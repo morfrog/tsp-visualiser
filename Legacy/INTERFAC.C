@@ -68,6 +68,9 @@ static int number_of_solvers=3;
 static int number_of_methods=8;
 static int number_of_inits=3;
 static int current_solver=0;
+static double temperature=100.0;
+static double coolingrate=0.8;
+static int changesattemp=50;
 
 int ScrAsMouseX(int m)
 {
@@ -311,6 +314,7 @@ int IntWinManager(int mode,int win,int x,int y)
 void Msg(char *string,int color)
 {
     HideMouse();
+    IntWinManager(CLEAR,msgbox,0,0);
     IntWinManager(SET,msgbox,0,0);
     DrawText(string,1,2,color);
     ShowMouse();
@@ -443,6 +447,7 @@ char *SetInit(int num,int override,int showhelp,int *inum)
     static int insinitnum=0;
     static int anninitnum=0;
     int changed=0;
+    int buffer[10];
 
     if (!(initialised))
     {
@@ -456,16 +461,22 @@ char *SetInit(int num,int override,int showhelp,int *inum)
 
 
         anninit=NewChoiceArray(3);
-        strcpy(anninit[0].name,"Temp =");
         ReadChoiceHelp("itemp.hlp",&anninit[0]);
-        strcpy(anninit[1].name,"Cool =");
         ReadChoiceHelp("icool.hlp",&anninit[1]);
-        strcpy(anninit[2].name,"AtTmp=");
         ReadChoiceHelp("iattmp.hlp",&anninit[2]);
 
-
-        initialised=1;
     }
+    if ((num==INITIALISE) || (!initialised))
+    {
+        initialised=1;
+        sprintf(buffer,"Temp =%6.2f",temperature);
+        strcpy(anninit[0].name,buffer);
+        sprintf(buffer,"Cool =%6.2f",coolingrate);
+        strcpy(anninit[1].name,buffer);
+        sprintf(buffer,"AtTmp=%6d",changesattemp);
+        strcpy(anninit[2].name,buffer);
+    }
+
     if (num==REQUEST) // * request for current * //
     {
         switch (current_solver) {
@@ -701,12 +712,19 @@ void DrawScreen(PROBLEM **currentprob)
     IntWinManager(BORDER,quitbtn,border_col,0);
 
     IntWinManager(SET,title,0,0);
-    DrawText("Visualisation Tool For The Travelling Salesman Problem - "
-             "Drew 1997",
-            1,1,GREEN);
+    DrawText("Visualisation Tool For The Travelling Salesman Problem",1,1,GREEN);
 
     IntWinManager(SET,help,0,0);
-    DrawText("VTTSP V1.01 1997",1,1,GREEN);
+    DrawText("      VTTSP V1.01 1997\n"
+             "\n"
+             "       By Drew\n"
+             "       \n"
+             "       Semester II 1997\n"
+             "               for\n"
+             "         PROJECT\n"
+             "\n"
+             "       PROJECT COORDINATOR\n"
+             "         Raymond Lister\n",1,1,GREEN);
 
     SetFile(currentprob,INITIALISE,TRUE);
     SetSolver(0,TRUE,FALSE);
@@ -732,10 +750,10 @@ void DrawScreen(PROBLEM **currentprob)
 
 void main()
 {
-    int pos=320,RequestUpdate=0,line;
+    int pos=320,line;
     MouseStatus m;
     char buffer[60];
-    int x,select,at=title,last=title,mx=0,my=0,tinit,tmethod;
+    int x,select,at=title,last=title,mx=0,my=0,tinit,tmethod,currentwin=title;
     INSPROB *insprob;
     PROBLEM *currentprob=NULL;
     FILE *out;
@@ -743,19 +761,19 @@ void main()
 
 //    char **messages=allocate_N_by_N_array(14,50,sizeof(char),"Messages");
 
-    char messages[13][45]={"Drew         ",
-                           "Choose A File                               ",
-                           "View of File                                ",
-                           "Choose a TSP method                         ",
-                           "This is the message box                     ",
-                           "Help on this program                        ",
-                           "Choose an 'TSP method' method               ",
+    char messages[13][60]={"",
+                           "Choose A File",
+                           "View of File",
+                           "Choose a TSP method",
+                           "This is the message box",
+                           "Help on this program",
+                           "Choose an 'TSP method' method",
                            "Choose an 'TSP method' initialisation method",
-                           "Creates a new random map                    ",
-                           "Saves the current map                       ",
-                           "Randomizes the map                          ",
-                           "Start with the current settings             ",
-                           "Quit the program                            "};
+                           "Creates a new random map",
+                           "Saves the current map",
+                           "Randomizes the map",
+                           "Start with the current settings",
+                           "Quit the program"};
 
     InitScreen(16);
     _setactivepage(0);
@@ -773,9 +791,41 @@ void main()
     do
     {
         MouseStat(&m);
+        if (MouseMoved()) 
+        {
+            at=IntWinManager(WHERE,NULL,m.xpos,m.ypos);
+            mx=m.xpos;my=m.ypos;
+            if (at!=last)
+            {
+                last=at;
+                if (at==fview) 
+                {
+                    sprintf(buffer,"View of %s                         ",
+                        SetFile(&currentprob,REQUEST,FALSE));
+                    Msg(buffer,GREEN);
+                }
+                else if (at==init)
+                {
+                    sprintf(buffer,"Choose an %s Initialisation Method           ",
+                        SetSolver(REQUEST,FALSE,FALSE));
+                    Msg(buffer,GREEN);
+                }
+                else if (at==method)
+                {
+                   sprintf(buffer,"Choose an %s Operation Method           ",
+                        SetSolver(REQUEST,FALSE,FALSE));
+                    Msg(buffer,GREEN);
+                }
+                else
+                    Msg(messages[at],GREEN);
+            }
+
+        }
+
         if (ButtonDown(&m))
         {
-            switch (IntWinManager(CURRENT,NULL,0,0)) {
+            currentwin=IntWinManager(CURRENT,NULL,0,0);
+            switch (currentwin) {
             case quitbtn :
                 ShutDown();
                 exit(1);
@@ -784,10 +834,11 @@ void main()
                 IntWinManager(CLEAR,help,0,0);
                 IntWinManager(SET,help,0,0);
                 HideMouse();
-                DrawText(":Please Enter",1,1,YELLOW);
-                DrawText(":The Number Of Points\n:",1,2,YELLOW);
+                DrawText("New...",1,1,GREEN);
+                DrawText(":Please Enter",1,2,YELLOW);
+                DrawText(":The Number Of Points\n:",1,3,YELLOW);
                 scanf("%d",&x);
-                DrawText(":The File Name\n:",1,4,YELLOW);
+                DrawText(":The File Name\n:",1,5,YELLOW);
                 scanf("%s",buffer);
                 ShowMouse();
                 if ((out=fopen(buffer,"wt"))==NULL)
@@ -801,7 +852,7 @@ void main()
                 }
                 SetFile(&currentprob,INITIALISE,TRUE);
 //                WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
-//                SetFile(&currentprob,number_of_files-1,FALSE);
+//               SetFile(&currentprob,number_of_files-1,FALSE);
                 break;
             case savebtn :
                 break;
@@ -888,35 +939,6 @@ void main()
                 else select=line;
                 if (select>=0) SetInit(select,FALSE,TRUE,NULL);
                 break;
-            }
-        }
-        if (MouseMoved() || (RequestUpdate) || (mx!=m.xpos) || (my!=m.ypos))
-        {
-            at=IntWinManager(WHERE,NULL,m.xpos,m.ypos);
-            mx=m.xpos;my=m.ypos;
-            if (at!=last)
-            {
-                last=at;
-                if (at==fview) 
-                {
-                    sprintf(buffer,"View of %s                         ",
-                        SetFile(&currentprob,REQUEST,FALSE));
-                    Msg(buffer,GREEN);
-                }
-                else if (at==init)
-                {
-                    sprintf(buffer,"Choose an %s Initialisation Method           ",
-                        SetSolver(REQUEST,FALSE,FALSE));
-                    Msg(buffer,GREEN);
-                }
-                else if (at==method)
-                {
-                   sprintf(buffer,"Choose an %s Operation Method           ",
-                        SetSolver(REQUEST,FALSE,FALSE));
-                    Msg(buffer,GREEN);
-                }
-                else
-                    Msg(messages[at],GREEN);
             }
         }
     }

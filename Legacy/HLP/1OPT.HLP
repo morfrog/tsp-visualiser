@@ -1,11 +1,11 @@
 1 Opt - Single City Move
 This method moves a single city
 from its place in the path and
-puts it in the place which
-minimises its increase to path
-distance. It ends when no more
-changes can be made which
-decrease the path length.
+puts it in a place which
+decreases the path length. It
+ends when no more changes can
+be made which decrease the path
+length.
 
 
 
