@@ -3,6 +3,8 @@
 #define FALSE 0
 #define TRUE  1
 
+#define byte unsigned char
+
 struct iarray
 {
     int size;

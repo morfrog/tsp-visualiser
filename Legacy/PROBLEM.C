@@ -12,6 +12,73 @@
 #include "screen.h"
 #include "problem.h"
 
+void WriteScreen2bmp(void)
+{
+    static int initialised;
+    static int screen_num;
+    char filename[13];
+    FILE *in;
+    FILE *out;
+    byte read;
+    int x,y;
+
+    if (!initialised)
+    {
+        strcpy(filename,"VTTSP000.BMP");
+        initialised=1;
+    }
+    in=fopen("VTTSP.DAT","r");
+    out=fopen(filename,"w");
+
+    for (x=0;x<1078;x++)
+    {
+        fread(&read,sizeof(byte),1,in);     // read and write header
+        fwrite(&read,sizeof(byte),1,out);
+    }
+    _setviewport(0,0,639,349);
+    for (x=0;x<640;x++)
+        for (y=0;y<350;y++)                 // write screen
+        {
+            read=(byte)_getpixel(x,y);
+            fputc(read,out);
+        }
+}
+
+void WriteScreen2File(void)
+{
+    static int initialised=0;
+    static int screen_num=0;
+    static char filename[13];
+    FILE *out;
+    int x,y;
+
+    if (!initialised)
+    {
+        strcpy(filename,"VTTSP000.SCR");
+        initialised=1;
+    }
+
+    filename[7]=48+screen_num;
+
+    if ((out=fopen(filename,"wb"))==NULL)
+    {
+        ShutDown();
+        printf("File Save Error");
+        exit(0);
+    }
+    else
+    {
+        _setviewport(0,0,639,349);
+        for (x=0;x<640;x++)
+            for (y=0;y<350;y++)
+                fputc(((char) _getpixel(x,y)) ,out);
+
+        fclose(out);
+        ++screen_num;
+    }
+}
+
+
 int TotalDelay(int tdelay)
 {
     static int tot_delay=WAITKEY; // * defaults to getkeypress option * //
@@ -50,11 +117,20 @@ int DoInput(char ch)
                     return 0;
                   }
                   break;
-        case '0': TotalDelay(1); return 1;
+        case '0': TotalDelay(0); return 1;
                   break;
         case 13 : TotalDelay(WAITKEY); return 1;
                   break;
-        default : break;
+        case 'V':
+                  Beep(100,100); WriteScreen2File();
+                  _setviewport(0,0,460,350); //  <- poxy but works for now
+                  break;
+        default : if ((ch>=49) && (ch<=57))
+                  {
+                    TotalDelay((ch-48)*50);
+                    return 1;
+                  }
+                  break;
     }
     return 0;
 }

@@ -41,7 +41,7 @@
 #define BORDER  3
 #define CLEAR   4
 
-#define title   0 
+#define title   0
 #define files   1   
 #define fview   2
 #define solver  3
@@ -55,6 +55,7 @@
 #define gobtn   11
 #define quitbtn 12
 #define current 13
+#define none    14
 
 struct choice
 {
@@ -274,7 +275,7 @@ int IntWinManager(int mode,int win,int x,int y)
         wrndbtn=NewWin(BTNSTART,VIEWBOTTOM+2+(BTNHEIGHT*2),639,VIEWBOTTOM+(BTNHEIGHT*3));
         wgobtn=NewWin(BTNSTART,VIEWBOTTOM+2+(BTNHEIGHT*3),639,VIEWBOTTOM+(BTNHEIGHT*5));
         wquitbtn=NewWin(BTNSTART,MSGBOXTOP,639,349);
-        wcurrent=title;
+        wcurrent=none;
         SetMousePos(wcurrent->t+1,wcurrent->l+1);
         map=allocate_N_by_N_array(640,350,sizeof(int),"Screen Map");
         for (ix=0;ix<=639;ix++)
@@ -383,7 +384,7 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
     static int numfiles;
     static char **directory;
     static int initialised=0;
-    int update=0;
+    int update=0,updatelist=1;
     
     if ((num==INITIALISE) || (!initialised)) {
         directory=GetDirectory( getcwd( NULL, 0 ),"TSP",&numfiles,1 );
@@ -405,10 +406,14 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
     else if ((num!=filenum) && (num!=INITIALISE))
     {
         if (num==SETLAST)
-            filenum=number_of_files-1;
+            if (filenum!=number_of_files-1)
+                filenum=number_of_files-1;
+            else
+                updatelist=0;
         else
             filenum=num;
         update=1;
+
         if (numfiles>0)
         {
             FreeMap(& ((*currentprob)->dist) );
@@ -420,11 +425,11 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
     if ((update) || (override))
     {
         HideMouse();
-        IntWinManager(CLEAR,files,0,0);
+        if (num!=SETLAST) IntWinManager(CLEAR,files,0,0);
         IntWinManager(SET,files,0,0);
         if (numfiles>0)
         {
-            DrawList(directory,numfiles,filenum);
+            if (updatelist) DrawList(directory,numfiles,filenum);
             UpdateFileView(*currentprob);
         }
         else
@@ -549,7 +554,7 @@ char *SetInit(int num,int override,int showhelp,int *inum)
         }
         ShowMouse();
     }
-    if ((showhelp) && (!changed))
+    if (showhelp)
     {
         IntWinManager(CLEAR,help,0,0);
         IntWinManager(SET,help,0,0);
@@ -774,7 +779,7 @@ void DrawScreen(PROBLEM **currentprob)
     IntWinManager(BORDER,quitbtn,border_col,0);
 
     IntWinManager(SET,title,0,0);
-    DrawText("Visualisation Tool For The Travelling Salesman Problem",1,1,GREEN);
+    DrawText("Visualisation Tool For The Travelling Salesman Problem - Drew",1,1,GREEN);
 
     ViewAbout();
 
@@ -915,26 +920,36 @@ void RndBtnPress(PROBLEM **currentprob)
     char infile[13];
 
     strcpy(infile,SetFile(currentprob,REQUEST,FALSE));
-    IntWinManager(CLEAR,help,0,0);
     IntWinManager(SET,help,0,0);
 
     DrawText("Randomizing...",1,2,YELLOW);
     rndfile(infile,"Current");
-
-    DrawText("Done!",1,4,GREEN);
+    DrawText("              ",1,2,GREEN);
     SetFile(currentprob,SETLAST,FALSE);
+}
+
+int IsButton(int cwindow)
+{
+    return ((cwindow==newbtn) ||
+            (cwindow==savebtn) ||
+            (cwindow==rndbtn) ||
+            (cwindow==gobtn) ||
+            (cwindow==quitbtn)
+           );
 }
 
 void main()
 {
     int pos=320,line;
     MouseStatus m;
+    MouseStatus p;
     char buffer[60];
-    int x,select,at,last,mx=0,my=0,tinit,tmethod,currentwin=title;
+    int x,y,select,at,last,mx=0,my=0,tinit,tmethod,currentwin=none;
     int keypress,keywin;
+    int lastleftx=0,lastlefty=0,lastrightx=0,lastrighty=0;
     INSPROB *insprob;
     PROBLEM *currentprob=NULL;
-    PROBLEM *tempprob=NULL;
+    PROBLEM *tempprob=NULL; // * should save path, not entire problem * //
     double length;
     CHOICE *vttsphelp;
 
@@ -954,11 +969,9 @@ void main()
                            "Start with the current settings          (Shift-G)",
                            "Quit the program                         (Shift-Q)"};
 
-
     vttsphelp=NewChoiceArray(1);
     strcpy(vttsphelp[0].name,"VTTSP - Help");
     ReadChoiceHelp("vttsp.hlp",&vttsphelp[0]);
-
 
     InitScreen(16);
     _setactivepage(0);
@@ -972,7 +985,7 @@ void main()
     SetMousePos(300,100);
     MouseStat(&m);
     at=IntWinManager(WHERE,NULL,m.xpos,m.ypos);
-    last=title;
+    last=none;
     ShowMouse();
 
     UseMouseCur(GLOVE);
@@ -1029,14 +1042,61 @@ void main()
                 case 'N' : keywin=newbtn;  break;
                 case 'R' : keywin=rndbtn;  break;
                 case 'H' : keywin=help;    break;
+                case 0   : if (kbhit())
+                            switch (getch()) {
+                                case 59 : keywin=help; break; // F1
+                                case 60 : keywin=savebtn; break; // F2
+                                case 68 : keywin=quitbtn; break; // F10
+                            }
+                           break;
+                case 'V' : /* WriteScreen2BMP(); */
+                           Beep(100,100); WriteScreen2File(); keypress=FALSE; 
+                           IntWinManager(SET,IntWinManager(CURRENT,NULL,0,0),0,0); 
                 default  : keypress=FALSE; break;
             }
         }
 
         if ((m.left) || (m.right) || (keypress))
         {
-            currentwin=IntWinManager(CURRENT,NULL,0,0);
+            if (m.left)
+            {
+                p.left=1;
+                PressInfo(&p);
+                if ((lastleftx!=p.xpos) || (lastlefty!=p.ypos))
+                {
+                    lastleftx=p.xpos;
+                    lastlefty=p.ypos;
+                    currentwin=IntWinManager(WHERE,NULL,p.xpos,p.ypos);
+                }
+                else
+                {
+                    if (!IsButton(currentwin))
+                    currentwin=none;
+                }
+            }
+            else if (m.right)
+            {
+                p.left=0;
+                p.right=1;
+                PressInfo(&p);
+                if ((lastrightx!=p.xpos) || (lastrighty!=p.ypos))
+                {
+                    lastrightx=p.xpos;
+                    lastrighty=p.ypos;
+                    currentwin=IntWinManager(WHERE,NULL,p.xpos,p.ypos);
+                }
+                else
+                {
+                    if (!((currentwin==init) && (current_solver==2)))
+                        if (!IsButton(currentwin))
+                            currentwin=none;
+                }
+            }
+            else
+                currentwin=IntWinManager(CURRENT,NULL,0,0);
             switch (keypress?keywin:currentwin) {
+            case none    :
+                break;
             case quitbtn :
                 ShutDown();
                 exit(1);
@@ -1079,7 +1139,7 @@ void main()
                     SwapPage();
 
                     ShowText("Hit Esc to Quit,\n"
-                             "'0' for Fast Mode\n"
+                             "Speeds '0','1'-'9'\n"
                              "Any other key \n"
                              "To continue..",1,19,BLUE);
 
@@ -1105,9 +1165,9 @@ void main()
                         DrawNorm(currentprob,1);
                         SwapPage();
 
-                        ShowText("                 \n"
-                                 "Hit Esc          \n"
-                                 "to Quit...       \n"
+                        ShowText("                  \n"
+                                 "Hit Esc           \n"
+                                 "to Quit...        \n"
                                  "                  ",1,19,LTRED);
                     
                         while (getch()!=27) {}
@@ -1184,3 +1244,36 @@ void main()
     ShutDown();
 }
 
+/*
+                case 'V' : Beep(100,100);
+                           for (x=0;x<640;x++)
+                            for (y=0;y<350;y++)    // save screen
+                                screenbuffer[x][y]=_getpixel(x,y);
+                            Beep(100,100);
+                            zRes640();
+                            for (x=0;x<640;x++)   // draw screen
+                            {
+                             point.x=x; 
+                             for (y=0;y<350;y++)
+                             {
+                                point.y=y;
+                                zDrawPoint(zSET,screenbuffer[x][y],&point);
+                             }
+                            }
+                            Beep(100,100);
+                            switch (zPCXMake(&tl, &rb, "VTTSP_0.PCX")) {
+                               case 1 : break;
+                               case 0 : Beep(100,100); break;
+                               case -1: Beep(400,100); Beep(500,100); break;
+                            }
+                            Beep(100,100);
+                            InitScreen(16);
+                            for (x=0;x<640;x++)  //  reload screen
+                             for (y=0;y<350;y++)
+                             {
+                                _setcolor((short)screenbuffer[x][y]);
+                                _setpixel(x,y);
+                             }
+                            break;                                                            
+
+*/
