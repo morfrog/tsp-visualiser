@@ -14,7 +14,17 @@ struct locates
 
 typedef struct locates LOCATES;
 
+struct matrix
+{
+        int size; /* <=big */
+        int **array;
+};
+
+typedef struct matrix DISTANCES;
+
 LOCATES *GetLocates();
 void ShowLocates(LOCATES *l);
+DISTANCES *LocToDist(LOCATES *l);
+void FreeDist(DISTANCES *d);
 
 #endif

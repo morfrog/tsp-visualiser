@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
+#include <i86.h>
+#include "sys.h"
 #include "readmap.h"
 
 POINT *n;
@@ -32,7 +34,7 @@ void read_points(int pos)
         if (( flag == EOF ) || (flag == 0))
         {
             size = pos;
-            n = (struct point *)(malloc(sizeof(struct point) * size));
+            n = (struct point *)(salloc(size,sizeof(struct point)));
             return;
         }
         else
@@ -46,7 +48,7 @@ void read_points(int pos)
 
 LOCATES *GetLocates()
 {
-    LOCATES *ret=malloc(sizeof(LOCATES *));
+    LOCATES *ret=salloc(1,sizeof(LOCATES *));
 
     read_points(0);
     ret->num=size;
@@ -64,10 +66,34 @@ void ShowLocates(LOCATES *l)
     }
 }
 
+DISTANCES *LocToDist(LOCATES *l)
+{
+    DISTANCES *d=salloc(1,sizeof(DISTANCES *));
+    int max=(l->num);
+    d->array=allocate_N_by_N_array(max,max,sizeof(double),"u");
+    return d;
+}
+
+void FreeDist(DISTANCES *d)
+{
+    int x,max=d->size;;
+    for (x=0;x<max;x++)
+        free(d->array[x]);
+    free(d);
+}
 /*
 void main()
 {
+    int *t;
+    int x;
     LOCATES *l=GetLocates();
+  
     ShowLocates(l);
+  
+    t=malloc(sizeof(int)*500);
+    for (x=0;x<500;x++)
+        t[x]=x;
+    for (x=0;x<500;x++)
+        printf("%d\n",t[x]);
 }
 */

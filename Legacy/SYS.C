@@ -2,17 +2,55 @@
 #include <stdio.h>
 #include <malloc.h>
 
-void *salloc(size_t something) {
+void *salloc(int n_items,size_t something) {
 /**********************************************************************
 Description   : Allocates memory, displays an error if there isn't enough
 Pre-Condition : The amount of memory to allocate is passed in.
 Post-Condition: A pointer to this memory is returned.
 **********************************************************************/
-    void *p=malloc(something);
-    if (p==NULL)
+    void *p;
+    if ( (p=malloc(n_items*something)) == 0 )
     {
         printf("Out Of Memory Error.\n\n\nGoodBye.\n");
         exit(EXIT_FAILURE);
     }
     return p;
 }
+
+char *
+allocate_array(int nelements, int sizeof_element, char *array_name)
+{
+    char    *malloc();
+    char    *p;
+    int i;
+
+
+    if ( (p=salloc(nelements,sizeof_element)) == 0 )
+    {
+        printf("allocate_array: error in salloc() for array '%s'\n",array_name);
+        exit(1);
+    }
+
+    for ( i=0 ; i<nelements*sizeof_element ; ++i ) p[i] = 0;
+
+    return(p);
+
+} /* allocate_array */
+
+char *
+allocate_N_by_N_array(int n1, int n2, int sizeof_element, char *array_name)
+{
+    char    **p;
+    int i;
+
+
+    p = (char **) allocate_array(n1, sizeof(char *), array_name);
+
+    for ( i=0; i<n1 ; ++i )
+    {
+        p[i] = allocate_array(n2, sizeof_element, array_name);
+    }
+
+    return( (char *) p);
+
+} /* allocate_N_by_N_array */

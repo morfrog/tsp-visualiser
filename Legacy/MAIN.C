@@ -3,6 +3,7 @@
 #include <conio.h>
 #include <graph.h>
 #include <i86.h>
+#include "sys.h"
 #include "screen.h"
 #include "readmap.h"
 
@@ -19,6 +20,9 @@ void DrawCities(LOCATES *loc)
 
 void main()
 {
+    int *t;
+    int **u;
+    int num=0,count=0;
     LOCATES *l=GetLocates();
     SWIN *main;
     int max=l->num,x,y;
@@ -56,4 +60,23 @@ void main()
     _setvisualpage(1);
     delay(4000);
     ShutDown();
+
+    u=allocate_N_by_N_array(20,20,sizeof(int),"u");
+    for (x=0;x<20;x++)
+        for (y=0;y<20;y++)
+        {
+            u[x][y]=num;
+            ++num;
+        }
+    delay(1000);
+    for (x=0;x<20;x++)
+        for (y=0;y<20;y++)
+        {
+            if (count!=u[x][y]) printf("%d!=%d\n",count,u[x][y]);
+            else printf("%d ",u[x][y]);
+            ++count;
+            
+        }
+   
+    
 }

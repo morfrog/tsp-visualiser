@@ -1,1 +1,2 @@
-arj a -x*.obj -x*.map -x*.sym -x*.err f:\arj\tsp%1
+arj a -x*.exe -x*.obj -x*.map -x*.sym -x*.err e:\project\bkps\tsp%1
+dir e:\project\bkps
