@@ -174,7 +174,7 @@ void _FAR SetTextWin(SWIN *w,int border)
     /* +2 is roundup + gap */
     if (border) {
         _setcolor(border_col);
-        _rectangle(_GBORDER,w->l,w->t,w->r,w->b);
+        _rectangle(_GBORDER,w->l,w->t,w->r-1,w->b-1);
     }
 
     _wrapon(_GWRAPON);
@@ -249,33 +249,4 @@ void _FAR SwapPage()
     static int viewpage;
     viewpage=_setvisualpage(viewpage);
     _setactivepage(viewpage);
-}
-
-void _FAR WinManager(int which)
-{
-    static int init=0;
-    static SWIN *main;
-    static SWIN *text;
-
-    if (!init) {
-        main=NewWin(1,1,460,350);
-        text=NewWin(465,1,640,350);
-        init=1;
-    }
-    switch (which) {
-        case Main : SetWin(main);  break;
-        case Text : SetTextWin(text,1);  break;
-    }
-}
-
-void _FAR ShowText(char string[],int start,int line,int color)
-{
-    int startpage=_getactivepage();
-    WinManager(Text);
-    _setactivepage(1);
-    DrawText(string,start,line,color);
-    _setactivepage(0);
-    DrawText(string,start,line,color);
-    _setactivepage(startpage);
-    WinManager(Main);
 }

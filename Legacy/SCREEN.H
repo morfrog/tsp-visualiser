@@ -39,9 +39,9 @@
 #define text_col    LTRED
 #define line_col    GREEN
 #define border_col  PURPLE
-
-#define Text 0    // WinManager
-#define Main 1    // WinManager
+#define hilite_1    BLUE
+#define hilite_2    WHITE
+#define hilite_3    ORANGE
 
 struct win
 {
@@ -66,6 +66,4 @@ void _FAR DrawCity(char name[],double x,double y,double size,int color);
 void _FAR DrawText(char string[],int start,int line,int color);
 void _FAR TextWindow(int rows,int cols);
 int _FAR SwapPage();
-void _FAR WinManager(int which);
-void _FAR ShowText(char string[],int start,int line,int color);
 #endif

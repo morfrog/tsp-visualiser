@@ -46,8 +46,8 @@ int TmpCity(PATH *p);
 
 void _FAR PathStart(PATH *p);
 void _FAR PathEnd(PATH *p);
-void _FAR PathCurrent(PATH *p,int *a);
-void _FAR PathPair(PATH *p,int *a,int *b);
+int _FAR PathCurrent(PATH *p,int *a);
+int _FAR PathPair(PATH *p,int *a,int *b);
 void _FAR PathNext(PATH *p);
 
 int ReverseSubPath(PATH *p,int keepl,int subl,int subr,int keepr);

@@ -13,10 +13,6 @@
 
 #define DEBUG 0
 
-#define opt1 1
-#define opt2 2
-#define opt3 3
-
 int ProcessCmdLine(int argc,char *argv[],char **filein,char **fileout,int *method,int *tdelay,double *optimal)
 {
     int wait_time;
@@ -93,16 +89,11 @@ void main(int argc,char *argv[])
             printf("             1opt     2opt     3opt\n"
                    "%12s ",filein);
             printf("%8.5f  %8.5f  %8.5f\n",ControlOneOpt(prob1,0)/optimal,
-            ControlTwoOpt(prob2,0)/optimal,ControlKOpt(prob3,3,0)/optimal);
+            ControlTwoOpt(prob2,0)/optimal,Control3Opt(prob3,0)/optimal);
         }
         else if (tdelay==-2) 
         {
-            switch (method) {
-                case opt1 : length=ControlOneOpt(prob1,((tdelay==-1) || (tdelay>0)));break;
-                case opt2 : length=ControlTwoOpt(prob1,((tdelay==-1) || (tdelay>0)));break;
-                case opt3 : length=ControlKOpt(prob1,3,((tdelay==-1) || (tdelay>0)));break;
-                default : break;
-            }
+            length=ControlAllOpt(prob1,method,((tdelay==-1) || (tdelay>0)),tdelay);
             printf("Length was %8.6f\n",length);
         }
         else
@@ -114,21 +105,22 @@ void main(int argc,char *argv[])
             WinManager(Main);
             WinManager(Text);
 
-            ShowText("Hit Esc to Quit,\n\n"
+            if (tdelay==0)
+                ShowText("Working...\n\n"
+                         "Working...\n",1,20,BLUE);
+            else
+                ShowText("Hit Esc to Quit,\n\n"
                  "Any other key \n"
                  "To continue..",1,20,BLUE);
                 
             DrawNorm(prob1,1);
+            SwapPage();
             oldpl=PathLength(prob1->path,prob1->dist);
             
-            switch (method) {
-                case opt1 : length=ControlOneOpt(prob1,((tdelay==-1) || (tdelay>0)));break;
-                case opt2 : length=ControlTwoOpt(prob1,((tdelay==-1) || (tdelay>0)));break;
-                case opt3 : length=ControlKOpt(prob1,3,((tdelay==-1) || (tdelay>0)));break;
-                default : break;
-            }
+            length=ControlAllOpt(prob1,method,((tdelay==-1) || (tdelay>0)),tdelay);
 
             DrawNorm(prob1,1);
+            SwapPage();
 
             ShowText("F I N I S H E D",1,11,RED);
             sprintf(buffer,"Lengths\n"
@@ -140,7 +132,13 @@ void main(int argc,char *argv[])
             
             if (DEBUG) ShowPath(prob1->path);
     
-            getch();
+            ShowText("Hit Esc         \n"
+                     "to Quit...      \n",1,20,LTRED);
+            ShowText("                \n"
+                     "                ",1,22,BLACK);
+            
+            while (getch()!=27) {}
+            
             ShutDown();
             
         }    

@@ -28,7 +28,7 @@ int ProcessCmdLine(int argc, char *argv[],char **filename,int *InitType,
         printf("Usage: %s filename init method [time].\n%s",
                 argv[0],
                "Where   init    in {Random,Furthest,Closest}\n"
-               "        method  in {Random,Cheap,Dear,NearN,Nearest,Furthest}\n"
+               "        method  in {Random,Cheap,Dear,NearN,Nearest,Furthest,N2,F2}\n"
                "        time    = 0 is calculate to end\n"
                "        time    = n is take n 10ths of seconds for each insert\n"
                "        time    =-2 is Benchmark Mode - Simply returns length\n"
@@ -51,10 +51,16 @@ int ProcessCmdLine(int argc, char *argv[],char **filename,int *InitType,
             case 'C' : case 'c' : *InsType=InsCheap; break;
             case 'N' : case 'n' : if ((argv[3][4]=='N') || (argv[3][4]=='n'))
                                       *InsType=InsNearN;
+                                  else if (argv[3][1]=='2')
+                                      *InsType=InsNearest2;  
                                   else
                                       *InsType=InsNearest;
                                   break;
-            case 'F' : case 'f' : *InsType=InsFurthest; break;
+            case 'F' : case 'f' : if (argv[3][1]=='2')
+                                    *InsType=InsFurthest2; 
+                                  else
+                                    *InsType=InsFurthest;
+                                  break;
             case 'D' : case 'd' : *InsType=InsDear; break;
             default  :            *InsType=InsRand; break;
         }
@@ -116,15 +122,15 @@ void main(int argc, char *argv[])
         if (tdelay==-3) { /* all benchmark with optimal - no graphics */
 
             printf("Init      File/Insert-> ");
-            for (method=InsRand;method<=InsFurthest;method++)
+            for (method=InsRand;method<=InsFurthest2;method++)
                 {printf("%s",MethodStr(method));printf(" ");}
             printf("\n");
 
             for (init=InitRand;init<=InitFurthest;init++)
             {
                 printf("%s",InitStr(init));
-                printf("%12s",filename);
-                for (method=InsRand;method<=InsFurthest;method++)
+                printf(" %12s",filename);
+                for (method=InsRand;method<=InsFurthest2;method++)
                 {
                     length=ControlAllIns(insprob,init,method,NoGraphics);
                     printf("%10.5f",length/optimal);
@@ -161,18 +167,19 @@ void main(int argc, char *argv[])
             length=ControlAllIns(insprob,inittype,instype,tdelay!=0);
         
             DrawNorm(insprob->prob,1);
+            SwapPage();
 
             sprintf(buffer,"F I N I S H E D");
             ShowText(buffer,1,16,LTRED);
             sprintf(buffer,"Length Is %8.6f",length);
             ShowText(buffer,1,18,YELLOW);
 
-            ShowText("Hit Any Key     \n"
+            ShowText("Hit Esc         \n"
                      "to Quit...      \n",1,20,LTRED);
             ShowText("                \n"
                      "                ",1,22,BLACK);
             
-            getch();
+            while (getch()!=27) {}
             ShutDown();
         }
 

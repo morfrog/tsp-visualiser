@@ -293,15 +293,17 @@ void _FAR PathEnd(PATH *p)
     p->current=p->head->prev;
 }
 
-void _FAR PathCurrent(PATH *p,int *a)
+int _FAR PathCurrent(PATH *p,int *a)
 {
     *a=p->current->citynum;
+    return *a;
 }
 
-void _FAR PathPair(PATH *p,int *a,int *b)
+int _FAR PathPair(PATH *p,int *a,int *b)
 {
     *a=p->current->citynum;
     *b=p->current->next->citynum;
+    return *a;
 }
 
 void _FAR PathNext(PATH *p)

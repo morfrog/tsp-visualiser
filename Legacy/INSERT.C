@@ -36,11 +36,12 @@ char *InitStr(int init)
 {
     char *buffer=salloc(20,sizeof(char));
     switch (init) {
-        case InitNearN   : sprintf(buffer,"Nearest Neighbour"); break;
-        case InitRand    : sprintf(buffer,"Random");            break;
-        case InitClosest : sprintf(buffer,"Closest");           break;
-        case InitFurthest: sprintf(buffer,"Furthest");          break;
-        default :          buffer=NULL;                         break; 
+        case InitNearN    : sprintf(buffer,"Nearest Neighbour"); break;
+        case InitRand     : sprintf(buffer,"Random  ");            break;
+        case InitClosest  : sprintf(buffer,"Closest ");           break;
+        case InitFurthest : sprintf(buffer,"Furthest");          break;
+        default           : buffer=NULL;                         break;
+
     }
     return buffer;
 }
@@ -49,13 +50,15 @@ char *MethodStr(int method)
 {
     char *buffer=salloc(20,sizeof(char));
     switch (method) {
-        case InsRand    : sprintf(buffer,"Random");             break;
-        case InsCheap   : sprintf(buffer,"Cheapest");           break;
-        case InsDear    : sprintf(buffer,"Dearest");            break;
-        case InsNearN   : sprintf(buffer,"Nearest Neigbour");   break;
-        case InsNearest : sprintf(buffer,"Nearest");            break;
-        case InsFurthest: sprintf(buffer,"Furthest");           break;
-        default         : buffer=NULL;                          break; 
+        case InsRand     : sprintf(buffer,"Random");             break;
+        case InsCheap    : sprintf(buffer,"Cheapest");           break;
+        case InsDear     : sprintf(buffer,"Dearest");            break;
+        case InsNearN    : sprintf(buffer,"Nearest Neigbour");   break;
+        case InsNearest  : sprintf(buffer,"Nearest");            break;
+        case InsFurthest : sprintf(buffer,"Furthest");           break;
+        case InsNearest2 : sprintf(buffer,"Nearest II");         break;
+        case InsFurthest2: sprintf(buffer,"Furthest II");        break;
+        default          : buffer=NULL;                          break; 
     }
     return buffer;
 }
@@ -275,6 +278,7 @@ double ControlRand(INSPROB *insprob,int graphics)
             sprintf(buffer,"%3d%% Complete.\n\n",100*(total-insprob->endo)/total);
             ShowText(buffer,1,16,LTBLUE);
             DrawNorm(insprob->prob,1);
+            SwapPage();
             WaitTill(now+(3*time_seg));
         }
 
@@ -310,6 +314,7 @@ double ControlNearN(INSPROB *insprob,int graphics)
         
         if (graphics) {
             DrawNorm(insprob->prob,0);
+            SwapPage();
             WaitTill(now+(2*time_seg));
         }
         this=next;
@@ -354,6 +359,7 @@ double ControlDist(INSPROB *insprob,int (* func)(double,double),int (* func2)(do
 
         if (graphics) {
             DrawNorm(insprob->prob,1);
+            SwapPage();
             WaitTill(now+(3*time_seg));
         }
 
@@ -372,6 +378,16 @@ double ControlFurthest(INSPROB *insprob,int graphics)
 double ControlNearest(INSPROB *insprob,int graphics)
 {
     return ControlDist(insprob,Lesser,Lesser,graphics);
+}
+
+double ControlFurthest2(INSPROB *insprob,int graphics)
+{
+    return ControlDist(insprob,Greater,Greater,graphics);
+}
+
+double ControlNearest2(INSPROB *insprob,int graphics)
+{
+    return ControlDist(insprob,Lesser,Greater,graphics);
 }
 
 double ControlCost(INSPROB *insprob,int (* func)(double,double),int graphics)
@@ -405,6 +421,7 @@ double ControlCost(INSPROB *insprob,int (* func)(double,double),int graphics)
 
         if (graphics) {
             DrawNorm(insprob->prob,1);
+            SwapPage();
             WaitTill(now+(3*time_seg));
         }
 
@@ -427,7 +444,7 @@ double ControlAllIns(INSPROB *insprob,int init,int method,int graphics)
 {
 
     char buffer[40];
-    if (graphics)
+    if ((graphics) || (TotalDelay(-1)==0))
     {
         sprintf(buffer,"%s\nMethod\n",MethodStr(method));
         ShowText(buffer,1,1,GREEN);
@@ -447,11 +464,41 @@ double ControlAllIns(INSPROB *insprob,int init,int method,int graphics)
         }
                     
         switch (method) {
-            case InsCheap   : return ControlCheap(insprob,graphics);    break;
-            case InsDear    : return ControlDear(insprob,graphics);     break;
-            case InsNearest : return ControlNearest(insprob,graphics);  break;
-            case InsFurthest: return ControlFurthest(insprob,graphics); break;
-            default/*Rand*/ : return ControlRand(insprob,graphics);     break;
+            case InsCheap    : return ControlCheap(insprob,graphics);     break;
+            case InsDear     : return ControlDear(insprob,graphics);      break;
+            case InsNearest  : return ControlNearest(insprob,graphics);   break;
+            case InsFurthest : return ControlFurthest(insprob,graphics);  break;
+            case InsNearest2 : return ControlNearest2(insprob,graphics);  break;
+            case InsFurthest2: return ControlFurthest2(insprob,graphics); break;
+            default/*Rand*/  : return ControlRand(insprob,graphics);      break;
         }
     }
 }
+
+void _FAR WinManager(int which)
+{
+    static int init=0;
+    static SWIN *main;
+    static SWIN *text;
+
+    if (!init) {
+        main=NewWin(1,1,460,350);
+        text=NewWin(465,1,640,350);
+        init=1;
+    }
+    switch (which) {
+        case Main : SetWin(main);  break;
+        case Text : SetTextWin(text,1);  break;
+    }
+}
+
+void _FAR ShowText(char string[],int start,int line,int color)
+{
+    int startpage=_getactivepage();
+    _setactivepage(1);
+    DrawText(string,start,line,color);
+    _setactivepage(0);
+    DrawText(string,start,line,color);
+    _setactivepage(startpage);
+}
+

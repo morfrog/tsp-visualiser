@@ -26,9 +26,14 @@ struct prob {
 
 typedef struct prob PROBLEM;
 
+int     TotalDelay(int tdelay);
 void    WaitTill(clock_t it);
+void    Init2TimeSegs(clock_t *a,clock_t *b);
+void    Init3TimeSegs(clock_t *a,clock_t *b,clock_t *c);
 void    DrawCitiesLine(LOCATES *loc,int A,int B,int col);
+void    DrawCityN(LOCATES *loc,int n,double size,int color);
 void    DrawCities(LOCATES *loc,MASK *m);
+void    DrawMaskPath(PATH *p,LOCATES *loc,MASK *m);
 void    DrawPath(PATH *p,LOCATES *loc,int returnp);
 char    *DelayStr(int delay,double optimal);
 PROBLEM *NewProblem(DISTANCES *d);
@@ -46,8 +51,8 @@ void _FAR SetMask(MASK *m,int color,double size);
 void _FAR SetMaskCol(MASK *m,int color);
 void _FAR SetMaskSize(MASK *m,double size);
 int  _FAR SetMaskAt(MASK *m,int color,double size,int pos);
+void _FAR SetMasksFrom(MASK *m,int *list,int listsize,int col, double size);
 int  _FAR SetMasks(MASK *m,int num, ...); // int pos,int color,double size
-int     TotalDelay(int tdelay);
 LOCATES *PathAsLocates(PATH *path,LOCATES *loc);
 PATH    *LocatesAsPath(LOCATES *loc);
 #endif

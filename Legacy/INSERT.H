@@ -5,15 +5,20 @@
 #define InitClosest  1
 #define InitFurthest 2
 
-#define InsNearN   -1
-#define InsRand     0
-#define InsCheap    1
-#define InsDear     2
-#define InsNearest  3
-#define InsFurthest 4
+#define InsNearN    -1
+#define InsRand      0
+#define InsCheap     1
+#define InsDear      2
+#define InsNearest   3 
+#define InsFurthest  4
+#define InsNearest2  5
+#define InsFurthest2 6
 
 #define NoGraphics 0
 #define Graphics   1
+
+#define Text 0    // WinManager
+#define Main 1    // WinManager
 
 struct iprob
 {
@@ -23,6 +28,9 @@ struct iprob
 };
 
 typedef struct iprob INSPROB;
+
+void _FAR WinManager(int which);
+void _FAR ShowText(char string[],int start,int line,int color);
 
 void   InsProbReset(INSPROB *insprob,int free);
 INSPROB *NewInsProb(DISTANCES *dist);

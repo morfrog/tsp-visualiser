@@ -19,6 +19,23 @@ int TotalDelay(int tdelay)
     return -1;
 }
 
+void Init2TimeSegs(clock_t *a,clock_t *b)
+{
+    int y=TotalDelay(-1);
+    *a=y;
+    *b=y*2;
+}
+
+void Init3TimeSegs(clock_t *a,clock_t *b,clock_t *c)
+{
+    int y=TotalDelay(-1);
+    *a=y;
+    *b=y*2;
+    *c=y*3;
+}
+
+
+
 void WaitTill(clock_t it)
 // * Waits until the clock() returns >= it * //
 {
@@ -39,6 +56,15 @@ void DrawCitiesLine(LOCATES *loc,int A,int B,int col)
     DrawLine(loc->at[A].x,loc->at[A].y,loc->at[B].x,loc->at[B].y,col);
 }
 
+void DrawCityN(LOCATES *loc,int n,double size,int color)
+{
+    char num[3]="00\0";
+    sprintf(num,"%d",loc->at[n].citynum);
+    DrawCity(num,loc->at[n].x,loc->at[n].y,
+        size,color);
+
+}
+
 void DrawCities(LOCATES *loc,MASK *m)
 {
     char num[3]="00\0";
@@ -46,7 +72,25 @@ void DrawCities(LOCATES *loc,MASK *m)
     for (count=0;count<(loc->num);count++)
     {
         sprintf(num,"%d",loc->at[count].citynum);
-        DrawCity(num,loc->at[count].x,loc->at[count].y,m->array[count].size,m->array[count].color);
+        DrawCity(num,loc->at[count].x,loc->at[count].y,
+            m->array[count].size,m->array[count].color);
+
+    }
+}
+
+void DrawMaskPath(PATH *p,LOCATES *loc,MASK *m)
+{
+    int count,a,b,max=p->size;
+
+    PathStart(p);
+    for (count=0;count<max;count++)
+    {
+        PathPair(p,&a,&b);  // get the current path pair
+        if (m->array[a].color==m->array[b].color)
+            DrawCitiesLine(loc,a,b,m->array[a].color);
+        else
+            DrawCitiesLine(loc,a,b,line_col);
+        PathNext(p);
     }
 }
 
@@ -207,7 +251,6 @@ void DrawNorm(PROBLEM *prob,int returnp)
     DrawPath(prob->path,l,returnp);
     DrawCities(l,prob->vmask);
     BorderWin();
-    SwapPage();
 }
 
 MASK _FAR *NewViewMask(int size,int color,double csize)
@@ -248,6 +291,16 @@ int _FAR SetMaskAt(MASK *m,int color,double size,int pos)
     if (color>-1)  m->array[pos].color=color;
     if (size>-1.0) m->array[pos].size=size;
     return ret;
+}
+
+void _FAR SetMasksFrom(MASK *m,int *list,int listsize,int col, double size)
+{
+    int x;
+    for (x=0;x<listsize;x++)
+    {
+        m->array[list[x]].color=col;
+        m->array[list[x]].size=size;
+    }
 }
 
 void _FAR SetMasks(MASK *m,int num, ...) // int pos,int color,double size

@@ -50,23 +50,25 @@ void main(int argc,char *argv[])
         DrawNorm(one,1);
         
         sprintf(buffer,"Viewing %s",filetwo);
-        DrawText(buffer,1,5,GREEN);
+        DrawText(buffer,1,7,GREEN);
         sprintf(buffer,"Length %6.5f",PathLength(two->path,two->dist));
-        DrawText(buffer,1,7,YELLOW);
+        DrawText(buffer,1,9,YELLOW);
         SwapPage();
         sprintf(buffer,"Viewing %s",fileone);
-        DrawText(buffer,1,5,GREEN);
+        DrawText(buffer,1,7,GREEN);
         sprintf(buffer,"Length %6.5f",PathLength(one->path,one->dist));
-        DrawText(buffer,1,7,YELLOW);
+        DrawText(buffer,1,9,YELLOW);
         
         sprintf(buffer,"Solution Comparison\n"
                        "        of\n"
-                       "%s and %s",fileone,filetwo);
+                       "   %12s\n"
+                       "        and\n"
+                       "   %12s",fileone,filetwo);
         ShowText(buffer,1,1,RED);
 
         ShowText("Hit Esc to Quit,\n\n"
                  "Any other key \n"
-                 "to continue..",1,9,BLUE);
+                 "to continue..",1,12,BLUE);
 
         do {
             SwapPage();
