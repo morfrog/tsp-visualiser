@@ -245,7 +245,7 @@ double ControlRand(INSPROB *insprob,int graphics)
 {
     int next,Ia,Ib;
     clock_t now;
-    clock_t time_seg=TotalDelay(-1)/3;
+    clock_t seg1,seg2,seg3;
     char buffer[80];
     static int col=WHITE;
     int total=insprob->endo;
@@ -259,7 +259,7 @@ double ControlRand(INSPROB *insprob,int graphics)
             sprintf(buffer,"Insert is %3d.  \n\n",next);
             ShowText(buffer,1,4,col);
             HiliteCity(insprob->prob,next,1);
-            WaitTill(now+time_seg);
+            if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 
         CityDel(insprob,next);
@@ -268,7 +268,7 @@ double ControlRand(INSPROB *insprob,int graphics)
         if (graphics) {
             ShowChanges(insprob,next,Ia,Ib,col,5);
             HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);
-            WaitTill(now+(2*time_seg));
+            if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 
         InsertPath(insprob->prob->path,next,Ia,Ib);
@@ -279,7 +279,7 @@ double ControlRand(INSPROB *insprob,int graphics)
             ShowText(buffer,1,16,LTBLUE);
             DrawNorm(insprob->prob,1);
             SwapPage();
-            WaitTill(now+(3*time_seg));
+            if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 
     } while (insprob->endo);
@@ -291,8 +291,10 @@ double ControlNearN(INSPROB *insprob,int graphics)
 {
     int next,this;
     clock_t now;
-    clock_t time_seg=TotalDelay(-1)/2;
+    clock_t seg1,seg2;
     char buffer[50];
+
+    Init2TimeSegs(&seg1,&seg2);
 
     PathEnd(insprob->prob->path);
     PathCurrent(insprob->prob->path,&this);
@@ -305,7 +307,7 @@ double ControlNearN(INSPROB *insprob,int graphics)
             sprintf(buffer,"Last Was %d.\n\nThis Is %d.",this,next);
             ShowText(buffer,1,4,WHITE);
             HiliteCity(insprob->prob,next,0);
-            WaitTill(now+time_seg);
+            if (WaitTill(now+seg1)) Init2TimeSegs(&seg1,&seg2);
         }
 
         CityDel(insprob,next);
@@ -315,7 +317,7 @@ double ControlNearN(INSPROB *insprob,int graphics)
         if (graphics) {
             DrawNorm(insprob->prob,0);
             SwapPage();
-            WaitTill(now+(2*time_seg));
+            if (WaitTill(now+seg2)) Init2TimeSegs(&seg1,&seg2);
         }
         this=next;
 
@@ -328,9 +330,11 @@ double ControlDist(INSPROB *insprob,int (* func)(double,double),int (* func2)(do
 {
     int next,Ia,Ib,it;
     clock_t now;
-    clock_t time_seg=TotalDelay(-1)/3;
+    clock_t seg1,seg2,seg3;
     static int col=WHITE;
     char buffer[50];
+
+    Init3TimeSegs(&seg1,&seg2,&seg3);
 
     do {
         now=clock();
@@ -342,7 +346,7 @@ double ControlDist(INSPROB *insprob,int (* func)(double,double),int (* func2)(do
             sprintf(buffer,"Insert is %3d.  \n\n",next);
             ShowText(buffer,1,4,col);
             HiliteCity(insprob->prob,next,1);
-            WaitTill(now+time_seg);
+            if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 
         CityDel(insprob,next);
@@ -351,7 +355,7 @@ double ControlDist(INSPROB *insprob,int (* func)(double,double),int (* func2)(do
         if (graphics) {
             ShowChanges(insprob,next,Ia,Ib,col,5);
             HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);
-            WaitTill(now+(2*time_seg));
+            if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 
         InsertPath(insprob->prob->path,next,Ia,Ib);
@@ -360,7 +364,7 @@ double ControlDist(INSPROB *insprob,int (* func)(double,double),int (* func2)(do
         if (graphics) {
             DrawNorm(insprob->prob,1);
             SwapPage();
-            WaitTill(now+(3*time_seg));
+            if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 
     } while (insprob->endo);
@@ -394,9 +398,11 @@ double ControlCost(INSPROB *insprob,int (* func)(double,double),int graphics)
 {
     int next,pA,pB;
     clock_t now;
-    clock_t time_seg=TotalDelay(-1)/3;
+    clock_t seg1,seg2,seg3;
     static int col=WHITE;
     char buffer[50];
+
+    Init3TimeSegs(&seg1,&seg2,&seg3);
 
     do {
         now=clock();
@@ -409,10 +415,11 @@ double ControlCost(INSPROB *insprob,int (* func)(double,double),int graphics)
             HiliteCity(insprob->prob,next,1);
             sprintf(buffer,"Insert is %3d.  \n\n",next);
             ShowText(buffer,1,4,col);
-            WaitTill(now+(time_seg));
+            if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
+
             HiliteCityGroup(insprob->prob,next,YELLOW,pA,pB,BLUE);
             ShowChanges(insprob,next,pA,pB,col,5);
-            WaitTill(now+(2*time_seg));
+            if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 
         CityDel(insprob,next);
@@ -422,7 +429,7 @@ double ControlCost(INSPROB *insprob,int (* func)(double,double),int graphics)
         if (graphics) {
             DrawNorm(insprob->prob,1);
             SwapPage();
-            WaitTill(now+(3*time_seg));
+            if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 
     } while (insprob->endo);

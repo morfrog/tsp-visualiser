@@ -37,54 +37,40 @@ void Init3TimeSegs(clock_t *a,clock_t *b,clock_t *c)
     *c=y;
 }
 
-void ProcessInput(int timesegs,clock_t *a,clock_t *b,clock_t *c)
+int DoInput(char ch)
+// * returns if a change has been made * //
 {
-    char ch;
-    if (kbhit())
-    {
-        if (timesegs==3)
-            Init3TimeSegs(a,b,c);
-        else
-            Init2TimeSegs(a,b);
-
-        ch=getch();
-        switch (ch) {
-            case 27 : {
-                        while (kbhit()) getch(); // * clear buffer * //
-                        ShutDown();
-                        exit(1);
-                      } break;
-            case '0': TotalDelay(1); break;
-            case 13 : TotalDelay(WAITKEY); break;
-            default : break;
-        }
-
-    }
-}
-
-void WaitTill(clock_t it)
-// * Waits until the clock() returns >= it * //
-{
-    char ch='~';
-    if (TotalDelay(REQUEST)<0) ch=getch(); // * if Wait_For_Keypress option * //
-    else
-    {
-
-        while (clock()<it)
-        {
-            if (kbhit()) {ch=getch();break;}
-        }
-    }
     switch (ch) {
         case 27 : {
                     while (kbhit()) getch(); // * clear buffer * //
                     ShutDown();
                     exit(1);
-                  } break;
-        case '0': TotalDelay(1); break;
-        case 13 : TotalDelay(WAITKEY); break;
+                  }
+                  break;
+        case '0': TotalDelay(1); return 1;
+                  break;
+        case 13 : TotalDelay(WAITKEY); return 1;
+                  break;
         default : break;
     }
+    return 0;
+}
+
+int WaitTill(clock_t it)
+// * Waits until the clock() returns >= it * //
+{
+    if (TotalDelay(REQUEST)<0) { // * if Wait_For_Keypress option * //
+        return DoInput(getch());
+    }
+    else
+    {
+        do
+        {
+            if ( kbhit() ) return DoInput(getch());
+        }
+        while (clock()<it);
+    }
+    return 0;
 }
 
 void DrawCitiesLine(LOCATES *loc,int A,int B,int col)

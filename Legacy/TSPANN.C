@@ -87,7 +87,7 @@ void main(int argc,char *argv[])
         leftp->prob->path=LocatesAsPath(leftp->prob->dist->l);
         rightp->prob->path=LocatesAsPath(rightp->prob->dist->l);
 
-        TotalDelay(WAITKEY);
+        TotalDelay(tdelay);
         InitScreen(16);
         AnnWinManager(text_top);
 

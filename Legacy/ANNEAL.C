@@ -159,9 +159,6 @@ void AnnealTwoOpt(ANNPROB *annprob)
     /*s*/free(array);
 }
 
-
-
-
 double GetP(double deltaE,double temperature)
 {
     if (deltaE<=0.0)
@@ -287,8 +284,7 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             }
             else DrawNorm(two->prob,1);
             SwapPage();
-            ProcessInput(3,&seg1,&seg2,&seg3);
-            WaitTill(now+seg1);
+            if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
     
             AnnWinManager(win_one);
             if (good1) {
@@ -302,8 +298,7 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             }
             else DrawNorm(two->prob,1);
             SwapPage();
-            ProcessInput(3,&seg1,&seg2,&seg3);
-            WaitTill(now+seg2);
+            if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
 
             if (good1) {
                 len1+=MakeAnnealChange(one,change1);
@@ -325,8 +320,7 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             AnnWinManager(win_two);
             DrawNorm(two->prob,1);
             SwapPage();
-            ProcessInput(3,&seg1,&seg2,&seg3);
-            WaitTill(now+seg3);
+            if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
 
         }
         temp*=cooling;
@@ -357,11 +351,11 @@ int ControlAnnOverlay(ANNPROB *one,ANNPROB *two,int width,int height,int starty)
     char buffer[50];
 
     AnnWinManager(text_one);
-    sprintf(buffer,"Length=%f",PathLength(one->prob->path,one->prob->dist));
+    sprintf(buffer,"Length=%f  ",PathLength(one->prob->path,one->prob->dist));
     AnnShowText(buffer,1,1,YELLOW);
 
     AnnWinManager(text_two);
-    sprintf(buffer,"Length=%f",PathLength(two->prob->path,two->prob->dist));
+    sprintf(buffer,"Length=%f  ",PathLength(two->prob->path,two->prob->dist));
     AnnShowText(buffer,1,1,LTRED);
 
     do

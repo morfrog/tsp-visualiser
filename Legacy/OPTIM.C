@@ -143,13 +143,13 @@ double ControlOneOpt(PROBLEM *prob,int graphics)
             ShowText(buffer,1,6,BLACK);
             HiliteOneOpt(prob,oldA,next,oldB,hilite_1,1);
             SwapPage();
-            WaitTill(now+seg1);
+            if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
     
             sprintf(buffer,"%2d to %2d,%2d  ",next,newA,newB);
             ShowText(buffer,1,5,hilite_2);
             HiliteOneOpt(prob,newA,next,newB,hilite_2,0);
             SwapPage();
-            WaitTill(now+seg2);
+            if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 
         DeletePath(prob->path,next);
@@ -161,8 +161,7 @@ double ControlOneOpt(PROBLEM *prob,int graphics)
             sprintf(buffer,"Path Length\n"
                            "Decrease = %8.6f",-improve);
             ShowText(buffer,1,6,YELLOW);
-
-            WaitTill(now+seg3);
+            if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
     }
     return PathLength(prob->path,prob->dist);
@@ -284,7 +283,9 @@ double ControlTwoOpt(PROBLEM *prob,int graphics)
     char buffer[60];
     double dab,dcd,dac,dbd;
     clock_t now;
-    clock_t time_seg=TotalDelay(-1)/3;
+    clock_t seg1,seg2,seg3;
+
+    Init3TimeSegs(&seg1,&seg2,&seg3);
 
 #ifdef DEBUG
     ShowPath(prob->path);
@@ -328,17 +329,18 @@ double ControlTwoOpt(PROBLEM *prob,int graphics)
             sprintf(buffer,"Path Length\n"
                            "Decrease = %8.6f\n",0.0-(dac-dab+dbd-dcd));
             ShowText(buffer,1,11,YELLOW);
-            WaitTill(now+(time_seg));
+            if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            
             HiliteTwoOpt(prob,A,B,C,D,1);
             SwapPage();
-            WaitTill(now+(time_seg*2));
+            if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
 
         }
         MakeTwoOptTransition(prob,A,B,C,D);
         if (graphics) {
             DrawNorm(prob,1);
             SwapPage();
-            WaitTill(now+(time_seg*3));
+            if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 #ifdef DEBUG
     ShowPath(prob->path);
@@ -525,8 +527,10 @@ double Control3Opt(PROBLEM *p,int graphics)
 {
     INTARRAY *iarray=Next3Opt(p);
     clock_t now;
-    clock_t time_seg=TotalDelay(-1)/2;
+    clock_t seg1,seg2,seg3;
     char buffer[50];
+
+    Init3TimeSegs(&seg1,&seg2,&seg3);
 
     if (graphics) ShowText("Three Opt Method",1,1,GREEN);
 
@@ -545,7 +549,7 @@ double Control3Opt(PROBLEM *p,int graphics)
             ShowText(buffer,1,7,hilite_3);
 
             Hilite3Opt(p,iarray,0);
-            WaitTill(now+(time_seg));
+            if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 #ifdef DEBUG
     printf("%s",buffer);
@@ -554,9 +558,12 @@ double Control3Opt(PROBLEM *p,int graphics)
 
         Make3OptTransition(p,iarray);
         if (graphics) {
+            Hilite3Opt(p,iarray,0);
+            if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
+
             DrawNorm(p,1);
             SwapPage();
-            WaitTill(now+(time_seg*2));
+            if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
         }
 
         sfree(iarray);

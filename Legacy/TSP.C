@@ -188,7 +188,7 @@ void main(int argc, char *argv[])
 
         out=PathAsLocates(insprob->prob->path,insprob->prob->dist->l);
         WriteLocates(out,"default.dat");
-        FreeLocates(out);
+/*        FreeLocates(out);*/
         if (tdelay>=-1) printf("File 'default.dat' written...\n");
     }
 
