@@ -10,6 +10,7 @@
 #include "screen.h"
 #include "path.h"
 #include "problem.h"
+#include "makemap.h"
 #include "insert.h"
 #include "optim.h"
 #include "anneal.h"
@@ -370,29 +371,40 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
     static int initialised=0;
     int update=0;
     
-    if (!(initialised)) {
+    if ((num==INITIALISE) || (!initialised)) {
         directory=GetDirectory( getcwd( NULL, 0 ),"TSP",&numfiles,1 );
-        printf("%d files found\n",numfiles);
-        
-        initialised=1;
-        *currentprob=NewProblem(NewMap(NewLocates(directory[filenum])));
-        (*currentprob)->path=LocatesAsPath((*currentprob)->dist->l);
         number_of_files=numfiles;
+//        printf("%d files found\n",numfiles);
+
+        if ((!initialised) && (numfiles>0)) {
+            *currentprob=NewProblem(NewMap(NewLocates(directory[filenum])));
+            (*currentprob)->path=LocatesAsPath((*currentprob)->dist->l);
+        }
+        initialised=1;
     }
     if (num==REQUEST) return directory[filenum];
-    if (num!=filenum)
+    if ((num!=filenum) && (num!=INITIALISE))
     {
         filenum=num;
         update=1;
-        *currentprob=NewProblem(NewMap(NewLocates(directory[filenum])));
-        (*currentprob)->path=LocatesAsPath((*currentprob)->dist->l);
+        if (numfiles>0)
+        {
+            *currentprob=NewProblem(NewMap(NewLocates(directory[filenum])));
+            (*currentprob)->path=LocatesAsPath((*currentprob)->dist->l);
+        }
     }
     if ((update) || (override))
     {
         HideMouse();
+        IntWinManager(CLEAR,files,0,0);
         IntWinManager(SET,files,0,0);
-        DrawList(directory,numfiles,filenum);
-        UpdateFileView(*currentprob);
+        if (numfiles>0)
+        {
+            DrawList(directory,numfiles,filenum);
+            UpdateFileView(*currentprob);
+        }
+        else
+            DrawText("No Files\nFound. Use\nNew to\ncreate one",1,1,YELLOW);
         ShowMouse();
     }
     return directory[filenum];
@@ -688,7 +700,7 @@ void DrawScreen(PROBLEM **currentprob)
     IntWinManager(SET,help,0,0);
     DrawText("VTTSP V1.01 1997",1,1,GREEN);
 
-    SetFile(currentprob,0,TRUE);
+    SetFile(currentprob,INITIALISE,TRUE);
     SetSolver(0,TRUE,FALSE);
 
     Msg("This is the message box!",GREEN);
@@ -718,6 +730,7 @@ void main()
     int x,select,at=title,last=title,mx=0,my=0,tinit,tmethod;
     INSPROB *insprob;
     PROBLEM *currentprob;
+    FILE *out;
     double length;
 
 //    char **messages=allocate_N_by_N_array(14,50,sizeof(char),"Messages");
@@ -760,6 +773,25 @@ void main()
                 exit(1);
                 break;
             case newbtn :
+                IntWinManager(CLEAR,help,0,0);
+                IntWinManager(SET,help,0,0);
+                HideMouse();
+                DrawText(":Please Enter",1,1,YELLOW);
+                DrawText(":The Number Of Points\n:",1,2,YELLOW);
+                scanf("%d",&x);
+                DrawText(":The File Name\n:",1,4,YELLOW);
+                scanf("%s",buffer);
+                ShowMouse();
+                if ((out=fopen(buffer,"wt"))==NULL)
+                    DrawText("Invalid File Name...",1,7,LTRED);
+                else
+                {
+                    StartRandom();
+                    MakeMap(out,x);
+                    fclose(out);
+                    DrawText("Map Created..",1,7,GREEN);
+                }
+                SetFile(&currentprob,INITIALISE,TRUE);
                 break;
             case savebtn :
                 break;
