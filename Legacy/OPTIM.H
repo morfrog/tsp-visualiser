@@ -6,6 +6,7 @@
 
 #define Text 0    // WinManager
 #define Main 1    // WinManager
+#define BORDER 3  // WinManager
 
 void _FAR OptWinManager(int which);
 

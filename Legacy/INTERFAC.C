@@ -11,6 +11,7 @@
 #include "path.h"
 #include "problem.h"
 #include "makemap.h"
+#include "rndfile.h"
 #include "insert.h"
 #include "optim.h"
 #include "anneal.h"
@@ -30,6 +31,7 @@
 #define INITIALISE -1
 #define REQUEST -2
 #define REQUESTFULL -3
+#define SETLAST -4
 
 #define CURRENT 0
 #define SET     1
@@ -347,7 +349,8 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
             (*currentprob)->path=LocatesAsPath((*currentprob)->dist->l);
         }
         strcpy(directory[numfiles],"Current");
-        WriteLocates(PathAsLocates((*currentprob)->path,(*currentprob)->dist->l),"CURRENT");
+        if (num!=(number_of_files-1))
+                WriteLocates(PathAsLocates((*currentprob)->path,(*currentprob)->dist->l),"Current");
         ++numfiles;
 
         number_of_files=numfiles;
@@ -357,7 +360,10 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
     if (num==REQUEST) return directory[filenum];
     if ((num!=filenum) && (num!=INITIALISE))
     {
-        filenum=num;
+        if (num==SETLAST)
+            filenum=number_of_files-1;
+        else
+            filenum=num;
         update=1;
         if (numfiles>0)
         {
@@ -366,6 +372,7 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
             (*currentprob)->path=LocatesAsPath((*currentprob)->dist->l);
         }
     }
+    if (num!=INITIALISE) ViewStatistics(*currentprob);
     if ((update) || (override))
     {
         HideMouse();
@@ -385,6 +392,20 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
     }
     return directory[filenum];
 }
+
+void ViewStatistics(PROBLEM *prob)
+{
+    char buffer[40];
+    IntWinManager(CLEAR,help,0,0);
+    IntWinManager(SET,help,0,0);
+    sprintf(buffer,"Statistics Of %s",SetFile(&prob,REQUEST,FALSE));
+    DrawText(buffer,1,1,YELLOW);
+    sprintf(buffer,"Path Length = %8.6f",PathLength(prob->path,prob->dist));
+    DrawText(buffer,1,4,GREEN);
+    sprintf(buffer,"Cities      = %4d",prob->dist->size);
+    DrawText(buffer,1,6,GREEN);
+}
+
 
 CHOICE *NewChoiceArray(int size)
 {
@@ -444,7 +465,7 @@ char *SetInit(int num,int override,int showhelp,int *inum)
     else if (num==REQUEST) // * request for current * //
     {
         switch (current_solver) {
-            case 0 : *inum=insinitnum; return insinit[insinitnum].name;        break;
+            case 0 : *inum=insinitnum; return insinit[insinitnum].name;  break;
             case 1 : *inum=-1; return NULL; break;
             case 2 : *inum=anninitnum; return anninit[anninitnum].name;  break;
         }
@@ -668,6 +689,23 @@ char *SetSolver(int num,int override,int showhelp)
     return solvermethod[current_solver].name;
 }
 
+void ViewAbout()
+{
+    HideMouse();
+    IntWinManager(CLEAR,help,0,0);
+    IntWinManager(SET,help,0,0);
+    DrawText("      VTTSP V1.01 1997\n"
+             "\n"
+             "       By Drew\n"
+             "       \n"
+             "       Semester II 1997\n"
+             "              for\n"
+             "       \n"
+             "      PROJECT COORDINATOR\n"
+             "         Raymond Lister\n",1,1,GREEN);
+    ShowMouse();
+}
+
 void DrawScreen(PROBLEM **currentprob)
 {
     IntWinManager(BORDER,files,border_col,0);
@@ -686,17 +724,7 @@ void DrawScreen(PROBLEM **currentprob)
     IntWinManager(SET,title,0,0);
     DrawText("Visualisation Tool For The Travelling Salesman Problem",1,1,GREEN);
 
-    IntWinManager(SET,help,0,0);
-    DrawText("      VTTSP V1.01 1997\n"
-             "\n"
-             "       By Drew\n"
-             "       \n"
-             "       Semester II 1997\n"
-             "               for\n"
-             "         PROJECT\n"
-             "\n"
-             "       PROJECT COORDINATOR\n"
-             "         Raymond Lister\n",1,1,GREEN);
+    ViewAbout();
 
     SetFile(currentprob,INITIALISE,TRUE);
     SetSolver(0,TRUE,FALSE);
@@ -776,7 +804,6 @@ void AnnealInitChange()
 
 void NewBtnPress(PROBLEM **currentprob)
 {
-    char buffer[20];
     FILE *out;
     int x;
 
@@ -787,22 +814,58 @@ void NewBtnPress(PROBLEM **currentprob)
     DrawText(":Please Enter",1,2,YELLOW);
     DrawText(":The Number Of Points (Integer) \n:",1,3,YELLOW);
     scanf("%d",&x);
-    DrawText(":The File Name (xxxxxxxx.xxx)\n:",1,5,YELLOW);
-    scanf("%s",buffer);
     ShowMouse();
-    if ((out=fopen(buffer,"wt"))==NULL)
-        DrawText("Invalid File Name...",1,7,LTRED);
-    else
+    out=fopen("Current","wt");
+    if (out!=NULL)
     {
         StartRandom();
         MakeMap(out,x);
         fclose(out);
-        DrawText("Map Created..",1,7,GREEN);
+        DrawText("Map Created..",1,6,GREEN);
     }
-    SetFile(currentprob,INITIALISE,TRUE);
-//  WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
-//  SetFile(&currentprob,number_of_files-1,FALSE);
 
+//  WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"Current");
+    SetFile(currentprob,SETLAST,FALSE);
+
+}
+
+void SaveBtnPress(PROBLEM *currentprob)
+{
+    char ch,filename[20],buffer[30];
+
+    IntWinManager(CLEAR,help,0,0);
+    IntWinManager(SET,help,0,0);
+    DrawText("Save As :\n: ",1,1,YELLOW);
+    while (!kbhit()) {}
+    ch=getch();
+    if (ch!=27)
+    {
+        ungetch(ch);
+        scanf("%s",filename);
+        WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),filename);
+        sprintf(buffer,"Map Saved As %s...",filename);
+        DrawText(buffer,1,7,GREEN);
+        SetFile(&currentprob,INITIALISE,TRUE);
+        SetFile(&currentprob,number_of_files-1,FALSE);
+    }
+    else
+        DrawText("Save Aborted..",1,7,LTRED);
+
+}
+
+void RndBtnPress(PROBLEM **currentprob)
+{
+    char infile[13];
+
+    strcpy(infile,SetFile(currentprob,REQUEST,FALSE));
+    IntWinManager(CLEAR,help,0,0);
+    IntWinManager(SET,help,0,0);
+
+    DrawText("Randomizing...",1,2,YELLOW);
+    rndfile(infile,"Current");
+
+    DrawText("Done!",1,4,GREEN);
+    SetFile(currentprob,SETLAST,FALSE);
 }
 
 void main()
@@ -894,6 +957,11 @@ void main()
                 NewBtnPress(&currentprob);
                 break;
             case savebtn :
+                SaveBtnPress(currentprob);
+                break;
+            case rndbtn:
+                RndBtnPress(&currentprob);
+//                SetFile(currentprob,number_of_files-1,FALSE);
                 break;
             case gobtn :
                 HideMouse();
@@ -902,35 +970,36 @@ void main()
                 _setvisualpage(1);
                 SwapPage();
 
+                SetInit(REQUEST,FALSE,FALSE,&tinit);
+                SetMethod(REQUEST,FALSE,FALSE,&tmethod);
+
                 switch (current_solver)
                 {
-                    case 0 : InsWinManager(BORDER);
-                             InsWinManager(Main);
+                    case 0 : InsWinManager(Main);
                              InsWinManager(Text);
                              break;
                     case 1 : OptWinManager(Main);
                              OptWinManager(Text);
-                             OptWinManager(BORDER);
                              break;
                     case 2 : break;
                 }
+                DrawNorm(currentprob,1);
+                SwapPage();
+
                 ShowText("Hit Esc to Quit,\n\n"
                      "Any other key \n"
                      "To continue..",1,19,BLUE);
 
                 TotalDelay(WAITKEY);
                 switch (current_solver) {
-                    case 0 : SetInit(REQUEST,FALSE,FALSE,&tinit);
-                             SetMethod(REQUEST,FALSE,FALSE,&tmethod);
-                             insprob=NewInsProb(currentprob->dist);
+                    case 0 : insprob=NewInsProb(currentprob->dist);
                              length=ControlAllIns(insprob,tinit,tmethod-1,TRUE);
                              if (length>0.0) currentprob=insprob->prob;
                              break;
-                    case 1 : SetMethod(REQUEST,FALSE,FALSE,&tmethod);
-                             tempprob=NewProblem(currentprob->dist);
-                             tempprob->path=LocatesAsPath(tempprob->dist->l);
+                    case 1 : tempprob=NewProblem(currentprob->dist);
+                             tempprob->path=LocatesAsPath(PathAsLocates(currentprob->path,currentprob->dist->l));
                              length=ControlAllOpt(tempprob,tmethod+1,TRUE,WAITKEY);
-                             if (length>0.0) currentprob=tempprob;   
+                             if (length>0.0) currentprob=tempprob;
                              break;
                     case 2 : break;
                 }

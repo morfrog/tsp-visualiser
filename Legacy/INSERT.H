@@ -19,6 +19,7 @@
 
 #define Text 0    // InsWinManager
 #define Main 1    // InsWinManager
+#define BORDER 3  // InsWinManager
 
 struct iprob
 {

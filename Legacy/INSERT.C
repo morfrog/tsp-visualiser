@@ -9,8 +9,6 @@
 #include "problem.h"
 #include "insert.h"
 
-#define BORDER 3
-
 INSPROB *NewInsProb(DISTANCES *dist)
 {
     INSPROB *ret=salloc(1,sizeof(INSPROB));

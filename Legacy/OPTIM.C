@@ -589,13 +589,14 @@ void _FAR OptWinManager(int which)
     if (!init) {
         main=NewWin(1,1,460,349);
         text=NewWin(465,1,639,349);
-        BorderWin(main,border_col);
-        BorderWin(text,border_col);
         init=1;
     }
     switch (which) {
         case Main : SetWin(main);  break;
         case Text : SetTextWin(text);  break;
+        case BORDER : BorderWin(main,border_col);
+                      BorderWin(text,border_col);
+                      break;
     }
 }
 
