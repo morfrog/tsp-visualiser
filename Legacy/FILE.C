@@ -71,6 +71,16 @@ void _FAR SkipLine(FILE *f)
     SkipTill(f,'\n');
 }
 
+int IsFileChar(char c)
+{
+    return 1; // all chars are file chars
+}
+
+int IsIntChar(char c)
+{
+    return (isdigit(c) || (c=='+') || (c=='-'));
+}
+
 int IsDoubleChar(char c)
 {
     return ((isdigit(c)) || (c=='.') || c=='-' || c=='+' || c=='E' || c=='e');

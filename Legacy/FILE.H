@@ -40,6 +40,9 @@ struct matrix
 
 typedef struct matrix DISTANCES;
 
+int IsIntChar(char c);
+int IsFileChar(char c);
+int IsDoubleChar(char c);
 int ReadLines(FILE *f,int lines,char *buffer);
 void ReadToken(FILE *f,char string[],int max);
 void SkipTill(FILE *f,char this);

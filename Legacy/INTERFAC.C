@@ -17,6 +17,8 @@
 #include "anneal.h"
 #include "mouse.h"
 
+#define VERSION 2.07
+
 #define TITLEHEIGHT 15
 #define MSGBOXTOP 320
 #define FILESWIDTH 120
@@ -149,6 +151,39 @@ char **GetDirectory(char *dir,char *extension,int *numfiles,int extras)
 
 }
 
+int ReadString(char buffer[],int size,int x,int y,int color,int (* filter)(char))
+// Reads in a string from a text window
+// returns 0 if failure, 1 if success, 2 if exceeded buffer size
+{
+    int pos;
+    char ch[1];
+
+    for (pos=0;pos<size;)
+    {
+        ch[0]=getch();
+        switch (ch[0]) {
+            case 27   : return 0;                           // ESC
+                        break;
+            case 13   : buffer[pos]='\0'; return 1;        // ENTER
+                        break;
+            case 8    : if (pos>0)
+                        {
+                            --pos;
+                            DrawText(" ",x+pos,y,color);   // BKSPCE
+                        }
+                        break;
+            default   : if (filter(ch[0]))
+                        {
+                            DrawText(ch,x+pos,y,color);    // CHARACTER
+                            buffer[pos]=ch[0];
+                            ++pos;
+                        }
+                        break;
+        }
+    }
+    return 2;
+}
+
 void DrawList(char *list[],int size,int chosen)
 {
     int x;
@@ -222,6 +257,7 @@ int IntWinManager(int mode,int win,int x,int y)
     SWIN *tmp;
     static int currenti;
     static char **map;
+    int ix,iy;
 
     if (!(initialised))
     {
@@ -240,6 +276,34 @@ int IntWinManager(int mode,int win,int x,int y)
         wquitbtn=NewWin(BTNSTART,MSGBOXTOP,639,349);
         wcurrent=title;
         SetMousePos(wcurrent->t+1,wcurrent->l+1);
+        map=allocate_N_by_N_array(640,350,sizeof(int),"Screen Map");
+        for (ix=0;ix<=639;ix++)
+        {
+            for (iy=0;iy<=349;iy++)
+            {
+                if (iy>MSGBOXTOP)
+                    if (ix>BTNSTART)     map[ix][iy]=quitbtn;
+                    else                 map[ix][iy]=msgbox;
+                else if (iy<TITLEHEIGHT) map[ix][iy]=title;
+                else if (ix<FILESWIDTH)  map[ix][iy]=files;
+                else if (iy<VIEWBOTTOM) { // * help or fview * // 
+                    if (ix>VIEWXPOS)     map[ix][iy]=help;
+                    else                 map[ix][iy]=fview;
+                }
+                else {
+                    if (ix>FILESWIDTH+6+(METHODWIDTH*3)) // * is a button * //
+                    {
+                        if (iy>VIEWBOTTOM+2+(BTNHEIGHT*3))      map[ix][iy]=gobtn;
+                        else if (iy>VIEWBOTTOM+2+(BTNHEIGHT*2)) map[ix][iy]=rndbtn;
+                        else if (iy>VIEWBOTTOM+2+(BTNHEIGHT))   map[ix][iy]=savebtn;
+                        else                                    map[ix][iy]=newbtn;
+                    }
+                    else if (ix>FILESWIDTH+4+(METHODWIDTH*2))   map[ix][iy]=init;
+                    else if (ix>FILESWIDTH+2+METHODWIDTH)       map[ix][iy]=method;
+                    else                                        map[ix][iy]=solver;
+                }
+            }
+        }
         initialised=1;
     }
     switch (mode) {
@@ -262,7 +326,6 @@ int IntWinManager(int mode,int win,int x,int y)
             } 
             if (mode==BORDER) BorderWin(tmp,x);
             else ClearSection(tmp->l+1,tmp->t+1,tmp->r-1,tmp->b-1);
-
             break;
             
             case SET :
@@ -285,29 +348,10 @@ int IntWinManager(int mode,int win,int x,int y)
                 }
                 break;
             case CURRENT :
-                return currenti; break;
+                return currenti;
+                break;
             case WHERE :
-                if (y>MSGBOXTOP)
-                    if (x>BTNSTART)     currenti=quitbtn;
-                    else                currenti=msgbox;
-                else if (y<TITLEHEIGHT) currenti=title;
-                else if (x<FILESWIDTH)  currenti=files;
-                else if (y<VIEWBOTTOM) { // * help or view * // 
-                    if (x>VIEWXPOS)     currenti=help;
-                    else                currenti=fview;
-                }
-                else {
-                    if (x>FILESWIDTH+6+(METHODWIDTH*3)) // * is a button * //
-                    {
-                        if (y>VIEWBOTTOM+2+(BTNHEIGHT*3))      currenti=gobtn;
-                        else if (y>VIEWBOTTOM+2+(BTNHEIGHT*2)) currenti=rndbtn;
-                        else if (y>VIEWBOTTOM+2+(BTNHEIGHT))   currenti=savebtn;
-                        else                                   currenti=newbtn;
-                    }
-                    else if (x>FILESWIDTH+4+(METHODWIDTH*2))   currenti=init;
-                    else if (x>FILESWIDTH+2+METHODWIDTH)       currenti=method;
-                    else                                       currenti=solver;
-                }
+                currenti=map[x][y];
                 return currenti; 
                 break;
             }
@@ -358,7 +402,7 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
 
     }
     if (num==REQUEST) return directory[filenum];
-    if ((num!=filenum) && (num!=INITIALISE))
+    else if ((num!=filenum) && (num!=INITIALISE))
     {
         if (num==SETLAST)
             filenum=number_of_files-1;
@@ -396,6 +440,7 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
 void ViewStatistics(PROBLEM *prob)
 {
     char buffer[40];
+    HideMouse();
     IntWinManager(CLEAR,help,0,0);
     IntWinManager(SET,help,0,0);
     sprintf(buffer,"Statistics Of %s",SetFile(&prob,REQUEST,FALSE));
@@ -404,6 +449,7 @@ void ViewStatistics(PROBLEM *prob)
     DrawText(buffer,1,4,GREEN);
     sprintf(buffer,"Cities      = %4d",prob->dist->size);
     DrawText(buffer,1,6,GREEN);
+    ShowMouse();
 }
 
 
@@ -691,18 +737,24 @@ char *SetSolver(int num,int override,int showhelp)
 
 void ViewAbout()
 {
+    int initialised=0;
+    static char buffer[20];
+    if (!initialised)
+    {
+        initialised=1;
+        sprintf(buffer,"VTTSP V%1.2f 1997",VERSION);
+    }
     HideMouse();
     IntWinManager(CLEAR,help,0,0);
     IntWinManager(SET,help,0,0);
-    DrawText("      VTTSP V1.01 1997\n"
-             "\n"
-             "       By Drew\n"
+    DrawText(buffer,8,1,GREEN);
+    DrawText("       By Drew\n"
              "       \n"
              "       Semester II 1997\n"
              "              for\n"
              "       \n"
              "      PROJECT COORDINATOR\n"
-             "         Raymond Lister\n",1,1,GREEN);
+             "         Raymond Lister\n",1,3,GREEN);
     ShowMouse();
 }
 
@@ -729,22 +781,27 @@ void DrawScreen(PROBLEM **currentprob)
     SetFile(currentprob,INITIALISE,TRUE);
     SetSolver(0,TRUE,FALSE);
 
-    Msg("This is the message box!",GREEN);
+//    Msg("This is the message box!",GREEN);
 
     IntWinManager(SET,newbtn,0,0);
-    DrawText("New",7,2,GREEN);
+    DrawText("N",7,2,GREEN);
+    DrawText("ew",8,2,BLUE);
 
     IntWinManager(SET,savebtn,0,0);
-    DrawText("Save",7,2,GREEN);
+    DrawText("S",7,2,GREEN);
+    DrawText("ave",8,2,BLUE);
     
     IntWinManager(SET,rndbtn,0,0);
-    DrawText("Randomize",4,3,GREEN);
+    DrawText("R",4,2,GREEN);
+    DrawText("andomize",5,3,BLUE);
 
     IntWinManager(SET,quitbtn,0,0);
-    DrawText("Quit",7,2,GREEN);
+    DrawText("Q",7,2,GREEN);
+    DrawText("uit",8,2,BLUE);
 
     IntWinManager(SET,gobtn,0,0);
-    DrawText("GO!",7,2,GREEN);
+    DrawText("G",7,2,GREEN);
+    DrawText("O!",8,2,BLUE);
 
 }
 
@@ -755,45 +812,43 @@ void AnnealInitChange()
     char buffer[60];
     char ch;
 
+    while (kbhit()) getch(); // clear the buffer
     HideMouse();
     IntWinManager(CLEAR,help,0,0);
     IntWinManager(SET,help,0,0);
     sprintf(buffer,"Please Enter The\n:%s\n:",SetInit(REQUESTFULL,FALSE,FALSE,&x));                    
     DrawText(buffer,1,1,YELLOW);
     while (!kbhit()) {}
-    ch=getch();
-    if (ch!=27)
+    if (ReadString(buffer,60,2,3,LTRED,x==2?IsIntChar:IsDoubleChar))
     {
-        ungetch(ch);
-        scanf("%s",buffer);
         switch (x) {
-                case 0 : checkd=atof(buffer);
-                     if (checkd>=0.0)
-                     {
-                        temperature=checkd;
-                        DrawText("Temperature Accepted",1,4,GREEN);
-                     }
-                     else
-                        DrawText("Temperature Must Be > 0.0",1,4,LTRED);
+            case 0 : checkd=atof(buffer);
+                 if (checkd>=0.0)
+                 {
+                     temperature=checkd;
+                     DrawText("Temperature Accepted",1,4,GREEN);
+                 }
+                 else
+                     DrawText("Temperature Must Be > 0.0",1,4,LTRED);
                      break;
-                case 1 : checkd=atof(buffer);
-                     if ((checkd>0.0) && (checkd<1.0))
-                     {
-                        coolingrate=checkd;
-                        DrawText("Cooling Rate Accepted",1,4,GREEN);
-                     }
-                     else
-                        DrawText("0.0 < cooling rate < 1.0",1,4,LTRED);
-                     break;
-                case 2 : checki=atoi(buffer);
-                     if (checki>0)
-                     {
-                        changesattemp=checki;
-                        DrawText("Changes At Temperature OK",1,4,GREEN);
-                         }
-                     else
-                        DrawText("Must be at least one change...",1,4,LTRED);
-                     break;
+            case 1 : checkd=atof(buffer);
+                 if ((checkd>0.0) && (checkd<1.0))
+                 {
+                     coolingrate=checkd;
+                     DrawText("Cooling Rate Accepted",1,4,GREEN);
+                 }
+                 else
+                     DrawText("0.0 < cooling rate < 1.0",1,4,LTRED);
+                 break;
+            case 2 : checki=atoi(buffer);
+                 if (checki>0)
+                 {
+                     changesattemp=checki;
+                     DrawText("Changes At Temperature OK",1,4,GREEN);
+                 }
+                 else
+                     DrawText("Must be at least one change...",1,4,LTRED);
+                 break;
         }
         SetInit(INITIALISE,TRUE,FALSE,NULL);
     }
@@ -806,14 +861,17 @@ void NewBtnPress(PROBLEM **currentprob)
 {
     FILE *out;
     int x;
+    char buffer[10];
 
+    while (kbhit()) getch(); // clear the buffer
+    HideMouse();
     IntWinManager(CLEAR,help,0,0);
     IntWinManager(SET,help,0,0);
-    HideMouse();
     DrawText("New...",1,1,GREEN);
     DrawText(":Please Enter",1,2,YELLOW);
     DrawText(":The Number Of Points (Integer) \n:",1,3,YELLOW);
-    scanf("%d",&x);
+    ReadString(buffer,10,2,4,LTRED,IsIntChar);
+    x=atoi(buffer);
     ShowMouse();
     out=fopen("Current","wt");
     if (out!=NULL)
@@ -833,15 +891,14 @@ void SaveBtnPress(PROBLEM *currentprob)
 {
     char ch,filename[20],buffer[30];
 
+    while (kbhit()) getch(); // clear the buffer
+    HideMouse();
     IntWinManager(CLEAR,help,0,0);
     IntWinManager(SET,help,0,0);
-    DrawText("Save As :\n: ",1,1,YELLOW);
+    DrawText("Save As :\n:",1,1,YELLOW);
     while (!kbhit()) {}
-    ch=getch();
-    if (ch!=27)
+    if (ReadString(filename,20,2,2,LTRED,IsFileChar))
     {
-        ungetch(ch);
-        scanf("%s",filename);
         WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),filename);
         sprintf(buffer,"Map Saved As %s...",filename);
         DrawText(buffer,1,7,GREEN);
@@ -850,7 +907,7 @@ void SaveBtnPress(PROBLEM *currentprob)
     }
     else
         DrawText("Save Aborted..",1,7,LTRED);
-
+    ShowMouse();
 }
 
 void RndBtnPress(PROBLEM **currentprob)
@@ -874,26 +931,34 @@ void main()
     MouseStatus m;
     char buffer[60];
     int x,select,at,last,mx=0,my=0,tinit,tmethod,currentwin=title;
+    int keypress,keywin;
     INSPROB *insprob;
     PROBLEM *currentprob=NULL;
     PROBLEM *tempprob=NULL;
     double length;
+    CHOICE *vttsphelp;
 
 //    char **messages=allocate_N_by_N_array(14,50,sizeof(char),"Messages");
 
     char messages[13][60]={"",
                            "Choose A File",
-                           "View of File",
+                           "View of 'File'",
                            "Choose a TSP method",
                            "This is the message box",
-                           "Help on this program",
+                           "Help on this program                     (Shift-H)",
                            "Choose an 'TSP method' method",
                            "Choose an 'TSP method' initialisation method",
-                           "Creates a new random map",
-                           "Saves the current map",
-                           "Randomizes the map",
-                           "Start with the current settings",
-                           "Quit the program"};
+                           "Creates a new random map - to Current    (Shift-N)",
+                           "Saves the selected map - to a file       (Shift-S)",
+                           "Randomizes the selected map - to Current (Shift-R)",
+                           "Start with the current settings          (Shift-G)",
+                           "Quit the program                         (Shift-Q)"};
+
+
+    vttsphelp=NewChoiceArray(1);
+    strcpy(vttsphelp[0].name,"VTTSP - Help");
+    ReadChoiceHelp("vttsp.hlp",&vttsphelp[0]);
+
 
     InitScreen(16);
     _setactivepage(0);
@@ -907,7 +972,7 @@ void main()
     SetMousePos(300,100);
     MouseStat(&m);
     at=IntWinManager(WHERE,NULL,m.xpos,m.ypos);
-    last=at;
+    last=title;
     ShowMouse();
 
     UseMouseCur(GLOVE);
@@ -929,8 +994,16 @@ void main()
                 }
                 else if (at==init)
                 {
-                    sprintf(buffer,"Choose an %s Initialisation Method           ",
-                        SetSolver(REQUEST,FALSE,FALSE));
+                    switch (current_solver)
+                    {
+                        case 0 : case 1 :
+                            sprintf(buffer,"Choose an %s Initialisation Method           ",
+                            SetSolver(REQUEST,FALSE,FALSE));
+                            break;
+                        case 2 :
+                            sprintf(buffer,"Annealing Inits LMB = Select, RMB = Change.");
+                            break;
+                    }
                     Msg(buffer,GREEN);
                 }
                 else if (at==method)
@@ -945,10 +1018,25 @@ void main()
 
         }
 
-        if ((m.left) || (m.right))
+        if (kbhit())
+        {
+            keypress=TRUE;
+            switch (getch())
+            {
+                case 'Q' : keywin=quitbtn; break;
+                case 'G' : keywin=gobtn;   break;
+                case 'S' : keywin=savebtn; break;
+                case 'N' : keywin=newbtn;  break;
+                case 'R' : keywin=rndbtn;  break;
+                case 'H' : keywin=help;    break;
+                default  : keypress=FALSE; break;
+            }
+        }
+
+        if ((m.left) || (m.right) || (keypress))
         {
             currentwin=IntWinManager(CURRENT,NULL,0,0);
-            switch (currentwin) {
+            switch (keypress?keywin:currentwin) {
             case quitbtn :
                 ShutDown();
                 exit(1);
@@ -990,7 +1078,8 @@ void main()
                     DrawNorm(currentprob,1);
                     SwapPage();
 
-                    ShowText("Hit Esc to Quit,\n\n"
+                    ShowText("Hit Esc to Quit,\n"
+                             "'0' for Fast Mode\n"
                              "Any other key \n"
                              "To continue..",1,19,BLUE);
 
@@ -1016,10 +1105,10 @@ void main()
                         DrawNorm(currentprob,1);
                         SwapPage();
 
-                        ShowText("                \n"
-                                 "Hit Esc         \n"
-                                 "to Quit...   \n"
-                                 "               ",1,19,LTRED);
+                        ShowText("                 \n"
+                                 "Hit Esc          \n"
+                                 "to Quit...       \n"
+                                 "                  ",1,19,LTRED);
                     
                         while (getch()!=27) {}
                         WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
@@ -1071,13 +1160,25 @@ void main()
                 else if (line>=number_of_inits) select=-1;
                 else select=line;
                 if (select>=0) SetInit(select,FALSE,TRUE,NULL);
-                if (m.right)
+                if ((m.right) && (current_solver==2))
                 {
                     AnnealInitChange();
                 }
                 break;
+            case help :
+                if (keypress) // only works off keypress mode
+                {
+                    HideMouse();
+                    IntWinManager(CLEAR,help,0,0);
+                    IntWinManager(SET,help,0,0);
+                    DrawChoiceHelp(vttsphelp[0]);
+                    ShowMouse();
+                }
+                break;
             }
         }
+
+        if (keypress) keypress=FALSE;
     }
     while (1);
     ShutDown();

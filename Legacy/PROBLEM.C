@@ -448,8 +448,8 @@ int ControlLCLOverlay(PROBLEM *one,PROBLEM *two,int width,int height,int starty,
 
             if (kbhit()) {
                 ch=getch();
-                if (ch==27) return 1;
                 while (ch==48) ch=getch(); // * handle pause mode * //
+                if (ch==27) return 1;
                 if (isdigit(ch))
                 {
                     factor=(ch-48); // * = todigit(ch) * //
@@ -475,6 +475,18 @@ int ControlLCLOverlay(PROBLEM *one,PROBLEM *two,int width,int height,int starty,
             DrawOverlay(two,col2,1);
             SwapPage();
             delay(1000); // * delay for 1 second at middle * // fix to handle 0 keypress for pause
+            if (kbhit()) {
+                ch=getch();
+                while (ch==48) ch=getch(); // * handle pause mode * //
+                if (ch==27) return 1;
+                if (isdigit(ch))
+                {
+                    factor=(ch-48); // * = todigit(ch) * //
+                    rd=(rd<0?-1:1)*factor;
+                    ld=-rd;
+                }
+            }    
+
         }
         edge=0; // * not at edge or middle * //
         ld=rd;

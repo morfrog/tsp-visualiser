@@ -441,6 +441,7 @@ void ControlAnneal(PROBLEM *prob,double temperature,double cooling,int changes,i
     ch=getch();
     if (ch!=27)
     {
+        ShowText("Hit Esc To Quit, Speeds '1'-'9', '0' Pause.",35,1,YELLOW);
         AnnWinManager(text_one);
         sprintf(buffer,"Length=%f  ",
             PathLength(leftp->prob->path,leftp->prob->dist));

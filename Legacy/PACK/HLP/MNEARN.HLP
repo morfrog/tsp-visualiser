@@ -1,0 +1,13 @@
+Nearest Neighbour Method
+From an initial point chosen at
+random, this method inserts the
+nearest neighbour of the last
+point inserted into the path
+after that point and continues
+until all points are in the path.
+At this point the first point is
+joined to the last point to
+complete the path.
+
+
+

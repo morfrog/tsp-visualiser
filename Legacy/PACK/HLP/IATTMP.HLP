@@ -1,0 +1,14 @@
+Changes At Each Temperature
+This is the number of changes
+that are to be made at each
+temperature. When all changes
+at a given temperature are the
+null change (path doesn't change)
+the simulated annealing stops.
+Thus setting this number too low
+may bring about a premature end.
+
+
+
+
+
