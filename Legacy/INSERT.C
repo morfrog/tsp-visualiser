@@ -218,12 +218,32 @@ int FNextDist(int (* func)(double,double),int (* func2)(double,double),INSPROB *
     return best;
 }
 
+void ShowChanges(INSPROB *insprob,int next,int Ia,int Ib,int color,int line)
+{
+    char buffer[80];
+    sprintf(buffer,"Between %3d and %3d.\n",Ia,Ib);
+    ShowText(buffer,1,line,color);
+    sprintf(buffer,"Edge Deleted =\n"
+                   "%3d->%3d is %6.5f\n",Ia,Ib,
+                   insprob->prob->dist->array[Ia][Ib]);
+    ShowText(buffer,1,line+1,color);
+    sprintf(buffer,"Edges Added = \n"
+                   "%3d->%3d is %6.5f\n"
+                   "%3d->%3d is %6.5f\n",
+                   next,Ia,insprob->prob->dist->array[next][Ia],
+                   next,Ib,insprob->prob->dist->array[next][Ib]);
+    ShowText(buffer,1,line+4,color);
+    sprintf(buffer,"Increase To Path =\n"
+                   "%6.5f",InsertCost(insprob->prob,next,Ia,Ib));
+    ShowText(buffer,1,line+8,color);
+}
+
 double ControlRand(INSPROB *insprob,int graphics)
 {
     int next,Ia,Ib;
     clock_t now;
     clock_t time_seg=TotalDelay(-1)/3;
-    char buffer[50];
+    char buffer[80];
     static int col=WHITE;
     int total=insprob->endo;
 
@@ -232,26 +252,31 @@ double ControlRand(INSPROB *insprob,int graphics)
         now=clock();
         next=RndNext(insprob);
 
-        if (graphics) {sprintf(buffer,"Insert is %3d.  \n\n",next);
-                       ShowText(buffer,1,4,col);}
-
-        if (graphics) {HiliteCity(insprob->prob,next,1);WaitTill(now+time_seg);}
+        if (graphics) {
+            sprintf(buffer,"Insert is %3d.  \n\n",next);
+            ShowText(buffer,1,4,col);
+            HiliteCity(insprob->prob,next,1);
+            WaitTill(now+time_seg);
+        }
 
         CityDel(insprob,next);
         BestInsert(insprob->prob,next,&Ia,&Ib);
 
-        if (graphics) {sprintf(buffer,"Between %3d and %3d.\n\n",Ia,Ib);
-                       ShowText(buffer,1,6,col);}
-        
-        if (graphics) {HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
+        if (graphics) {
+            ShowChanges(insprob,next,Ia,Ib,col,5);
+            HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);
+            WaitTill(now+(2*time_seg));
+        }
 
         InsertPath(insprob->prob->path,next,Ia,Ib);
         SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
 
-        if (graphics) {sprintf(buffer,"%3d%% Complete.\n\n",100*(total-insprob->endo)/total);
-                       ShowText(buffer,1,12,LTBLUE);}
-        
-        if (graphics) {DrawNorm(insprob->prob,1);WaitTill(now+(3*time_seg));}
+        if (graphics) {
+            sprintf(buffer,"%3d%% Complete.\n\n",100*(total-insprob->endo)/total);
+            ShowText(buffer,1,16,LTBLUE);
+            DrawNorm(insprob->prob,1);
+            WaitTill(now+(3*time_seg));
+        }
 
     } while (insprob->endo);
 
@@ -272,16 +297,21 @@ double ControlNearN(INSPROB *insprob,int graphics)
         now=clock();
         next=FNeighbour(Lesser,insprob,this);
 
-        if (graphics) {sprintf(buffer,"Last Was %d.\n\nThis Is %d.",this,next);
-                       ShowText(buffer,1,4,WHITE);}
-
-        if (graphics) {HiliteCity(insprob->prob,next,0);WaitTill(now+time_seg);}
+        if (graphics) {
+            sprintf(buffer,"Last Was %d.\n\nThis Is %d.",this,next);
+            ShowText(buffer,1,4,WHITE);
+            HiliteCity(insprob->prob,next,0);
+            WaitTill(now+time_seg);
+        }
 
         CityDel(insprob,next);
         InsertPathEnd(insprob->prob->path,next);
         SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
         
-        if (graphics) {DrawNorm(insprob->prob,0);WaitTill(now+(2*time_seg));}
+        if (graphics) {
+            DrawNorm(insprob->prob,0);
+            WaitTill(now+(2*time_seg));
+        }
         this=next;
 
     } while (insprob->endo);
@@ -289,59 +319,94 @@ double ControlNearN(INSPROB *insprob,int graphics)
     return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 
-double ControlFurthest(INSPROB *insprob,int graphics)
+double ControlDist(INSPROB *insprob,int (* func)(double,double),int (* func2)(double,double),int graphics)
 {
     int next,Ia,Ib,it;
     clock_t now;
     clock_t time_seg=TotalDelay(-1)/3;
+    static int col=WHITE;
     char buffer[50];
 
     do {
         now=clock();
-        next=FNextDist(Greater,Lesser,insprob,&it);
+        if (col==WHITE) col=LTWHITE; else col=WHITE;
 
-        if (graphics) {sprintf(buffer,"Last Was %d.\n\nThis Is %d.",it,next);
-                       ShowText(buffer,1,4,WHITE);}
-        
-        if (graphics) {HiliteCity(insprob->prob,next,1);WaitTill(now+time_seg);}
+        next=FNextDist(*func,*func2,insprob,&it);
+
+        if (graphics) {
+            sprintf(buffer,"Insert is %3d.  \n\n",next);
+            ShowText(buffer,1,4,col);
+            HiliteCity(insprob->prob,next,1);
+            WaitTill(now+time_seg);
+        }
 
         CityDel(insprob,next);
         BestInsert(insprob->prob,next,&Ia,&Ib);
 
-        if (graphics) {HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
+        if (graphics) {
+            ShowChanges(insprob,next,Ia,Ib,col,5);
+            HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);
+            WaitTill(now+(2*time_seg));
+        }
 
         InsertPath(insprob->prob->path,next,Ia,Ib);
         SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
 
-        if (graphics) {DrawNorm(insprob->prob,1);WaitTill(now+(3*time_seg));}
+        if (graphics) {
+            DrawNorm(insprob->prob,1);
+            WaitTill(now+(3*time_seg));
+        }
 
     } while (insprob->endo);
 
     return PathLength(insprob->prob->path,insprob->prob->dist);
+
+
+}
+
+double ControlFurthest(INSPROB *insprob,int graphics)
+{
+    return ControlDist(insprob,Greater,Lesser,graphics);
 }
 
 double ControlNearest(INSPROB *insprob,int graphics)
 {
-    int next,Ia,Ib,it;
+    return ControlDist(insprob,Lesser,Lesser,graphics);
+}
+
+double ControlCost(INSPROB *insprob,int (* func)(double,double),int graphics)
+{
+    int next,pA,pB;
     clock_t now;
     clock_t time_seg=TotalDelay(-1)/3;
+    static int col=WHITE;
     char buffer[50];
 
     do {
         now=clock();
-        next=FNextDist(Lesser,Lesser,insprob,&it);
+        if (col==WHITE) col=LTWHITE; else col=WHITE;
 
-        if (graphics) {HiliteCity(insprob->prob,next,1);WaitTill(now+time_seg);}
+        next=FNextCost(*func,insprob,&pA,&pB);
+        BestInsert(insprob->prob,next,&pA,&pB);
+
+        if (graphics) {
+            HiliteCity(insprob->prob,next,1);
+            sprintf(buffer,"Insert is %3d.  \n\n",next);
+            ShowText(buffer,1,4,col);
+            WaitTill(now+(time_seg));
+            HiliteCityGroup(insprob->prob,next,YELLOW,pA,pB,BLUE);
+            ShowChanges(insprob,next,pA,pB,col,5);
+            WaitTill(now+(2*time_seg));
+        }
 
         CityDel(insprob,next);
-        BestInsert(insprob->prob,next,&Ia,&Ib);
-
-        if (graphics) {HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
-
-        InsertPath(insprob->prob->path,next,Ia,Ib);
+        InsertPath(insprob->prob->path,next,pA,pB);
         SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
 
-        if (graphics) {DrawNorm(insprob->prob,1);WaitTill(now+(3*time_seg));}
+        if (graphics) {
+            DrawNorm(insprob->prob,1);
+            WaitTill(now+(3*time_seg));
+        }
 
     } while (insprob->endo);
 
@@ -350,50 +415,12 @@ double ControlNearest(INSPROB *insprob,int graphics)
 
 double ControlDear(INSPROB *insprob,int graphics)
 {
-    int next,pA,pB;
-    clock_t now;
-    clock_t time_seg=TotalDelay(-1)/3;
-    char buffer[50];
-
-    do {
-        now=clock();
-        next=FNextCost(Greater,insprob,&pA,&pB);
-        BestInsert(insprob->prob,next,&pA,&pB);
-        if (graphics) {HiliteCity(insprob->prob,next,1);WaitTill(now+(time_seg));}
-        if (graphics) {HiliteCityGroup(insprob->prob,next,YELLOW,pA,pB,BLUE);WaitTill(now+(2*time_seg));}
-        CityDel(insprob,next);
-        InsertPath(insprob->prob->path,next,pA,pB);
-        SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
-
-        if (graphics) {DrawNorm(insprob->prob,1);WaitTill(now+(3*time_seg));}
-
-    } while (insprob->endo);
-
-    return PathLength(insprob->prob->path,insprob->prob->dist);
+    return ControlCost(insprob,Greater,graphics);
 }
 
 double ControlCheap(INSPROB *insprob,int graphics)
 {
-    int next,pA,pB;
-    clock_t now;
-    clock_t time_seg=TotalDelay(-1)/3;
-    char buffer[50];
-
-    do {
-        now=clock();
-        next=FNextCost(Lesser,insprob,&pA,&pB);
-
-        if (graphics) {HiliteCity(insprob->prob,next,1);WaitTill(now+(time_seg));}
-        if (graphics) {HiliteCityGroup(insprob->prob,next,YELLOW,pA,pB,BLUE);WaitTill(now+(2*time_seg));}
-        CityDel(insprob,next);
-        InsertPath(insprob->prob->path,next,pA,pB);
-        SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
-
-        if (graphics) {DrawNorm(insprob->prob,1);WaitTill(now+(3*time_seg));}
-
-    } while (insprob->endo);
-
-    return PathLength(insprob->prob->path,insprob->prob->dist);
+    return ControlCost(insprob,Lesser,graphics);
 }
 
 double ControlAllIns(INSPROB *insprob,int init,int method,int graphics)

@@ -32,8 +32,10 @@ int ProcessCmdLine(int argc, char *argv[],char **filename,int *InitType,
                "        time    = 0 is calculate to end\n"
                "        time    = n is take n 10ths of seconds for each insert\n"
                "        time    =-2 is Benchmark Mode - Simply returns length\n"
-               "        time    =-3 double is Benchmark for all methods, double=optimal\n"
+               "        time    =-3 optimal is Benchmark for all methods,\n"
+               "                               with optimal calculation\n"
                "        No time = wait for keypress between each insert\n");
+        printf("E.G. %s myfile.in Random Dear",argv[0]);
 
         return 0;
     }
@@ -164,14 +166,19 @@ void main(int argc, char *argv[])
             ShowText(buffer,1,16,LTRED);
             sprintf(buffer,"Length Is %8.6f",length);
             ShowText(buffer,1,18,YELLOW);
-                           
+
+            ShowText("Hit Any Key     \n"
+                     "to Quit...      \n",1,20,LTRED);
+            ShowText("                \n"
+                     "                ",1,22,BLACK);
+            
             getch();
             ShutDown();
         }
 
 /*        FreeWin(main);    */  
      
-/*        FreeMap(d);     */  
+/*        FreeMap(insprob->prob->dist);     */
 
         out=PathAsLocates(insprob->prob->path,insprob->prob->dist->l);
         WriteLocates(out,"default.dat");

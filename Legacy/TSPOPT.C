@@ -25,15 +25,16 @@ int ProcessCmdLine(int argc,char *argv[],char **filein,char **fileout,int *metho
                "Optimization Methods. V%3.2f\n",VERSION);
         printf("Usage: %s input output method [time]\n%s",
                 argv[0],
-                "Where  input   = input filename\n"
-                "       output  = output filename\n"
-                "       method in {1opt,2opt,3opt}\n"
-                "       time    = 0 is calculate to end\n"
-                "       time    = n is take n 10ths of seconds for each insert\n"
-                "       time    =-2 is Benchmark Mode - Simply returns length\n"
-                "       time    =-3 double is Benchmark for all methods, double=optimal\n"
-                "       No time = wait for keypress between each optimize step\n");
-
+               "Where  input   = input filename\n"
+               "       output  = output filename\n"
+               "       method in {1opt,2opt,3opt}\n"
+               "       time    = 0 is calculate to end\n"
+               "       time    = n is take n 10ths of seconds for each insert\n"
+               "       time    =-2 is Benchmark Mode - Simply returns length\n"
+               "       time    =-3 optimal is Benchmark for all methods,\n"
+               "                              with optimal calculation\n"
+               "       No time = wait for keypress between each optimize step\n");
+        printf("E.G. %s myfile.in myfile.out 2opt",argv[0]);
 
         return 0;
     }

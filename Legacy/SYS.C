@@ -75,7 +75,6 @@ int sfree(void *ptr)
     else
         free(ptr);
     return 1;
-
 }
 
 char mygetch()
