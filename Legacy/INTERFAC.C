@@ -965,33 +965,37 @@ void main()
                 break;
             case gobtn :
                 HideMouse();
+
+                SetInit(REQUEST,FALSE,FALSE,&tinit);
+                SetMethod(REQUEST,FALSE,FALSE,&tmethod);
+
                 InitScreen(16);
                 _setactivepage(0);
                 _setvisualpage(1);
                 SwapPage();
 
-                SetInit(REQUEST,FALSE,FALSE,&tinit);
-                SetMethod(REQUEST,FALSE,FALSE,&tmethod);
-
                 switch (current_solver)
                 {
-                    case 0 : InsWinManager(Main);
-                             InsWinManager(Text);
-                             break;
-                    case 1 : OptWinManager(Main);
-                             OptWinManager(Text);
-                             break;
-                    case 2 : break;
-                }
-                DrawNorm(currentprob,1);
-                SwapPage();
+                    case 0 : case 1 :
 
-                ShowText("Hit Esc to Quit,\n\n"
-                     "Any other key \n"
-                     "To continue..",1,19,BLUE);
+                    switch (current_solver)
+                    {
+                        case 0 : InsWinManager(Main);
+                                 InsWinManager(Text);
+                                 break;
+                        case 1 : OptWinManager(Main);
+                                 OptWinManager(Text);
+                                 break;
+                    }
+                    DrawNorm(currentprob,1);
+                    SwapPage();
 
-                TotalDelay(WAITKEY);
-                switch (current_solver) {
+                    ShowText("Hit Esc to Quit,\n\n"
+                             "Any other key \n"
+                             "To continue..",1,19,BLUE);
+
+                    TotalDelay(WAITKEY);
+                    switch (current_solver) {
                     case 0 : insprob=NewInsProb(currentprob->dist);
                              length=ControlAllIns(insprob,tinit,tmethod-1,TRUE);
                              if (length>0.0) currentprob=insprob->prob;
@@ -1001,27 +1005,32 @@ void main()
                              length=ControlAllOpt(tempprob,tmethod+1,TRUE,WAITKEY);
                              if (length>0.0) currentprob=tempprob;
                              break;
-                    case 2 : break;
-                }
-                if (length>0.0)
-                {
-                    sprintf(buffer,"F I N I S H E D");
-                    ShowText(buffer,1,16,LTRED);
-                    sprintf(buffer,"Length Is %8.6f",length);
-                    ShowText(buffer,1,18,YELLOW);
+                    }
+                    if (length>0.0)
+                    {
+                        sprintf(buffer,"F I N I S H E D");
+                        ShowText(buffer,1,16,LTRED);
+                        sprintf(buffer,"Length Is %8.6f",length);
+                        ShowText(buffer,1,18,YELLOW);
 
-                    DrawNorm(currentprob,1);
-                    SwapPage();
+                        DrawNorm(currentprob,1);
+                        SwapPage();
 
-                    ShowText("                \n"
-                             "Hit Esc         \n"
-                             "to Quit...   \n"
-                             "               ",1,19,LTRED);
+                        ShowText("                \n"
+                                 "Hit Esc         \n"
+                                 "to Quit...   \n"
+                                 "               ",1,19,LTRED);
                     
-                    while (getch()!=27) {}
-                    WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
-                    SetFile(&currentprob,number_of_files-1,FALSE);
-                }        
+                        while (getch()!=27) {}
+                        WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
+                        SetFile(&currentprob,number_of_files-1,FALSE);
+                    }
+                    break;
+                    case 2 :
+                        ControlAnneal(currentprob,temperature,coolingrate,changesattemp,WAITKEY);
+                        break;
+                }
+
                 InitScreen(16);
                 
                 _setvisualpage(0);

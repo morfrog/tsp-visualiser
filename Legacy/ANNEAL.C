@@ -52,6 +52,37 @@ int MethodMaxSize(int method,int max)
     return 0;
 }
 
+void _FAR AnnWinManager(int which)
+{
+    static int init=0;
+    static SWIN *one;
+    static SWIN *two;
+    static SWIN *textone;
+    static SWIN *texttwo;
+    static SWIN *texttop;
+
+    if (!init) {
+        texttop=NewWin(1,1,639,topsize-1);
+        one=NewWin(1,1+topsize,320,240+topsize);
+        textone=NewWin(1,242+topsize,320,349);
+        two=NewWin(321,1+topsize,639,240+topsize);
+        texttwo=NewWin(321,242+topsize,639,349);
+        BorderWin(texttop,border_col);
+        BorderWin(textone,border_col);
+        BorderWin(texttwo,border_col);
+        BorderWin(one,border_col);
+        BorderWin(two,border_col);
+        init=1;
+
+    }
+    switch (which) {
+        case win_one  : SetWin(one);  break;
+        case win_two  : SetWin(two);  break;
+        case text_one : SetTextWin(textone);  break;
+        case text_two : SetTextWin(texttwo);  break;
+        case text_top : SetTextWin(texttop);  break;
+    }
+}
 
 ANNPROB *NewAnnProb(DISTANCES *dist,int method)
 {
@@ -249,7 +280,7 @@ double MakeAnnealChange(ANNPROB *annprob,int change)
     return 0;
 }
 
-void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,int changes)
+int Control1vs2Anneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,int changes)
 {
     double temp=temperature;
 
@@ -311,7 +342,8 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             }
             SwapPage();
             if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
-    
+            else if (waitresult==WAIT_EXIT) return 0;
+
             if (!done1)
             {
                 AnnWinManager(win_one);
@@ -336,6 +368,7 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             }
             SwapPage();
             if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
 
             AnnWinManager(win_one);
             DrawNorm(one->prob,1);
@@ -343,7 +376,7 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             DrawNorm(two->prob,1);
             SwapPage();
             if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
-
+            else if (waitresult==WAIT_EXIT) return 0;
         }
         if (nulls1>=changes) done1=1;
         if (nulls2>=changes) done2=1;
@@ -363,37 +396,67 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
     }
 }
 
-void _FAR AnnWinManager(int which)
+void ControlAnneal(PROBLEM *prob,double temperature,double cooling,int changes,int tdelay)
 {
-    static int init=0;
-    static SWIN *one;
-    static SWIN *two;
-    static SWIN *textone;
-    static SWIN *texttwo;
-    static SWIN *texttop;
+    ANNPROB *leftp;
+    ANNPROB *rightp;
+    char buffer[80];
+    char ch;
+          
+    leftp=NewAnnProb(prob->dist,opt1);
+    rightp=NewAnnProb(prob->dist,opt2);
+    leftp->prob->path=LocatesAsPath(leftp->prob->dist->l);
+    rightp->prob->path=LocatesAsPath(rightp->prob->dist->l);
 
-    if (!init) {
-        texttop=NewWin(1,1,639,topsize-1);
-        one=NewWin(1,1+topsize,320,240+topsize);
-        textone=NewWin(1,242+topsize,320,349);
-        two=NewWin(321,1+topsize,639,240+topsize);
-        texttwo=NewWin(321,242+topsize,639,349);
-        BorderWin(texttop,border_col);
-        BorderWin(textone,border_col);
-        BorderWin(texttwo,border_col);
-        BorderWin(one,border_col);
-        BorderWin(two,border_col);
-        init=1;
+    TotalDelay(tdelay);
+    InitScreen(16); // * 2 pages, 640x350, 16 color * //
+    AnnWinManager(text_top);
 
-    }
-    switch (which) {
-        case win_one  : SetWin(one);  break;
-        case win_two  : SetWin(two);  break;
-        case text_one : SetTextWin(textone);  break;
-        case text_two : SetTextWin(texttwo);  break;
-        case text_top : SetTextWin(texttop);  break;
+    sprintf(buffer,"Temperature=%11.6f  Cooling_Rate=%8.6f  "
+            "#Changes=%3d OF %3d.",temperature,cooling,1,changes);
+    ShowText("1opt vs 2opt Annealing Run...",1,1,GREEN);
+    ShowText(buffer,1,3,RED);
+
+    AnnWinManager(text_one);
+    ShowText("Length=            Accepted=       %",1,1,RED);
+    AnnWinManager(text_two);
+    ShowText("Length=            Accepted=       %",1,1,RED);
+
+    AnnWinManager(win_one);
+    DrawNorm(leftp->prob,1);
+    AnnWinManager(win_two);
+    DrawNorm(leftp->prob,1);
+    SwapPage();
+
+    Control1vs2Anneal(leftp,rightp,temperature,cooling,changes);
+
+    AnnWinManager(win_one);
+    DrawNorm(leftp->prob,1);
+    AnnWinManager(win_two);
+    DrawNorm(rightp->prob,1);
+    SwapPage();
+
+    AnnWinManager(text_top);
+    ShowText("Hit Esc To Quit, Any Key For Overlay.",35,1,YELLOW);
+    ch=getch();
+    if (ch!=27)
+    {
+        AnnWinManager(text_one);
+        sprintf(buffer,"Length=%f  ",
+            PathLength(leftp->prob->path,leftp->prob->dist));
+        ShowText(buffer,1,1,YELLOW);
+
+        AnnWinManager(text_two);
+        sprintf(buffer,"Length=%f  ",
+            PathLength(rightp->prob->path,rightp->prob->dist));
+        ShowText(buffer,1,1,LTRED);
+
+        ControlLCLOverlay(leftp->prob,rightp->prob,639,240,59,YELLOW,LTRED);
+        if (kbhit()) getch();
+
     }
 }
+
 
 
  

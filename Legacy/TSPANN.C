@@ -93,73 +93,7 @@ void main(int argc,char *argv[])
           
     if (ProcessCmdLine(argc,argv,&filename,&temperature,&cooling,&changes,&tdelay,&optimal))
     {
-        leftp=NewAnnProb(NewMap(NewLocates(filename)),opt1);
-        rightp=NewAnnProb(NewMap(NewLocates(filename)),opt2);
-        leftp->prob->path=LocatesAsPath(leftp->prob->dist->l);
-        rightp->prob->path=LocatesAsPath(rightp->prob->dist->l);
-
-        TotalDelay(tdelay);
-        InitScreen(16); // * 2 pages, 640x350, 16 color * //
-        AnnWinManager(text_top);
-
-        sprintf(buffer,"Temperature=%11.6f  Cooling_Rate=%8.6f  "
-                "#Changes=%3d OF %3d.",temperature,cooling,1,changes);
-        ShowText("1opt vs 2opt Annealing Run...",1,1,GREEN);
-        ShowText(buffer,1,3,RED);
-
-        AnnWinManager(text_one);
-        ShowText("Length=            Accepted=       %",1,1,RED);
-        AnnWinManager(text_two);
-        ShowText("Length=            Accepted=       %",1,1,RED);
-
-        AnnWinManager(win_one);
-        DrawNorm(leftp->prob,1);
-        AnnWinManager(win_two);
-        DrawNorm(leftp->prob,1);
-        SwapPage();
-
-        ControlAnneal(leftp,rightp,temperature,cooling,changes);
-
-        AnnWinManager(win_one);
-        DrawNorm(leftp->prob,1);
-        AnnWinManager(win_two);
-        DrawNorm(rightp->prob,1);
-        SwapPage();
-        AnnWinManager(text_top);
-        ShowText("Hit Esc To Quit, Any Key For Overlay.",35,1,YELLOW);
-        ch=getch();
-        if (ch!=27)
-        {
-            AnnWinManager(text_one);
-            sprintf(buffer,"Length=%f  ",
-                PathLength(leftp->prob->path,leftp->prob->dist));
-            ShowText(buffer,1,1,YELLOW);
-
-            AnnWinManager(text_two);
-            sprintf(buffer,"Length=%f  ",
-                PathLength(rightp->prob->path,rightp->prob->dist));
-            ShowText(buffer,1,1,LTRED);
-
-            ControlLCLOverlay(leftp->prob,rightp->prob,639,240,59,YELLOW,LTRED);
-/*
-            ControlVarOverlay(leftp->prob,1,59,639/2,298,LTRED,0,3,-4,-3,IntLesser,40,40,-1);
-            ControlVarOverlay(rightp->prob,321,59,639,298,ORANGE,4,3,0,-3,IntLesser,40,40,-1);
-            ControlVarOverlay(rightp->prob,310,170,329,190,YELLOW,-4,-3,4,3,IntGreater,640,349,-1);
-            ControlVarOverlay(rightp->prob,2,1,20,2,GREEN,0,0,4,4,IntGreater,640,349,-1);
-            ControlVarOverlay(rightp->prob,560,2,639,81,BLUE,-4,1,-4,2,IntLesser,78,78,130);
-            ControlVarOverlay(rightp->prob,0,0,640,350,LTRED,4,3,-4,-3,IntLesser,40,40,-1);
-
-            while (1) {
-                ControlVarOverlay(rightp->prob,0,0,640,350,GREEN,4,0,-4,0,IntLesser,-1,-1,160);
-                ControlVarOverlay(rightp->prob,0,0,640,350,GREEN,0,4,0,-4,IntLesser,-1,-1,87);
-            }
-            getch();
-*/
-            if (kbhit()) getch();
-
-        }
-
+        ControlAnneal(NewProblem(NewMap(NewLocates(filename))),temperature,cooling,changes,tdelay);
         ShutDown();
     }
 }
- 

@@ -43,7 +43,7 @@ void AnnealTwoOpt(ANNPROB *annprob);
 void ApplyTemperature(ANNPROB *annprob,double temp);
 int ChooseChange(ANNPROB *annprob);
 double MakeAnnealChange(ANNPROB *annprob,int change);
-void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,int changes);
+void ControlAnneal(PROBLEM *prob,double temperature,double cooling,int changes,int tdelay);
 int ControlAnnOverlay(ANNPROB *one,ANNPROB *two,int width,int height,int starty);
 void _FAR AnnWinManager(int which);
 
