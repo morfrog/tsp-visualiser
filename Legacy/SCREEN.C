@@ -3,6 +3,7 @@
 #include <conio.h> /* getch */
 #include <malloc.h> /* malloc,free */
 #include <i86.h> /* sound */
+#include "sys.h"
 #include "screen.h" 
 
 struct videoconfig  VC;
@@ -22,7 +23,7 @@ void main()
     printf("Mem Free = %d size_t\n",(int)_memavl());
     getch();
     
-    InitScreen(12);
+    InitScreen(16);
 
     _setcolor(line_col);
 
@@ -30,13 +31,13 @@ void main()
     BorderWin();
 
     _setcolor(line_col);
-    DrawLine(12,12,74,70);
-    DrawLine(74,70,76,15);
+    DrawLine(0.5,0.2,0.8,0.2);
+    DrawLine(0.8,0.2,0.5,0.7);
     _setcolor(city_col);
-    DrawCity("A",12,12,citysize);
-    DrawCity("B",12,74,citysize);
-    DrawCity("C",74,70,citysize);
-    DrawCity("D",76,15,citysize);
+    DrawCity("A",0.5,0.2,citysize);
+    DrawCity("B",0.8,0.2,citysize);
+    DrawCity("C",0.5,0.7,citysize);
+    DrawCity("D",0.2,0.2,citysize);
 
     SetTextWin(text,1);
 
@@ -125,7 +126,7 @@ int _FAR InitScreen(int videomode)
         _remappalette( BorderColour, _BLACK );  /* black      */
     }
 #endif
-    _setwindow(0,1,1,maxx,maxy);
+    _setwindow(0,0.0,0.0,1.0,1.0);
     _setcharsize_w(citysize*4/3,citysize*4/3);
     _registerfonts( "*.fon" );
     return( 1 );
@@ -141,7 +142,7 @@ int _FAR ShutDown( void )
 
 SWIN _FAR *NewWin(int l,int t,int r,int b)
 {
-    SWIN *w;
+    SWIN *w=NULL;
     w=malloc(sizeof(SWIN));
     w->t=t;
     w->l=l;
@@ -154,7 +155,7 @@ void _FAR SetWin(SWIN *w)
 {
     _setviewport(w->t,w->l,w->b,w->r);
     _setcharsize_w(citysize*4/3,citysize*4/3);
-    _setcharspacing_w(-2);
+    _setcharspacing_w(-0.02);
 }
 
 void _FAR SetTextWin(SWIN *w,int border)
@@ -178,12 +179,12 @@ void _FAR ResetWin(SWIN *w,int t,int l,int b,int r)
 void _FAR BorderWin()
 {
     _setcolor(border_col);
-    _rectangle_w(_GBORDER,1,1,maxx,maxy);
+    _rectangle_w(_GBORDER,0.0,0.0,1.0,1.0);
 }
 
 void _FAR FreeWin(SWIN *w)
 {
-    free(w);
+    if (!(sfree(w))) printf("Failed To Free Window.\n");
 }
 
 double _FAR Scale(int thing,int max)
@@ -199,20 +200,19 @@ void _FAR DrawLine(double x1,double y1,double x2,double y2)
  */
 {
         _setcolor(line_col);
-        _moveto_w(x1*maxx,y1*maxy);
-        _lineto_w(x2*maxx,y2*maxy);
+        _moveto_w(x1,y1);
+        _lineto_w(x2,y2);
 }
 
 void _FAR DrawCity(char name[],double x,double y,double size)
 /* x,y,size are in unit square 0.0,0.0 - 1.0,1.0 */
 {
-    double dx=x*maxx,dy=y*maxy,dxs=size*maxx,dys=size*maxy;
-    double t=dy-dys,l=dx-dxs,b=dy+dys,r=dx+dxs;
+    double t=y-size,l=x-size,b=y+size,r=x+size;
     _setcolor(city_col);
     _ellipse_w(_GFILLINTERIOR,l,t,r,b);
     _setcolor(text_col);
     _settextalign(_CENTER,_HALF);
-    _grtext_w(dx, dy, name);
+    _grtext_w(x, y, name);
 }
 
 void _FAR TextWindow(int rows,int cols)
@@ -231,3 +231,11 @@ void _FAR DrawText(char string[],int start,int line,int color)
     _outtext(string);
 }
 
+void _FAR SwapPage()
+{
+    static int viewpage=0;
+    _setactivepage(viewpage);
+    if (viewpage) viewpage=0;
+    else          viewpage=1;
+    _setvisualpage(viewpage);
+}

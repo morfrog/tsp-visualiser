@@ -1,15 +1,16 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "sys.h"
 #include "path.h"
 
 PATH _FAR *NewPath(int city1,int city2,int city3)
 {
-    NODE CityOne=malloc(sizeof(NODE));
-    NODE CityTwo=malloc(sizeof(NODE));
-    NODE CityThree=malloc(sizeof(NODE));
-    PATH *t=malloc(sizeof(PATH));
+    NODE *CityOne=salloc(1,sizeof(NODE));
+    NODE *CityTwo=salloc(1,sizeof(NODE));
+    NODE *CityThree=salloc(1,sizeof(NODE));
+    PATH *t=salloc(1,sizeof(PATH));
     t->head=CityOne;
-    t->current=NULL;
+    t->current=CityOne;
     t->size=3;
 
     CityOne->citynum=city1;
@@ -25,18 +26,17 @@ PATH _FAR *NewPath(int city1,int city2,int city3)
 
 void _FAR FreePath(PATH *p)
 {
-    NODE c=p->head->next;
-    NODE del=p->head;
+    NODE *c=p->head->next;
+    NODE *del=p->head;
     int count;
 
     for (count=1;count<(p->size);count++)
     {
-        free(del);
+        if (!(sfree(del))) printf("Failed To Free Path Node.\n");
         del=c;  
-                c=c->next;
-
+        c=c->next;
     }
-    free(p);
+    if (!(sfree(p))) printf("Failed To Free Path Structure.\n");
 
 
 }
@@ -44,16 +44,16 @@ void _FAR FreePath(PATH *p)
 int _FAR InsertPath(PATH *p,int city,int city1,int city2)
 /* inserts city between city1 and city2, returns 1 if works, 0 if not */
 {
-        NODE c=p->head;
-    NODE new;
+    NODE *c=p->head;
+    NODE *new=NULL;
     int count;
 
     for (count=0;count<p->size;count++)
     {
         if (((c->citynum==city1) && (c->next->citynum==city2)) ||
-                        ((c->citynum==city2) && (c->next->citynum==city1)))
+            ((c->citynum==city2) && (c->next->citynum==city1)))
         {
-                new=malloc(sizeof(NODE));
+                new=salloc(1,sizeof(NODE));
                 new->citynum=city;
                 new->next=c->next;
                 c->next=new;
@@ -67,7 +67,7 @@ int _FAR InsertPath(PATH *p,int city,int city1,int city2)
 
 void _FAR ShowPath(PATH *p)
 {
-        NODE c=p->head;
+    NODE *c=p->head;
     int count;
 
     for (count=1;count<(p->size);count++)
@@ -81,19 +81,19 @@ void _FAR ShowPath(PATH *p)
 
 void _FAR PathStart(PATH *p)
 {
-        p->current=p->head;
+    p->current=p->head;
 }
 
 void _FAR PathNext(PATH *p)
 /* advances the currents */
 {
-        p->current=p->current->next;
+    p->current=p->current->next;
 }
 
-int _FAR **PathToArray(PATH *p)
+int _FAR *PathToArray(PATH *p)
 {
-    int **array=malloc(p->size*sizeof(int));
-    NODE look=p->head;
+    int *array=salloc(p->size,sizeof(int));
+    NODE *look=p->head;
     int count;
 
     for (count=0;count<p->size;count++)
@@ -110,9 +110,9 @@ int _FAR EqualPaths(PATH *a,PATH *b)
  * returns 0 otherwise.
  */
 {
-        int count,equal_found=0;
-        int **aarray=PathToArray(a);
-    int **barray=PathToArray(b);
+    int count,equal_found=0;
+    int *aarray=PathToArray(a);
+    int *barray=PathToArray(b);
 
     if ((a->size)!=(b->size))
         return 0; /* different size therefore not equal */
@@ -150,12 +150,12 @@ int _FAR EqualPaths(PATH *a,PATH *b)
 /*
 void main()
 {
-        PATH *path=NewPath(2,5,0);
+    PATH *path=NewPath(2,5,0);
     PATH *new=NewPath(2,7,8);
-    int **a;
+    int **a=NULL;
 
     printf("-----------------\n");
-        ShowPath(path);
+    ShowPath(path);
     ShowPath(new);
 }
 */

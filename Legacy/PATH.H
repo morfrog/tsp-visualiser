@@ -14,12 +14,12 @@ struct node
         int citynum;
 };
 
-typedef struct node *NODE;
+typedef struct node NODE;
 
 struct header
 {
-    NODE head;
-    NODE current; /* the current */
+    NODE *head;
+    NODE *current; /* the current */
     int size;
 };
 
@@ -31,7 +31,7 @@ int _FAR InsertPath(PATH *p,int city,int city1,int city2);
 void _FAR ShowPath(PATH *p);
 void _FAR PathStart(PATH *p);
 void _FAR PathNext(PATH *p);
-int _FAR **PathToArray(PATH *p);
+int _FAR *PathToArray(PATH *p);
 int _FAR EqualPaths(PATH *a,PATH *b);
 
 #endif

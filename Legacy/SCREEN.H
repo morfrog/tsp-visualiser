@@ -1,7 +1,7 @@
 #ifndef SCREEN_H
 #define maxx 100
 #define maxy 100
-#define citysize 3
+#define citysize 0.03
 
 #if defined ( __386__ )
     #define _FAR
@@ -60,5 +60,5 @@ void _FAR DrawLine(double x1,double y1,double x2,double y2);
 void _FAR DrawCity(char name[],double x,double y,double size);
 void _FAR DrawText(char string[],int start,int line,int color);
 void _FAR TextWindow(int rows,int cols);
-
+void _FAR SwapPage();
 #endif

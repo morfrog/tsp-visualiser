@@ -17,8 +17,7 @@ struct city
 
 struct point
 {
-        int x;
-    int y;
+    double x,y;
     int citynum;
 };
 
@@ -30,13 +29,13 @@ struct locates
         POINT *at; /* array of locations */
 };
 
-typedef struct locates *LOCATES;
+typedef struct locates LOCATES;
 
 struct matrix
 {
-        int size; /* <=big */
-        int array[big][big];
-    LOCATES l;
+        int size;
+        LOCATES *l;
+        double **array;
 };
 
 typedef struct matrix DISTANCES;
@@ -44,10 +43,11 @@ typedef struct matrix DISTANCES;
 void ReadToken(FILE *f,char string[],int max);
 void SkipTill(FILE *f,char this);
 void SkipLine(FILE *f);
-int ReadInt(FILE *f);
-int Dist(POINT a,POINT b);
+double ReadDouble(FILE *f);
+double Dist(POINT a,POINT b);
 DISTANCES *NewMap(char *filename);
 void FreeMap(DISTANCES *d);
 void PrintMap(DISTANCES *d);
-
+void ShowLocates(LOCATES *loc);
+LOCATES *CopyLocates(LOCATES *loc);
 #endif

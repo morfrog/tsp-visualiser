@@ -1,0 +1,18 @@
+Connecting...
+cd e:\watcom\tsp
+wmake -f e:\watcom\tsp\main.mk -h -e
+wcc386 file.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -hw -fp5 -fpi87 -ms -5r -bt=dos
+file.c(103): Warning! W202: Symbol 'num' has been defined, but not referenced
+file.c(144): Warning! W104: Inconsistent levels of indirection
+wcc386 path.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -hw -fp5 -fpi87 -ms -5r -bt=dos
+wcc386 screen.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -hw -fp5 -fpi87 -ms -5r -bt=dos
+wcc386 sys.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -hw -fp5 -fpi87 -ms -5r -bt=dos
+wcc386 tsp.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -hw -fp5 -fpi87 -ms -5r -bt=dos
+tsp.c(195): Warning! W202: Symbol 'tmp' has been defined, but not referenced
+tsp.c(194): Warning! W202: Symbol 'avg_tot' has been defined, but not referenced
+tsp.c(192): Warning! W202: Symbol 'best' has been defined, but not referenced
+tsp.c(193): Warning! W202: Symbol 'count' has been defined, but not referenced
+tsp.c(194): Warning! W202: Symbol 'avg_num' has been defined, but not referenced
+tsp.c(192): Warning! W202: Symbol 'worst' has been defined, but not referenced
+wlink SYS dos4g op m d all op st=8192 op maxe=25 op d op q op symf @main.lk1
+Execution complete

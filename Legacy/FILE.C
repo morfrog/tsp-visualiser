@@ -6,7 +6,8 @@
 #include <i86.h>
 #include "sys.h"
 #include "file.h"
-
+ 
+/*
 void main()
 {
         int c;
@@ -14,7 +15,7 @@ void main()
         for (c=0;c<10;c++)
         {
             d->array[c][c]=c;
-            printf("%d is %d\n  %s",c,d->array[1][c],
+            printf("%.2f is %.2f\n  %s",c,d->array[1][c],
             c==d->array[1][c]?"OK":"Fail...");
         }
         getch();
@@ -23,6 +24,7 @@ void main()
         getch();
 
 }
+*/
 
 void _FAR ReadToken(FILE *f,char string[],int max)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -67,7 +69,7 @@ void _FAR SkipLine(FILE *f)
 }
 
 
-int _FAR ReadInt(FILE *f)
+double _FAR ReadDouble(FILE *f)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *      Desc    :       Reads an int from a file, removing leading spaces and
  *                              stopping at an EOF or space or new line character       
@@ -93,18 +95,16 @@ int _FAR ReadInt(FILE *f)
         ++x;
     }
     if (ch=='\n') ungetc(ch,f);
-    return atoi(buffer);
+    return atof(buffer);
 }
 
-int _FAR Dist(POINT a,POINT b)
+double _FAR Dist(POINT a,POINT b)
 {
-    int num;
-    long y=(b.y-a.y);
-    long x=(b.x-a.x);
-    printf("%d,%d to %d,%d is %d %d.\n",a.x,a.y,b.x,b.y,(int)x,(int)y);
-    num=(int)(sqrt((double)(x*x + y*y)));
-    if (num<0) return (num*-1);
-    else return num;
+    double num;
+    double y=(b.y-a.y);
+    double x=(b.x-a.x);
+    printf("%.4f,%.4f to %.4f,%.4f is %.4f %.4f.\n",a.x,a.y,b.x,b.y,x,y);
+    return sqrt((x*x) + (y*y));
 
 }
 
@@ -116,62 +116,60 @@ DISTANCES *NewMap(char *filename)
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  */
 {
-    DISTANCES *dist=salloc(sizeof(DISTANCES *));
-    LOCATES loc;
+    DISTANCES *dist=NULL;
+    LOCATES *loc=NULL;
 
     FILE *input=fopen(filename,"rt");
     int count,count2,n;
-    char *type=malloc(12*sizeof(char));
-    char name[STR_LEN];
-    int ndist;
+    char *type=salloc(20,sizeof(char));
+/*    char name[STR_LEN];*/
+    double ndist;
 
     if (input==NULL)
     {
         printf("Can't find file \"%.12s\", Exiting System.",filename);
-        getch();
+        mygetch();
         exit(EXIT_FAILURE);
         return NULL;
     }
     else
     {
-        printf("Reading File %s...\n",filename); 
-        /* fgets(type,sizeof(type),input); */
+        fgets(type,sizeof(type),input);
         printf("%s",type);
         SkipLine(input);
-        dist->size=ReadInt(input);                      /* the number of points */
-        printf(" %d\n",dist->size);
+
+        dist=salloc(1,sizeof(DISTANCES));
+        dist->size=ReadDouble(input);      /* the number of points */
+        dist->array=
+        allocate_N_by_N_array(dist->size,dist->size,sizeof(double),"Distance");        
+        printf(" %.4f\n",dist->size);
         SkipLine(input);
-        if (strcmp(type,"Geographic")) /* is Geographic */
+        if (strncmp(type,"Geographic",sizeof(char)*3)==0) /* is Geographic */
         {     
-            loc=salloc(sizeof(LOCATES *));
+            loc=salloc(1,sizeof(LOCATES));
             loc->num=(dist->size);
-            loc->at=salloc(loc->num*sizeof(POINT *));
+            loc->at=salloc(loc->num,sizeof(POINT));
             for (count=0;count<loc->num;count++) 
             {
-                (loc->at[count]).x=ReadInt(input);
-                (loc->at[count]).y=ReadInt(input);
+                (loc->at[count]).x=ReadDouble(input);
+                (loc->at[count]).y=ReadDouble(input);
                 (loc->at[count]).citynum=count;
                 SkipLine(input);
 
             }
-            for (count=0;count<loc->num;count++)
-            {
-                printf("Point (%d,%d)\n",(loc->at[count]).x,(loc->at[count]).y);
-            }
+            ShowLocates(loc);
             printf("loc->num=%d\n",loc->num);
             n=(loc->num);
-            getch();
+            mygetch();
             for (count=0;count<n;count++) 
             {
                 for (count2=count;count2<n;count2++) 
                 {
-                    printf("%d %d<%d ",count,count2,n);
+                    printf("%.2f %.2f<%.2f ",count,count2,n);
                     ndist=Dist(loc->at[count],loc->at[count2]);
-                    printf("Dist= %d.\n",ndist);
-
-/*
+                    printf("Dist= %.2f.\n",ndist);
                     dist->array[count][count2]=ndist;
-*/
+                    dist->array[count2][count]=ndist;
                 }
             }
             dist->l=loc;
@@ -183,16 +181,16 @@ DISTANCES *NewMap(char *filename)
 
         }
         fclose(input);
-        free(type);
         return dist; 
     }
 }
 
 void _FAR FreeMap(DISTANCES *d)
 {
-    free(d->l->at);
-    free(d->l);
-    free(d);
+    if (!(sfree(d->l->at))) printf("Failed To Free Locates 'At' Array.\n");
+    if (!(sfree(d->l))) printf("Failed To Free Locates Structure.\n");
+    if (!(sfree(d->array))) printf("Failed To Free Distances Array.\n");
+    if (!(sfree(d))) printf("Failed To Distances Structure.\n");
 }
 
 void _FAR PrintMap(DISTANCES *d)
@@ -203,8 +201,18 @@ void _FAR PrintMap(DISTANCES *d)
     for (count=0;count<size;count++) 
     {
         for (count2=0;count2<size;count2++) 
-                printf("%2d ",d->array[count2][count]);
+                printf("%.2f ",d->array[count2][count]);
         printf("\n");
             
     }
 }
+
+void ShowLocates(LOCATES *loc)
+{
+    int count;
+    for (count=0;count<loc->num;count++)
+    {
+        printf("Point (%.2f,%.2f)\n",(loc->at[count]).x,(loc->at[count]).y);
+    }
+}
+

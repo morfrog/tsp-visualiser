@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
+#include <conio.h>
 
 void *salloc(int n_items,size_t something) {
 /**********************************************************************
@@ -8,20 +9,27 @@ Description   : Allocates memory, displays an error if there isn't enough
 Pre-Condition : The amount of memory to allocate is passed in.
 Post-Condition: A pointer to this memory is returned.
 **********************************************************************/
-    void *p;
+    void *p=NULL;
     if ( (p=malloc(n_items*something)) == 0 )
     {
         printf("Out Of Memory Error.\n\n\nGoodBye.\n");
         exit(EXIT_FAILURE);
     }
+    /*
+    else
+    {
+        printf("%d Memory Allocated",_msize(p) / something);
+        if ((_msize(p) / something)!=n_items) printf(":UNEXPECTED - Required %d.",n_items);
+        printf("\n");
+    }
+    */   
     return p;
 }
 
 char *
 allocate_array(int nelements, int sizeof_element, char *array_name)
 {
-    char    *malloc();
-    char    *p;
+    char    *p=NULL;
     int i;
 
 
@@ -40,7 +48,7 @@ allocate_array(int nelements, int sizeof_element, char *array_name)
 char *
 allocate_N_by_N_array(int n1, int n2, int sizeof_element, char *array_name)
 {
-    char    **p;
+    char    **p=NULL;
     int i;
 
 
@@ -54,3 +62,20 @@ allocate_N_by_N_array(int n1, int n2, int sizeof_element, char *array_name)
     return( (char *) p);
 
 } /* allocate_N_by_N_array */
+
+int sfree(void *ptr)
+{
+    if (ptr==NULL)
+        return 0;
+/*    else
+        free(ptr);*/
+    return 1;
+
+}
+
+char mygetch()
+{
+    printf("Hit any key...\n");
+    return getch();
+}
+

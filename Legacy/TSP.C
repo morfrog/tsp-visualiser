@@ -4,10 +4,12 @@
 /* #include <values.h> */
 #include <time.h>
 #include <conio.h>
+#include <i86.h>
+#include "sys.h"
 #include "screen.h"
 #include "file.h"
 #include "path.h"
-
+ 
 #define DEBUG 1
 #define PRINTON 1
 #define TEST_RUNS 500
@@ -17,16 +19,11 @@ int random(int num)
     return rand() % num;
 }
 
-char mygetch()
+double PathLength(PATH *p,DISTANCES *d)
 {
-        if (DEBUG) return getch();
-        return 0;                       
-}
-
-int PathLength(PATH *p,DISTANCES *d)
-{
-        int count,ret=0;
-    NODE look=p->head;
+    int count;
+    double ret=0.0;
+    NODE *look=p->head;
 
     for (count=0;count<p->size;count++)
     {
@@ -36,29 +33,36 @@ int PathLength(PATH *p,DISTANCES *d)
     return ret;
 }
 
-void CreateRandomOrder(int order[],int size)
+int *CreateRandomOrder(int rsize)
 {
+    int count,tmp,source,target; /* for swapping values */
+    int *ret=NULL;
 
-    int count;
-    int tmp,source,target; /* for swapping values */
-    
-    for (count=0;count<size;count++)
-        order[count]=count;
-    for (count=0;count<(size*3);count++) /* perform size*3 swaps is good */
+    ret=salloc(rsize,sizeof(int));
+   
+    printf("Starting Randomize\n");
+    for (count=0;count<rsize;count++)
+        ret[count]=count;
+    for (count=0;count<rsize;count++)
+        printf("%2d ",ret[count]);
+    printf("\n");
+    for (count=0;count<(rsize*3);count++) /* perform size*3 swaps is good */
     {
-        target=random(size);
-        source=random(size);
+        target=random(rsize);
+        source=random(rsize);
         if (source!=target)  /* swap them */
         {
-            tmp=order[target];
-            order[target]=order[source];
-            order[source]=tmp;
+            tmp=ret[target];
+            ret[target]=ret[source];
+            ret[source]=tmp;
         }
         else ++count;
     }
-    /*for (count=0;count<size;count++)
-        printf("%d ",order[count]);*/
-        
+    for (count=0;count<rsize;count++)
+        printf("%2d ",ret[count]);
+    printf("\n");
+    printf("First Three are %d %d %d",ret[0],ret[1],ret[2]);
+    return ret;        
 }
 
 PATH *InsertMethod(DISTANCES *d)
@@ -68,16 +72,24 @@ PATH *InsertMethod(DISTANCES *d)
  *             minimised
  */
 {
-    PATH *p;
-    NODE Nc,Nd;
-    int order[20];
-    int order_pos; 
-    int count,insert_city,this_dist;
-    int bestA,bestB,best_dist; /* > biggest possible */
-    int total;
+    PATH *p=NULL;
+    NODE *Nc,*Nd;
+    int *order=NULL;
+    int order_pos,count;
+    double this_dist,
+           best_dist, /* > biggest possible */
+           total;
+    int bestA,bestB,insert_city; /* cities */
 
-    CreateRandomOrder(&order,d->size);
+ 
+
+    printf("Creating Random Order \n");
+    order=CreateRandomOrder((d->size));
+
+    printf("Creating New Path %d -> %d -> %d\n",order[0],order[1],order[2]);
+
     p=NewPath(order[0],order[1],order[2]);
+
     total=d->array[order[0]][order[1]]+
           d->array[order[1]][order[2]]+
           d->array[order[2]][order[0]];
@@ -85,14 +97,15 @@ PATH *InsertMethod(DISTANCES *d)
     if (PRINTON) printf("Start Path IS ");
     ShowPath(p);
 
-    for (order_pos=3;order_pos<d->size;order_pos++) /* 0,1 and 2 are start path */
+
+    for (order_pos=3;order_pos<(d->size);order_pos++) /* 0,1 and 2 are start path */
     {
         insert_city=order[order_pos];
         if (PRINTON) printf("Inserting City %d.\n",insert_city);
-        best_dist=1000;
+        best_dist=1000.0;
         PathStart(p);
 
-        for (count=0;count<p->size;count++)
+        for (count=0;count<(p->size);count++)
         {
             Nc=p->current;
             Nd=p->current->next;
@@ -101,7 +114,7 @@ PATH *InsertMethod(DISTANCES *d)
                 d->array[insert_city][Nd->citynum]      - /* subtract old */
                 d->array[Nc->citynum][Nd->citynum];
         
-            if (PRINTON) printf("Distance %d=%d+%d-%d.\n",this_dist,
+            if (PRINTON) printf("Distance %.4f=%.4f+%.4f-%.4f.\n",this_dist,
                 d->array[insert_city][Nc->citynum],
                 d->array[insert_city][Nd->citynum],
                 d->array[Nc->citynum][Nd->citynum]);
@@ -117,7 +130,7 @@ PATH *InsertMethod(DISTANCES *d)
         
         }
         if (PRINTON)
-            printf("Best was %d -> %d, Distance %d, Proceeding with next Insert.\n",
+            printf("Best was %d -> %d, Distance %.4f, Proceeding with next Insert.\n",
                             bestA,bestB,       best_dist);
         total+=best_dist;
         if (!(InsertPath(p,insert_city,bestA,bestB)))
@@ -126,27 +139,25 @@ PATH *InsertMethod(DISTANCES *d)
             exit(EXIT_FAILURE);
         }
         ShowPath(p);
-        mygetch();
     }
-    if (PRINTON) printf("Total Distance Is %d\n",total);                        
+    if (PRINTON) printf("Total Distance Is %.4f\n",total);                        
     return p;
 }
 
-
-void DrawCities(LOCATES loc)
+void DrawCities(LOCATES *loc)
 {
     char num[3]="00\0";
     int count;
     for (count=0;count<=(loc->num)-1;count++)
     {
         sprintf(num,"%d",loc->at[count].citynum);
-        DrawCity(num,loc->at[count].x,loc->at[count].y,12);
+                DrawCity(num,loc->at[count].x,loc->at[count].y,0.03);
     }
 }
 
-void DrawPath(PATH *p,LOCATES loc)
+void DrawPath(PATH *p,LOCATES *loc)
 {
-    NODE c=p->head;
+    NODE *c=p->head;
     int count;
 
     for (count=0;count<(p->size);count++)
@@ -160,30 +171,42 @@ void DrawPath(PATH *p,LOCATES loc)
 
 void main(int argc, char *argv[])
 {
-    DISTANCES *d;
-    PATH *p;
+    DISTANCES *d=NULL;
+    PATH *p=NULL;
+    SWIN *main=NewWin(1,1,350,350);
     /* char str[40]; */
-    int length,count,best=10000,worst=0;
-    long avg_tot=0,avg_num=0;
+    double length,best=10000.0,worst=0.0;
+    int count;
+    double avg_tot=0.0,avg_num=0.0;
+    int *tmp;
 
-    
+/*
+    printf("POINT     : %d  * %d\nDISTANCES : %d  * %d\n",
+    sizeof(POINT),sizeof(POINT *),sizeof(DISTANCES),sizeof(DISTANCES *));
+    mygetch();
+*/
     if (argc<2)
     {
         printf("Visual Tool For The Travelling Salesman Problem.\n");
-        printf("Usage: %s filename.",argv[0]);
+        printf("Usage: %s filename [time].\n%s\n%s\n%s\n",argv[0],
+               "Where        time = 0 is calculate to end",
+               "             time = n is wait n seconds between each insert",
+               "          No time = wait for keypress between each insert");
     }
     else
     {
-        printf("Reading Map...\n");
+        printf("Reading Map From File '%s'...\n",argv[1]);
         d=NewMap(argv[1]);
         printf("Map Read...\n");
         PrintMap(d);
         mygetch();
 
+        /*
         for (count=0;count<TEST_RUNS;count++)
         {
             printf("-----------START-------------\n");
             p=InsertMethod(d);
+            printf("Insert Method Complete.");
             length=PathLength(p,d);
             
             if (length<best) best=length;
@@ -198,20 +221,36 @@ void main(int argc, char *argv[])
         printf("   Best Path Length Off %3d Runs was %3d\n",TEST_RUNS,best);
         printf("Average Path Length Off %3d Runs was %3d\n",TEST_RUNS,avg_tot / avg_num);
         printf("  Worst Path Length Off %3d Runs was %3d\n",TEST_RUNS,worst);
-        getch();
-
-        InitScreen();
-        _setcolor(normal_col);
-        _rectangle(_GBORDER,0,0,639,479);
-   
-        DrawPath(p,d->l);
-        DrawCities(d->l);
-   
         mygetch();
-        ShutDown();
-        FreeMap(d);
-        FreePath(p);
+        */
+       
+        printf("Insert Method Starting...\n");
+        p=InsertMethod(d);
+        printf("Insert Method Complete - Calculating Path Length.\n");
+
+        length=PathLength(p,d);
+        printf("Length was %.3f\n",length);
+        mygetch();
+
+
+        InitScreen(16);
+        /*
+        _setcolor(normal_col);
+        _rectangle(_GBORDER,0,0,639,349);
+        */
+        SetWin(main);
+        BorderWin();
+
+        DrawPath(p,d->l);
+
+        DrawCities(d->l);
+
+        delay(2000);
         
+        ShutDown();
+/*      FreeWin(main);*/
+     
+/*      FreeMap(d); */
     }
 }
 
