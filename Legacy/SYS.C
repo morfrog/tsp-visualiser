@@ -173,3 +173,7 @@ void Working()
     _outtext(out);
 }
 
+void ClearBuffer()
+{
+    while (kbhit()) getch();
+}

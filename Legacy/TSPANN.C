@@ -77,18 +77,16 @@ void main(int argc,char *argv[])
     ANNPROB *rightp;
     char buffer[80];
     char ch;
-    int x;
           
     if (ProcessCmdLine(argc,argv,&filename,&temperature,&cooling,&changes,&tdelay,&optimal))
     {
-
         leftp=NewAnnProb(NewMap(NewLocates(filename)),opt1);
         rightp=NewAnnProb(NewMap(NewLocates(filename)),opt2);
         leftp->prob->path=LocatesAsPath(leftp->prob->dist->l);
         rightp->prob->path=LocatesAsPath(rightp->prob->dist->l);
 
         TotalDelay(tdelay);
-        InitScreen(16);
+        InitScreen(16); // * 2 pages, 640x350, 16 color * //
         AnnWinManager(text_top);
 
         sprintf(buffer,"Temperature=%11.6f  Cooling_Rate=%8.6f  "
@@ -97,9 +95,9 @@ void main(int argc,char *argv[])
         AnnShowText(buffer,1,3,RED);
 
         AnnWinManager(text_one);
-        AnnShowText("Length=",1,1,RED);
+        AnnShowText("Length=           Accepted=        %",1,1,RED);
         AnnWinManager(text_two);
-        AnnShowText("Length=",1,1,RED);
+        AnnShowText("Length=           Accepted=        %",1,1,RED);
 
         AnnWinManager(win_one);
         DrawNorm(leftp->prob,1);
@@ -119,8 +117,19 @@ void main(int argc,char *argv[])
         ch=getch();
         if (ch!=27)
         {
-            ControlAnnOverlay(leftp,rightp,639,240,59);
-            if (!kbhit()) getch();
+            AnnWinManager(text_one);
+            sprintf(buffer,"Length=%f  ",
+                PathLength(leftp->prob->path,leftp->prob->dist));
+            AnnShowText(buffer,1,1,YELLOW);
+
+            AnnWinManager(text_two);
+            sprintf(buffer,"Length=%f  ",
+                PathLength(rightp->prob->path,rightp->prob->dist));
+            AnnShowText(buffer,1,1,LTRED);
+
+            ControlLCLOverlay(leftp->prob,rightp->prob,639,240,59,YELLOW,LTRED);
+/*          ControlShrinkOverlay(leftp->prob,1,59,639/2,298,LTRED); */
+            if (kbhit()) getch();
         }
         ShutDown();
     }

@@ -233,6 +233,7 @@ double MakeAnnealChange(ANNPROB *annprob,int change)
     case opt3 :
         break;
     }
+    return 0;
 }
 
 void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,int changes)
@@ -250,11 +251,13 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
     char buffer[50];
     int max1=MethodMaxSize(one->method,one->prob->dist->size);
     int max2=MethodMaxSize(two->method,two->prob->dist->size);
+    int nulls1=0,nulls2=0,done1=0,done2=0;
 
     Init3TimeSegs(&seg1,&seg2,&seg3);
 
-    while (temp>0.0000005)
+    while ((temp>0.0000005) && (!( (done1) && (done2) )) )
     {
+        nulls1=0;nulls2=0;
         for (x=0;x<changes;x++)
         {
             now=clock();
@@ -262,58 +265,64 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             sprintf(buffer,"%3d",x+1);
             ShowText(buffer,58,3,LTRED);
 
-            AnnealOneOpt(one);
-            ApplyTemperature(one,temp);
-            change1=ChooseChange(one);
-            good1=(!(change1==-1));
-            AnnWinManager(win_one);
-            if (good1) {
-                array1=one->ann[change1].array;
-                HiliteOneOpt(one->prob,array1[1],array1[0],array1[2],hilite_1,1);
+            if (!done1)
+            {
+                AnnealOneOpt(one);
+                ApplyTemperature(one,temp);
+                change1=ChooseChange(one);
+                if (change1==-1)
+                    {++nulls1;good1=0;}
+                else good1=1;
+                AnnWinManager(win_one);
+                if (good1) {
+                    array1=one->ann[change1].array;
+                    HiliteOneOpt(one->prob,array1[1],array1[0],array1[2],hilite_1,1);
+                }
+                else DrawNorm(one->prob,1);
             }
-            else DrawNorm(one->prob,1);
 
-            AnnealTwoOpt(two);
-            ApplyTemperature(two,temp);
-            change2=ChooseChange(two);
-            good2=(!(change2==-1));
-            AnnWinManager(win_two);
-            if (good2) {
-                array2=two->ann[change2].array;
-                HiliteTwoOpt(two->prob,array2[0],array2[1],array2[2],array2[3],0);
+            if (!done2)
+            {
+                AnnealTwoOpt(two);
+                ApplyTemperature(two,temp);
+                change2=ChooseChange(two);
+                if (change2==-1)
+                    {++nulls2;good2=0;}
+                else good2=1;
+                AnnWinManager(win_two);
+                if (good2) {
+                    array2=two->ann[change2].array;
+                    HiliteTwoOpt(two->prob,array2[0],array2[1],array2[2],array2[3],0);
+                }
+                else DrawNorm(two->prob,1);
             }
-            else DrawNorm(two->prob,1);
             SwapPage();
             if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
     
-            AnnWinManager(win_one);
-            if (good1) {
-                 HiliteOneOpt(one->prob,array1[3],array1[0],array1[4],hilite_2,0);
+            if (!done1)
+            {
+                AnnWinManager(win_one);
+                if (good1) {
+                    HiliteOneOpt(one->prob,array1[3],array1[0],array1[4],hilite_2,0);
+                    len1+=MakeAnnealChange(one,change1);
+                    AnnWinManager(text_one);
+                    sprintf(buffer,"%f",len1);
+                    AnnShowText(buffer,8,1,LTRED);
+                }
             }
-            else DrawNorm(one->prob,1);
-
-            AnnWinManager(win_two);
-            if (good2) {
-                HiliteTwoOpt(two->prob,array2[0],array2[1],array2[2],array2[3],1);
+            if (!done2)
+            {
+                AnnWinManager(win_two);
+                if (good2) {
+                    HiliteTwoOpt(two->prob,array2[0],array2[1],array2[2],array2[3],1);
+                    len2+=MakeAnnealChange(two,change2);
+                    AnnWinManager(text_two);
+                    sprintf(buffer,"%f",len2);
+                    AnnShowText(buffer,8,1,LTRED);
+                }
             }
-            else DrawNorm(two->prob,1);
             SwapPage();
             if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
-
-            if (good1) {
-                len1+=MakeAnnealChange(one,change1);
-            }
-
-            if (good2) {
-                len2+=MakeAnnealChange(two,change2);
-            }        
-            AnnWinManager(text_one);
-            sprintf(buffer,"%f",len1);
-            AnnShowText(buffer,8,1,LTRED);
-
-            AnnWinManager(text_two);
-            sprintf(buffer,"%f",len2);
-            AnnShowText(buffer,8,1,LTRED);
 
             AnnWinManager(win_one);
             DrawNorm(one->prob,1);
@@ -323,81 +332,21 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
 
         }
-        temp*=cooling;
-   
-        AnnWinManager(text_top);
-        sprintf(buffer,"%11.6f",temp);
-        ShowText(buffer,13,2,LTRED);
-
-
-    }
-}
-
-void DrawOverlay(PROBLEM *prob,int color,int cities)
-{
-    LOCATES *l=prob->dist->l;
-    SetMask(prob->vmask,color,citysize);
-    DrawMaskPath(prob->path,l,prob->vmask);
-    SetMask(prob->vmask,city_in,citysize);
-    if (cities)  DrawCities(l,prob->vmask);
-}
-
-int ControlAnnOverlay(ANNPROB *one,ANNPROB *two,int width,int height,int starty)
-{
-    SWIN *left=NewWin(1,starty,width/2,starty+height-1);
-    SWIN *right=NewWin((width/2)+1,starty,width,starty+height-1);
-    int ld=1,rd=-1,edge=0,delayfor=(270)/(one->prob->dist->size);
-    clock_t now;
-    char buffer[50];
-
-    AnnWinManager(text_one);
-    sprintf(buffer,"Length=%f  ",PathLength(one->prob->path,one->prob->dist));
-    AnnShowText(buffer,1,1,YELLOW);
-
-    AnnWinManager(text_two);
-    sprintf(buffer,"Length=%f  ",PathLength(two->prob->path,two->prob->dist));
-    AnnShowText(buffer,1,1,LTRED);
-
-    do
-    {
-        while (!edge)
-        {
-            now=clock();
-            SetWin(left);
-            _clearscreen(_GVIEWPORT);
-            SetWin(right);
-            _clearscreen(_GVIEWPORT);
-            DrawOverlay(two->prob,LTRED,1);
-            SetWin(left);
-            DrawOverlay(one->prob,YELLOW,1);
-            SwapPage();
-            MoveWin(left,ld,0,ld,0);
-            MoveWin(right,rd,0,rd,0);
-            if (kbhit()) return 0;
-
-//            while (clock()<now+1) {}
-            delay(delayfor);
-            if ((left->l)>=(right->l)) // centre
-                edge=1;
-            if ((left->r)<(right->l)) // edges
-                edge=2;
+        if (nulls1>=changes) done1=1;
+        if (nulls2>=changes) done2=1;
+        if (!((done1) && (done2))) {
+            temp*=cooling;
+            AnnWinManager(text_top);
+            sprintf(buffer,"%11.6f",temp);
+            ShowText(buffer,13,2,LTRED);
+            AnnWinManager(text_one);
+            sprintf(buffer,"%8.3f",done1?0:100*(double)(changes-nulls1)/changes);
+            AnnShowText(buffer,28,2,LTRED);
+            AnnWinManager(text_two);
+            sprintf(buffer,"%8.3f",done2?0:100*(double)(changes-nulls2)/changes);
+            AnnShowText(buffer,28,2,LTRED);
         }
-        if (edge==1)
-        {
-            SetWin(left);
-            _clearscreen(_GVIEWPORT);
-            DrawOverlay(one->prob,YELLOW,0);
-            DrawOverlay(two->prob,LTRED,1);
-            SwapPage();
-            now=clock();
-            while (clock()<now+100) {}
-        }
-        edge=0;
-        ld=rd;
-        rd*=-1;
     }
-    while (!(kbhit()));
-    return 1;
 }
 
 void _FAR AnnWinManager(int which)

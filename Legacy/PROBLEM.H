@@ -59,4 +59,6 @@ int  _FAR SetMasks(MASK *m,int num, ...); // int pos,int color,double size
 void    DrawMaskPath(PATH *p,LOCATES *loc,MASK *m);
 LOCATES *PathAsLocates(PATH *path,LOCATES *loc);
 PATH    *LocatesAsPath(LOCATES *loc);
+int ControlLCLOverlay(PROBLEM *one,PROBLEM *two,int width,int height,int starty,int col1,int col2);
+int ControlShrinkOverlay(PROBLEM *prob,int startx,int starty,int endx,int endy,int col);
 #endif

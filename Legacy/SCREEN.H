@@ -61,6 +61,7 @@ void _FAR SetTextWin(SWIN *w);
 void _FAR ResetWin(SWIN *w,int l,int t,int r,int b);
 void _FAR MoveWin(SWIN *w,int l,int t,int r,int b);
 void _FAR FreeWin(SWIN *w);
+void _FAR ClearSection(int x1,int y1,int x2,int y2);
 void _FAR BorderWin(SWIN *w,int color);
 void _FAR DrawLine(double x1,double y1,double x2,double y2,int color);
 void _FAR DrawCity(char name[],double x,double y,double size,int color);

@@ -9,6 +9,37 @@
 #include "problem.h"
 
 #define VERSION 1.01
+#define Main 0
+#define Text 1
+
+void _FAR WinManager(int which)
+{
+    static int init=0;
+    static SWIN *main;
+    static SWIN *text;
+
+    if (!init) {
+        main=NewWin(1,1,460,349);
+        text=NewWin(465,1,639,349);
+        BorderWin(main,border_col);
+        BorderWin(text,border_col);
+        init=1;
+    }
+    switch (which) {
+        case Main : SetWin(main);  break;
+        case Text : SetTextWin(text);  break;
+    }
+}
+
+void _FAR ShowText(char string[],int start,int line,int color)
+{
+    int startpage=_getactivepage();
+    _setactivepage(1);
+    DrawText(string,start,line,color);
+    _setactivepage(0);
+    DrawText(string,start,line,color);
+    _setactivepage(startpage);
+}
 
 int ProcessCmdLine(int argc,char *argv[],char **fileone,char **filetwo)
 {

@@ -4,6 +4,8 @@
 #include <time.h>
 #include <conio.h>
 #include <graph.h>
+#include <dos.h>
+#include <ctype.h>
 #include "sys.h"
 #include "file.h"
 #include "path.h"
@@ -366,6 +368,100 @@ PATH *LocatesAsPath(LOCATES *loc)
     for (x=1;x<(loc->num);x++)
         InsertPathEnd(ret,loc->at[x].citynum);
     return ret;
+}
+
+void DrawOverlay(PROBLEM *prob,int color,int cities)
+{
+    LOCATES *l=prob->dist->l;
+    SetMask(prob->vmask,color,citysize);
+    DrawMaskPath(prob->path,l,prob->vmask);
+    SetMask(prob->vmask,city_in,citysize);
+    if (cities)  DrawCities(l,prob->vmask);
+}
+
+int ControlShrinkOverlay(PROBLEM *prob,int startx,int starty,int endx,int endy,int col)
+{
+    SWIN *win=NewWin(startx,starty,endx,endy);
+
+    while ((win->l+4<win->r) && (win->t+4<win->b))
+    {
+        SetWin(win);
+        _clearscreen(_GVIEWPORT);
+        DrawOverlay(prob,col,1);
+        SwapPage();
+        delay(30);
+        MoveWin(win,1,0,1,0);
+    }
+    return 1;
+}
+
+int ControlLCLOverlay(PROBLEM *one,PROBLEM *two,int width,int height,int starty,int col1,int col2)
+// * Moves overlay from edges to centre to start edges and repeats till esc key hit * //
+{
+    SWIN *left=NewWin(1,starty,width/2,starty+height-1);
+    SWIN *right=NewWin((width/2)+1,starty,width,starty+height-1);
+    int factor=1,ld=factor,rd=-factor,edge=0,delayfor=(270)/(one->dist->size);
+    int done=0,cx1=1,cy1=starty,cx2=width,cy2=starty+height-1;
+    char ch;
+
+    ClearBuffer();
+    MoveWin(left,ld,0,ld,0);
+    MoveWin(right,rd,0,rd,0);
+
+    do
+    {
+        while (!edge)
+        {
+            ClearSection(cx1,cy1,cx2,cy2);
+            SetWin(left);
+            DrawOverlay(one,col1,1);
+            SetWin(right);
+            DrawOverlay(two,col2,1);
+            SwapPage();
+            delay(delayfor);
+        
+            MoveWin(left,ld,0,ld,0);
+            MoveWin(right,rd,0,rd,0);
+
+            if (kbhit()) {
+                ch=getch();
+                if (ch==27) return 1;
+                while (ch==48) ch=getch(); // * handle pause mode * //
+                if (isdigit(ch))
+                {
+                    factor=(ch-48); // * = todigit(ch) * //
+                    rd=(rd<0?-1:1)*factor;
+                    ld=-rd;
+                }
+            }    
+
+            if (abs((right->l)-(left->l))<factor)
+                edge=1;
+            else if (((left->l)+factor)>=(right->l)) // centre
+                edge=1;
+            else if ((left->l)<=factor+1) // edges
+                edge=2;
+            else if ((rd<0) && (left->l<=factor*2))
+                edge=2;
+        }
+        if (edge==1)
+        {
+            ClearSection(cx1,cy1,cx2,cy2);
+            SetWin(left);
+            DrawOverlay(one,col1,0);
+            DrawOverlay(two,col2,1);
+            SwapPage();
+            delay(1000); // * delay for 1 second at middle * //
+        }
+        edge=0; // * not at edge or middle * //
+        ld=rd;
+        rd*=-1;
+
+        MoveWin(left,ld,0,ld,0);
+        MoveWin(right,rd,0,rd,0);
+    }
+    while (!done);
+    return 1;
 }
 
 /*

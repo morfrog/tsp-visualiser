@@ -208,6 +208,12 @@ void _FAR BorderWin(SWIN *w,int color)
 
 }
 
+void _FAR ClearSection(int x1,int y1,int x2,int y2)
+{
+    _setviewport(x1,y1,x2,y2);
+    _clearscreen(_GVIEWPORT);
+}
+
 void _FAR FreeWin(SWIN *w)
 {
     if (!(sfree(w))) printf("Failed To Free Window.\n");

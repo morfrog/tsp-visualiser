@@ -25,4 +25,5 @@ void CopyIntArray(INTARRAY *to,INTARRAY *from);
 void FreeIntArray(INTARRAY **a);
 void Beep(int pitch,int time);
 void Working();
+void ClearBuffer();
 #endif
