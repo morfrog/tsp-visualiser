@@ -1,0 +1,70 @@
+
+---------- MOUSE.C
+
+---------- INSERT.C
+
+---------- INTERFAC.C
+#define REQUEST -1
+    if (num==REQUEST) return directory[filenum];
+    if (num==REQUEST) // * request for current * //
+    if (num==REQUEST) // * request for current * //
+    if (num==REQUEST) return solvermethod[current_solver];
+    int pos=320,RequestUpdate=0,line;
+        if (MouseMoved() || (RequestUpdate) || (mx!=m.xpos) || (my!=m.ypos))
+                        SetFile(&currentprob,REQUEST,0));
+
+---------- SYS.C
+
+---------- SCREEN.C
+
+---------- FILE.C
+
+---------- VIDMODES.C
+
+---------- SCAN.C
+
+---------- PROBLEM.C
+    if (tdelay==REQUEST)
+        return -2; // * was set - not request * //
+    int y=TotalDelay(REQUEST);
+    int y=TotalDelay(REQUEST);
+    if (TotalDelay(REQUEST)<0) { // * if Wait_For_Keypress option * //
+
+---------- PATH.C
+
+---------- TSPANN.C
+
+---------- TSP.C
+
+---------- TXTS.C
+
+---------- MAKEMAP.C
+
+---------- COMPSOLN.C
+
+---------- RNDFILE.C
+
+---------- OPTIM.C
+
+---------- TSPOPT.C
+
+---------- ANNEAL.C
+
+---------- MOUSE.H
+
+---------- SYS.H
+
+---------- FILE.H
+
+---------- ANNEAL.H
+
+---------- INSERT.H
+
+---------- PATH.H
+
+---------- PROBLEM.H
+#define REQUEST -2
+
+---------- OPTIM.H
+
+---------- SCREEN.H
