@@ -18,8 +18,6 @@ wcc386 tsp.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -hw -fp5 -fpi87 -mm -5r -bt
 cls
 echo Compiling...
 wmake -f e:\watcom\tsp\main.mk -h -e >out
-echo Linking...
-wlink SYS dos4g op m d all op st=8192 op maxe=25 op d op q op symf @main.lk1 >>out
 type out
 echo --------------------------------------------------------------------------------
 find /I /V "SYMBOL" out | find /I /V "wlink" | find /I /V "wcc386" | find /I /V "cd e:"

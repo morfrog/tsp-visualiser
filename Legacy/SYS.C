@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <conio.h>
+#include <time.h>
+#include <dos.h>
 
 void *salloc(int n_items,size_t something) {
 /**********************************************************************
@@ -67,8 +69,8 @@ int sfree(void *ptr)
 {
     if (ptr==NULL)
         return 0;
-    else
-        free(ptr);
+/*    else
+        free(ptr);*/
     return 1;
 
 }
@@ -79,8 +81,16 @@ char mygetch()
     return getch();
 }
 
-int random(int num)
+void StartRandom()
 {
-    return rand() % num;
+    struct dostime_t time;
+    _dos_gettime(&time);
+    srand(((time.hsecond)*(time.second))%RAND_MAX);
 }
+
+int Random(int num)
+{
+    return (rand() % num); /* 0..num-1 */
+}
+
 

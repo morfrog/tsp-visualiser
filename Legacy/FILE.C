@@ -4,9 +4,11 @@
 #include <string.h>
 #include <conio.h>
 #include <i86.h>
+#include <ctype.h>
 #include "sys.h"
 #include "file.h"
- 
+
+#define PRINTON 0
 /*
 void main()
 {
@@ -68,11 +70,17 @@ void _FAR SkipLine(FILE *f)
     SkipTill(f,'\n');
 }
 
+int IsDoubleChar(char c)
+{
+    return ((isdigit(c)) || (c=='.'));
+}
+
 
 double _FAR ReadDouble(FILE *f)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *      Desc    :       Reads an int from a file, removing leading spaces and
- *                              stopping at an EOF or space or new line character       
+ *      Desc    :       Reads an int from a file, removing leading non
+ *                              {0123456789.} chars and stopping at an
+ *                              EOF or space or new line character       
  *      Pre             :       the file exists
  *      Post    :       the integer is returned, the file pointer is past the 
  *                              integer
@@ -85,10 +93,10 @@ double _FAR ReadDouble(FILE *f)
     int x=0;
     strcpy(buffer,"          ");
     ch=fgetc(f);
-    if (ch==' ') /* remove leading spaces */
-        do ch=fgetc(f); while (ch==' ');
+    if (!IsDoubleChar(ch)) /* find first char of double */
+        do ch=fgetc(f); while (!IsDoubleChar(ch));
 
-    while ((ch!=' ') && (ch!='\n') && (ch!=EOF))
+    while (IsDoubleChar(ch))
     {
         buffer[x]=ch;
         ch=fgetc(f);
@@ -121,7 +129,6 @@ DISTANCES *NewMap(char *filename)
 
     FILE *input=fopen(filename,"rt");
     int count,count2,n;
-    char *type=salloc(20,sizeof(char));
 /*    char name[STR_LEN];*/
     double ndist;
 
@@ -134,55 +141,44 @@ DISTANCES *NewMap(char *filename)
     }
     else
     {
-        fgets(type,sizeof(type),input);
-        printf("%s",type);
-        SkipLine(input);
-
         dist=salloc(1,sizeof(DISTANCES));
         dist->size=ReadDouble(input);      /* the number of points */
         dist->array=
         allocate_N_by_N_array(dist->size,dist->size,sizeof(double),"Distance");        
-        printf(" %.4f\n",dist->size);
+        if (PRINTON) printf(" %.4f\n",dist->size);
         SkipLine(input);
-        if (strncmp(type,"Geographic",sizeof(char)*3)==0) /* is Geographic */
-        {     
-            loc=salloc(1,sizeof(LOCATES));
-            loc->num=(dist->size);
-            loc->at=salloc(loc->num,sizeof(POINT));
-            for (count=0;count<loc->num;count++) 
-            {
-                (loc->at[count]).x=ReadDouble(input);
-                (loc->at[count]).y=ReadDouble(input);
-                (loc->at[count]).citynum=count;
-                SkipLine(input);
-
-            }
-            ShowLocates(loc);
-            printf("loc->num=%d\n",loc->num);
-            n=(loc->num);
-            mygetch();
-            for (count=0;count<n;count++) 
-            {
-                for (count2=count;count2<n;count2++) 
-                {
-                    /* printf("%.2f %.2f<%.2f ",count,count2,n); */
-                    ndist=Dist(loc->at[count],loc->at[count2]);
-                    /* printf("Dist= %.2f.\n",ndist); */
-                    dist->array[count][count2]=ndist;
-                    dist->array[count2][count]=ndist;
-                }
-            }
-            dist->l=loc;
-                        
-        }
-        else
+        loc=salloc(1,sizeof(LOCATES));
+        loc->num=(dist->size);
+        loc->at=salloc(loc->num,sizeof(POINT));
+        for (count=0;count<loc->num;count++) 
         {
-            printf("not defined");
+            (loc->at[count]).x=ReadDouble(input);
+            (loc->at[count]).y=ReadDouble(input);
+            (loc->at[count]).citynum=count;
+            SkipLine(input);
 
         }
-        fclose(input);
-        return dist; 
+        if (PRINTON) ShowLocates(loc);
+        if (PRINTON) printf("loc->num=%d\n",loc->num);
+        n=(loc->num);
+        if (PRINTON) mygetch();
+        for (count=0;count<n;count++) 
+        {
+            for (count2=count;count2<n;count2++) 
+            {
+                /* printf("%.2f %.2f<%.2f ",count,count2,n); */
+                ndist=Dist(loc->at[count],loc->at[count2]);
+                /* printf("Dist= %.2f.\n",ndist); */
+                dist->array[count][count2]=ndist;
+                dist->array[count2][count]=ndist;
+            }
+        }
+        dist->l=loc;
+                      
     }
+    fclose(input);
+    return dist; 
+
 }
 
 void _FAR FreeMap(DISTANCES *d)

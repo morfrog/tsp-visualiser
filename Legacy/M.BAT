@@ -1,4 +1,2 @@
-rem copy head file.in2
-rem mapmake 8 >>file.in2
-main file.in3 1
+main 30cities.da4 F Nearest -3 4.11147
 

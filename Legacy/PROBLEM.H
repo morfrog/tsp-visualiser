@@ -1,12 +1,7 @@
-#ifndef PATH_H
-
-#include "file.h" /* DISTANCES */
-#include "path.h" /* PATH */
+#ifndef PROBLEM_H
 
 struct prob {
     DISTANCES *dist;
-    int endi;
-    int *inpath;
     PATH *path;
     int endo;
     int *outpath;
@@ -16,6 +11,19 @@ typedef struct prob PROBLEM;
 
 PROBLEM *NewProblem(DISTANCES *d);
 double PathLength(PATH *p,DISTANCES *d);
-PATH *InsertMethod(DISTANCES *d);
+double InsertCost(PROBLEM *prob,int I, int A, int B);
+void BestInsert(PROBLEM *prob,int citynum,int *a,int *b);
+void ProblemReset(PROBLEM *prob,int free);
+void PrintList(int *list,int listsize);
+void CityDel(PROBLEM *prob,int citynum);
+void NNeighbourStartPath(PROBLEM *prob);
+void RndStartPath(PROBLEM *prob);
+int FNeighbour(int (* func)(double,double),PROBLEM *prob,int citynum);
+int Lesser(double this,double best);
+int Greater(double this,double best);
+void FStartPath(int (* func)(double,double),PROBLEM *prob);
+int FNextCost(int (* func)(double,double),PROBLEM *prob,int *A,int *B);
+int FNextDist(int (* func)(double,double),int (* func2)(double,double),PROBLEM *prob,int *fcity);
+int RndNext(PROBLEM *prob);
 
 #endif

@@ -36,9 +36,7 @@ void _FAR FreePath(PATH *p)
         del=c;  
         c=c->next;
     }
-    if (sfree(p)) p=NULL;
-    else printf("Failed To Free Path Structure.\n");
-
+    if (!(sfree(p))) printf("Failed To Free Path Structure.\n");
 
 
 }
@@ -84,6 +82,17 @@ void _FAR ShowPath(PATH *p)
 void _FAR PathStart(PATH *p)
 {
     p->current=p->head;
+}
+
+void _FAR PathCurrent(PATH *p,int *a)
+{
+    *a=p->current->citynum;
+}
+
+void _FAR PathPair(PATH *p,int *a,int *b)
+{
+    *a=p->current->citynum;
+    *b=p->current->next->citynum;
 }
 
 void _FAR PathNext(PATH *p)

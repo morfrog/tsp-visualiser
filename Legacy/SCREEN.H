@@ -1,4 +1,7 @@
 #ifndef SCREEN_H
+#define maxx 100
+#define maxy 100
+#define citysize 0.02
 
 #if defined ( __386__ )
     #define _FAR
@@ -30,11 +33,11 @@
 /* colours */
 #define normal_col  RED
 #define change_col  YELLOW
+#define line_change LTRED
 #define city_col    GREY
 #define text_col    LTRED
 #define line_col    GREEN
-#define line_change ORANGE
-#define border_col  BLUE
+#define border_col  PURPLE
 
 struct win
 {
