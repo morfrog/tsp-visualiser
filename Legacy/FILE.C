@@ -252,17 +252,33 @@ DISTANCES *NewMap(LOCATES *loc)
     return dist; 
 }
 
-void _FAR FreeLocates(LOCATES **loc)
+int _FAR FreeLocates(LOCATES **loc)
 {
-   if (!(sfree((*loc)->at))) printf("Failed To Free Locates 'At' Array.\n");
-   if (!(sfree(*loc))) printf("Failed To Free Locates Structure.\n");
+    int ret=1;
+    if (!(sfree((*loc)->at))) {
+        printf("Failed To Free Locates 'At' Array.\n");
+        ret=0;
+    }
+    if (!(sfree(*loc))) {
+        printf("Failed To Free Locates Structure.\n");
+        ret=0;
+    }
+    return ret;
 }
 
-void _FAR FreeMap(DISTANCES **d)
+int _FAR FreeMap(DISTANCES **d)
 {
-    FreeLocates( &((*d)->l));
-    if (!(sfree((*d)->array))) printf("Failed To Free Distances Array.\n");
-    if (!(sfree(*d))) printf("Failed To Distances Structure.\n");
+    int ret=1;
+    if (!FreeLocates( &((*d)->l))) ret=0;
+    if (!(sfree((*d)->array))) {
+        printf("Failed To Free Distances Array.\n");
+        ret=0;
+    }
+    if (!(sfree(*d))) {
+        printf("Failed To Distances Structure.\n");
+        ret=0;
+    }
+    return ret;
 }
 
 void _FAR PrintMap(DISTANCES *d)

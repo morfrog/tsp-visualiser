@@ -373,14 +373,18 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
     
     if ((num==INITIALISE) || (!initialised)) {
         directory=GetDirectory( getcwd( NULL, 0 ),"TSP",&numfiles,1 );
-        number_of_files=numfiles;
-//        printf("%d files found\n",numfiles);
 
         if ((!initialised) && (numfiles>0)) {
             *currentprob=NewProblem(NewMap(NewLocates(directory[filenum])));
             (*currentprob)->path=LocatesAsPath((*currentprob)->dist->l);
         }
+        strcpy(directory[numfiles],"Current");
+        WriteLocates(PathAsLocates((*currentprob)->path,(*currentprob)->dist->l),"CURRENT");
+        ++numfiles;
+
+        number_of_files=numfiles;
         initialised=1;
+
     }
     if (num==REQUEST) return directory[filenum];
     if ((num!=filenum) && (num!=INITIALISE))
@@ -389,6 +393,7 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
         update=1;
         if (numfiles>0)
         {
+            FreeMap(& ((*currentprob)->dist) );
             *currentprob=NewProblem(NewMap(NewLocates(directory[filenum])));
             (*currentprob)->path=LocatesAsPath((*currentprob)->dist->l);
         }
@@ -404,7 +409,10 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
             UpdateFileView(*currentprob);
         }
         else
-            DrawText("No Files\nFound. Use\nNew to\ncreate one",1,1,YELLOW);
+            DrawText(" No Files\n"
+                     "Found. Use\n"
+                     "  New to\n"
+                     "create one",1,1,YELLOW);
         ShowMouse();
     }
     return directory[filenum];
@@ -729,7 +737,7 @@ void main()
     char buffer[60];
     int x,select,at=title,last=title,mx=0,my=0,tinit,tmethod;
     INSPROB *insprob;
-    PROBLEM *currentprob;
+    PROBLEM *currentprob=NULL;
     FILE *out;
     double length;
 
@@ -792,6 +800,8 @@ void main()
                     DrawText("Map Created..",1,7,GREEN);
                 }
                 SetFile(&currentprob,INITIALISE,TRUE);
+//                WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
+//                SetFile(&currentprob,number_of_files-1,FALSE);
                 break;
             case savebtn :
                 break;
@@ -832,12 +842,16 @@ void main()
                      "               ",1,19,LTRED);
             
                 while (getch()!=27) {}
+
+                currentprob=insprob->prob;
+                WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
+                SetFile(&currentprob,number_of_files-1,FALSE);
+                
                 InitScreen(16);
                 
                 _setvisualpage(0);
                 _setactivepage(0);
                 _clearscreen(_GCLEARSCREEN);
-                currentprob=insprob->prob;
                 DrawScreen(&currentprob);
                 ResetMouse();
                 SetMousePos(mx,my);
