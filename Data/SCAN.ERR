@@ -1,0 +1,2 @@
+scan.c(9): Warning! W202: Symbol 'waste' has been defined, but not referenced
+scan.c(5): Warning! W202: Symbol 'argc' has been defined, but not referenced

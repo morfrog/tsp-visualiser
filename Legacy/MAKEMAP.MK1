@@ -1,0 +1,14 @@
+!define BLANK ""
+e:\watcom\tsp\makemap.obj : e:\watcom\tsp\makemap.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ *wcc386 makemap.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tsp\makemap.exe : e:\watcom\tsp\makemap.obj .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ @%write makemap.lk1 NAME makemap
+ @%append makemap.lk1 FIL makemap.obj
+ @%append makemap.lk1 
+ *wlink SYS dos4g op m d all op st=8192 op maxe=25 op q op symf @makemap.lk1
+

@@ -1,0 +1,44 @@
+!define BLANK ""
+e:\watcom\tspins\file.obj : e:\watcom\tspins\file.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tspins
+ *wcc386 file.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tspins\path.obj : e:\watcom\tspins\path.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tspins
+ *wcc386 path.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tspins\problem.obj : e:\watcom\tspins\problem.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tspins
+ *wcc386 problem.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tspins\screen.obj : e:\watcom\tspins\screen.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tspins
+ *wcc386 screen.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tspins\sys.obj : e:\watcom\tspins\sys.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tspins
+ *wcc386 sys.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tspins\tspopt.obj : e:\watcom\tspins\tspopt.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tspins
+ *wcc386 tspopt.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tspins\123opt.exe : e:\watcom\tspins\file.obj e:\watcom\tspins\pat&
+h.obj e:\watcom\tspins\problem.obj e:\watcom\tspins\screen.obj e:\watcom\tsp&
+ins\sys.obj e:\watcom\tspins\tspopt.obj e:\watcom\tspins\file.h e:\watcom\ts&
+pins\path.h e:\watcom\tspins\problem.h e:\watcom\tspins\screen.h e:\watcom\t&
+spins\sys.h .AUTODEPEND
+ @e:
+ cd e:\watcom\tspins
+ @%write 123opt.lk1 NAME 123opt
+ @%append 123opt.lk1 FIL file.obj,path.obj,problem.obj,screen.obj,sys.obj,ts&
+popt.obj
+ @%append 123opt.lk1 
+ *wlink SYS dos4g op m d all op st=8192 op maxe=25 op q op symf @123opt.lk1
+
