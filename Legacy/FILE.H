@@ -1,5 +1,5 @@
 #ifndef FILE_H
-#define big 20
+#define big 10
 #define STR_LEN 10
 
 #if defined ( __386__ )
@@ -35,19 +35,19 @@ typedef struct locates *LOCATES;
 struct matrix
 {
         int size; /* <=big */
-    int array[big][big];
+        int array[big][big];
     LOCATES l;
 };
 
 typedef struct matrix DISTANCES;
 
-void _FAR ReadToken(FILE *f,char string[],int max);
-void _FAR SkipTill(FILE *f,char this);
-void _FAR SkipLine(FILE *f);
-int _FAR ReadInt(FILE *f);
-int _FAR Dist(POINT a,POINT b);
-DISTANCES _FAR *NewMap(char *filename);
-void _FAR FreeMap(DISTANCES *d);
-void _FAR PrintMap(DISTANCES *d);
+void ReadToken(FILE *f,char string[],int max);
+void SkipTill(FILE *f,char this);
+void SkipLine(FILE *f);
+int ReadInt(FILE *f);
+int Dist(POINT a,POINT b);
+DISTANCES *NewMap(char *filename);
+void FreeMap(DISTANCES *d);
+void PrintMap(DISTANCES *d);
 
 #endif

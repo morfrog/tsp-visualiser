@@ -1,0 +1,14 @@
+!define BLANK ""
+e:\watcom\tsp\readmap.obj : e:\watcom\tsp\readmap.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ *wcc386 readmap.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tsp\file.exe : e:\watcom\tsp\readmap.obj .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ @%write file.lk1 NAME file
+ @%append file.lk1 FIL readmap.obj
+ @%append file.lk1 
+ *wlink SYS dos4g op m d all op st=8192 op maxe=25 op q op symf @file.lk1
+

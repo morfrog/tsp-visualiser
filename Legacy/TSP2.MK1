@@ -1,0 +1,22 @@
+!define BLANK ""
+e:\watcom\tsp\file.obj : e:\watcom\tsp\file.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ *wcc file.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -fp5 -fpi87 -ms -5 -bt=&
+dos
+
+e:\watcom\tsp\sys.obj : e:\watcom\tsp\sys.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ *wcc sys.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -fp5 -fpi87 -ms -5 -bt=d&
+os
+
+e:\watcom\tsp\tsp2.exe : e:\watcom\tsp\file.obj e:\watcom\tsp\sys.obj e:\wat&
+com\tsp\file.h e:\watcom\tsp\sys.h .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ @%write tsp2.lk1 NAME tsp2
+ @%append tsp2.lk1 FIL file.obj,sys.obj
+ @%append tsp2.lk1 
+ *wlink SYS dos op m d all op st=8192 op maxe=25 op q op symf @tsp2.lk1
+

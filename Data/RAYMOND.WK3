@@ -1,0 +1,137 @@
+Next meeting ... same bat time, same bat room ... Tuesday 3:30pm
+
+Ray's tasks for the coming week ... write the of project outline
+
+***
+
+Drew's tasks for the coming week ...
+
+Program 1.  Program to generate a set of N random cities
+
+	- defaults to real values (at least 5 decimal places) inside a
+	  unit square
+	- the number of cities is a command line argument
+	- writes cities to standard output, 1 city coordinate pair to a line
+	- initializes random number generator by
+			- second command line argument if there is one
+			- otherwise uses clock
+	
+	*** single file program
+
+
+Program 2.  Plots a set of N cities on the screen
+
+	- reads the cities from standard input
+
+	- surrounded by enclosing unit square border
+
+	- coordinates on screen of enclosing square given on command line
+	
+	*** the "plot" is in a separate file from the main
+
+
+(Completing the two above programs would be a satisfactory performance 
+for this week.  A strong performance would include the following ...)
+
+
+Program 3 Demo of Knowledge of Virtual Pages
+
+	- Done by visualizing insertion method
+
+	- updated path done on a second page, and then "slammed in",
+	  that the change to the screen in "instantaneous"
+
+	  (This program should be making use of the "plot" software from
+	  program 2.)
+
+
+---
+
+struct point{
+	double  x;
+	double  y;
+};
+
+void
+read_points(int pos)	/* Position into which this call of read_points
+			 * should write. First call gets 0.
+			 */
+/*
+ *  changes pointer "n" to point to array of double numbers
+ *  changes int "size" to indicate size of array "n"
+ */
+{
+	struct	point cityN;
+	double	x, y;
+	int	flag;
+
+
+	flag = scanf("%lf %lf", &x, &y);
+
+	if ( flag == 2 )
+	{
+		read_points(pos+1);
+		n[pos].x = x;
+		n[pos].y = y;
+		return;
+	}
+	else
+	if ( flag == EOF )
+	{
+		size = pos;
+		n = (struct point *)(malloc(sizeof(struct point) * size));
+		return;
+	}
+	else
+	{
+		fprintf(stderr,"read_points: read error, pos = %d\n", pos);
+		exit(1);
+	}
+	
+} /* read_points */
+
+
+*****************************
+
+
+::::::::::::::
+drew/harry.h
+::::::::::::::
+#define	HARRY	1
+
+
+
+::::::::::::::
+drew/alice.c
+::::::::::::::
+#include "harry.h"
+
+extern void printHello();
+
+main()
+{
+	printHello("elephant");
+
+} /* main */
+
+
+
+::::::::::::::
+drew/fred.c
+::::::::::::::
+#include <stdio.h>
+#include "harry.h"
+
+void
+printHello(char *s)
+{
+	printf("hello %s", s);
+
+} /* main */
+
+compiling ...
+
+	first "cc fred" will produce fred.o
+	then "cc -o alice alice.c fred.o" will link alice and fred
+		to produce the binary "alice"
+

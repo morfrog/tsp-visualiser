@@ -7,15 +7,22 @@
 #include "sys.h"
 #include "file.h"
 
-/*void main()
+void main()
 {
+        int c;
         DISTANCES *d=NewMap("file.in");
+        for (c=0;c<10;c++)
+        {
+            d->array[c][c]=c;
+            printf("%d is %d\n  %s",c,d->array[1][c],
+            c==d->array[1][c]?"OK":"Fail...");
+        }
+        getch();
         printf("Map Read...\n");
         PrintMap(d);
         getch();
 
 }
-*/
 
 void _FAR ReadToken(FILE *f,char string[],int max)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -101,7 +108,7 @@ int _FAR Dist(POINT a,POINT b)
 
 }
 
-DISTANCES _FAR *NewMap(char *filename)
+DISTANCES *NewMap(char *filename)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *      Desc    :       reads a new map in from a file
  *      Pre             :       none
@@ -114,7 +121,7 @@ DISTANCES _FAR *NewMap(char *filename)
 
     FILE *input=fopen(filename,"rt");
     int count,count2,n;
-    char type[12]="            "; 
+    char *type=malloc(12*sizeof(char));
     char name[STR_LEN];
     int ndist;
 
@@ -128,7 +135,7 @@ DISTANCES _FAR *NewMap(char *filename)
     else
     {
         printf("Reading File %s...\n",filename); 
-        fgets(type,12,input);
+        /* fgets(type,sizeof(type),input); */
         printf("%s",type);
         SkipLine(input);
         dist->size=ReadInt(input);                      /* the number of points */
@@ -161,11 +168,10 @@ DISTANCES _FAR *NewMap(char *filename)
                     printf("%d %d<%d ",count,count2,n);
                     ndist=Dist(loc->at[count],loc->at[count2]);
                     printf("Dist= %d.\n",ndist);
+
 /*
                     dist->array[count][count2]=ndist;
-                    dist->array[count2][count]=ndist;
 */
-  
                 }
             }
             dist->l=loc;
@@ -177,6 +183,7 @@ DISTANCES _FAR *NewMap(char *filename)
 
         }
         fclose(input);
+        free(type);
         return dist; 
     }
 }

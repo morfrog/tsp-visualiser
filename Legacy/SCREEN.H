@@ -48,7 +48,7 @@ struct win
 
 typedef struct win SWIN;
 
-int _FAR InitScreen( void );
+int _FAR InitScreen(int videomode);
 int _FAR ShutDown( void );
 SWIN _FAR *NewWin(int t,int l,int b,int r);
 void _FAR SetWin(SWIN *w);
@@ -56,8 +56,8 @@ void _FAR SetTextWin(SWIN *w,int border);
 void _FAR ResetWin(SWIN *w,int t,int l,int b,int r);
 void _FAR FreeWin(SWIN *w);
 void _FAR BorderWin();
-void _FAR DrawLine(int x1,int y1,int x2,int y2);
-void _FAR DrawCity(char name[],int size,int x,int y);
+void _FAR DrawLine(double x1,double y1,double x2,double y2);
+void _FAR DrawCity(char name[],double x,double y,double size);
 void _FAR DrawText(char string[],int start,int line,int color);
 void _FAR TextWindow(int rows,int cols);
 

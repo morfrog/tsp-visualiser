@@ -1,0 +1,9 @@
+!define BLANK ""
+e:\watcom\tsp\tspt.exp : .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ @%write tspt.lk1 NAME tspt
+ @%append tspt.lk1 
+ @%append tspt.lk1 
+ *wlink SYS pharlap op m d all op st=8192 op maxe=25 op q op symf @tspt.lk1
+

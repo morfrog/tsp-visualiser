@@ -22,7 +22,7 @@ void main()
     printf("Mem Free = %d size_t\n",(int)_memavl());
     getch();
     
-    InitScreen();
+    InitScreen(12);
 
     _setcolor(line_col);
 
@@ -55,7 +55,7 @@ void main()
 }
 */
 
-int _FAR InitScreen( void )
+int _FAR InitScreen(int videomode)
 /*===========================
 
     This routine selects the best video mode for a given adapter.
@@ -68,6 +68,9 @@ int _FAR InitScreen( void )
 #if defined( __PC98__ )
     mode = _MAXCOLORMODE;
 #else
+    if (videomode>=0) mode = videomode;
+    else
+    {
     _getvideoconfig( &VC );
     switch( VC.adapter ) {
     case _VGA :
@@ -94,7 +97,8 @@ int _FAR InitScreen( void )
         return( 0 );          /* report insufficient hardware */
     }
 #endif
-
+    }
+    
     if( _setvideomode( mode ) == 0 ) {
         return( 0 );
     }
@@ -150,6 +154,7 @@ void _FAR SetWin(SWIN *w)
 {
     _setviewport(w->t,w->l,w->b,w->r);
     _setcharsize_w(citysize*4/3,citysize*4/3);
+    _setcharspacing_w(-2);
 }
 
 void _FAR SetTextWin(SWIN *w,int border)
@@ -186,22 +191,23 @@ double _FAR Scale(int thing,int max)
     return (double)thing/(double)max;
 }
 
-void _FAR DrawLine(int x1,int y1,int x2,int y2)
+void _FAR DrawLine(double x1,double y1,double x2,double y2)
 /* Draw A line in the current window 
- *  pre  : 0 < x1,x2 < maxx
- *         0 < y1,y2 < maxy 
+ *  pre  : 0.0 < x1,x2 < 1.0
+ *         0.0 < y1,y2 < 1.0 
  *  post : scales points and draws line in <out> box
  */
 {
         _setcolor(line_col);
-        _moveto_w((double)x1,(double)y1);
-        _lineto_w((double)x2,(double)y2);
+        _moveto_w(x1*maxx,y1*maxy);
+        _lineto_w(x2*maxx,y2*maxy);
 }
 
-void _FAR DrawCity(char name[],int x,int y,int size)
+void _FAR DrawCity(char name[],double x,double y,double size)
+/* x,y,size are in unit square 0.0,0.0 - 1.0,1.0 */
 {
-    double dx=(double)x,dy=(double)y,ds=(double)size;
-    double t=dy-ds,l=dx-ds,b=dy+ds,r=dx+ds;
+    double dx=x*maxx,dy=y*maxy,dxs=size*maxx,dys=size*maxy;
+    double t=dy-dys,l=dx-dxs,b=dy+dys,r=dx+dxs;
     _setcolor(city_col);
     _ellipse_w(_GFILLINTERIOR,l,t,r,b);
     _setcolor(text_col);
