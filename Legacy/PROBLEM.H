@@ -19,8 +19,6 @@ typedef struct vmask MASK;
 struct prob {
     DISTANCES *dist;
     PATH *path;
-    int endo;
-    int *outpath;
     MASK *vmask;
 };
 
@@ -32,8 +30,9 @@ void DrawPath(PATH *p,LOCATES *loc,int returnp);
 PROBLEM *NewProblem(DISTANCES *d);
 double PathLength(PATH *p,DISTANCES *d);
 void ProblemReset(PROBLEM *prob,int free);
+double InsertCost(PROBLEM *prob,int I, int A, int B);
+void BestInsert(PROBLEM *prob,int citynum,int *a,int *b);
 void PrintList(int *list,int listsize);
-void CityDel(PROBLEM *prob,int citynum);
 void HiliteCityGroup(PROBLEM *prob,int main,int maincol,int city1, int city2,int col);
 void HiliteCityPair(PROBLEM *prob,int city1,int city2,int col);
 void HiliteCity(PROBLEM *prob,int citynum,int returnp);

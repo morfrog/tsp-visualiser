@@ -89,7 +89,7 @@ void PrintCmdLine(char *filename,int InitType,int InsType,int delay,int optimal)
 
 void main(int argc, char *argv[])
 {
-    PROBLEM *prob=NULL;
+    INSPROB *insprob=NULL;
     LOCATES *out=NULL;
     double length;
 
@@ -104,12 +104,14 @@ void main(int argc, char *argv[])
         if (PRINTON) PrintCmdLine(filename,inittype,instype,tdelay,optimal);
 
         if (PRINTON) printf("Reading Map From File '%s'...\n",filename);
-        prob=NewProblem(NewMap(NewLocates(filename)));
-        if (PRINTON) printf("Map Read...\n");
-        if (PRINTON) PrintMap(prob->dist);
-        if (PRINTON) mygetch();
-        if (PRINTON) printf("Delay = %d \n",tdelay);
-
+        insprob=NewInsProb(NewMap(NewLocates(filename)));
+        if (PRINTON) {
+            printf("Map Read...\n");
+            PrintMap(insprob->prob->dist);
+            mygetch();
+            printf("Delay = %d \n",tdelay);
+        }
+        
 
         if (tdelay==-3) { /* all benchmark with optimal - no graphics */
 
@@ -126,36 +128,36 @@ void main(int argc, char *argv[])
                 {
                     if (method==InsNearN)
                     {
-                        NNeighbourStartPath(prob);
-                        length=ControlNearN(prob,NoGraphics);break;
+                        NNeighbourStartPath(insprob);
+                        length=ControlNearN(insprob,NoGraphics);break;
                     }
                     else
                     {
                         switch (inittype) {
-                            case InitClosest : FStartPath(Lesser,prob);  break;
-                            case InitFurthest: FStartPath(Greater,prob); break;
-                            default : RndStartPath(prob);             break;
+                            case InitClosest : FStartPath(Lesser,insprob);  break;
+                            case InitFurthest: FStartPath(Greater,insprob); break;
+                            default : RndStartPath(insprob);             break;
                         }
                     
 
                         switch (method) {
-                            case InsCheap   : length=ControlCheap(prob,NoGraphics);break;
-                            case InsDear    : length=ControlDear(prob,NoGraphics);break;
-                            case InsNearest : length=ControlNearest(prob,NoGraphics);break;
-                            case InsFurthest: length=ControlFurthest(prob,NoGraphics);break;
-                            default/*Rand*/ : length=ControlRand(prob,NoGraphics); break;
+                            case InsCheap   : length=ControlCheap(insprob,NoGraphics);break;
+                            case InsDear    : length=ControlDear(insprob,NoGraphics);break;
+                            case InsNearest : length=ControlNearest(insprob,NoGraphics);break;
+                            case InsFurthest: length=ControlFurthest(insprob,NoGraphics);break;
+                            default/*Rand*/ : length=ControlRand(insprob,NoGraphics); break;
         
                         }
                     }
                     printf("%10.5f",length/optimal);
-                    ProblemReset(prob,1);
+                    InsProbReset(insprob,1);
                 }
                 printf("\n");
             }
             
             printf("NearN    ");printf("%12s",filename);
-            NNeighbourStartPath(prob);
-            length=ControlNearN(prob,NoGraphics);
+            NNeighbourStartPath(insprob);
+            length=ControlNearN(insprob,NoGraphics);
             printf("%10.5f\n",length/optimal);
 
         }
@@ -164,25 +166,25 @@ void main(int argc, char *argv[])
             
             if (instype==InsNearN)
             {
-                NNeighbourStartPath(prob);
+                NNeighbourStartPath(insprob);
             }
             else
             {
                 switch (inittype) {
-                    case InitClosest : FStartPath(Lesser,prob);  break;
-                    case InitFurthest: FStartPath(Greater,prob); break;
-                    default : RndStartPath(prob);             break;
+                    case InitClosest : FStartPath(Lesser,insprob);  break;
+                    case InitFurthest: FStartPath(Greater,insprob); break;
+                    default : RndStartPath(insprob);             break;
                 }
             }
             if (tdelay==-2) { /* benchmark only - no graphics */
             
                 switch (instype) {
-                    case InsCheap   : length=ControlCheap(prob,NoGraphics);break; 
-                    case InsDear    : length=ControlDear(prob,NoGraphics);break; 
-                    case InsNearN   : length=ControlNearN(prob,NoGraphics);break;
-                    case InsNearest : length=ControlNearest(prob,NoGraphics);break;
-                    case InsFurthest: length=ControlFurthest(prob,NoGraphics);break;
-                    default/*Rand*/ : length=ControlRand(prob,NoGraphics); break;
+                    case InsCheap   : length=ControlCheap(insprob,NoGraphics);break; 
+                    case InsDear    : length=ControlDear(insprob,NoGraphics);break; 
+                    case InsNearN   : length=ControlNearN(insprob,NoGraphics);break;
+                    case InsNearest : length=ControlNearest(insprob,NoGraphics);break;
+                    case InsFurthest: length=ControlFurthest(insprob,NoGraphics);break;
+                    default/*Rand*/ : length=ControlRand(insprob,NoGraphics); break;
             
                 }
 
@@ -196,19 +198,19 @@ void main(int argc, char *argv[])
                 WinManager(Main);
                 WinManager(Text);
         
-                DrawNorm(prob,1);
-                delay(500);
+                DrawNorm(insprob->prob,1);
+                delay(tdelay>0?tdelay:0);
     
                 switch (instype) {
-                    case InsCheap   : ControlCheap(prob,((tdelay!=0) && Graphics)); break;
-                    case InsDear    : ControlDear(prob,((tdelay!=0) && Graphics)); break;
-                    case InsNearN   : ControlNearN(prob,((tdelay!=0) && Graphics)); break;
-                    case InsNearest : ControlNearest(prob,((tdelay!=0) && Graphics));break;
-                    case InsFurthest: ControlFurthest(prob,((tdelay!=0) && Graphics));break;
-                    default/*Rand*/ : ControlRand(prob,((tdelay!=0) && Graphics)); break;
+                    case InsCheap   : ControlCheap(insprob,((tdelay!=0) && Graphics)); break;
+                    case InsDear    : ControlDear(insprob,((tdelay!=0) && Graphics)); break;
+                    case InsNearN   : ControlNearN(insprob,((tdelay!=0) && Graphics)); break;
+                    case InsNearest : ControlNearest(insprob,((tdelay!=0) && Graphics));break;
+                    case InsFurthest: ControlFurthest(insprob,((tdelay!=0) && Graphics));break;
+                    default/*Rand*/ : ControlRand(insprob,((tdelay!=0) && Graphics)); break;
         
                 }
-                DrawNorm(prob,1);
+                DrawNorm(insprob->prob,1);
                 getch();
 
                 ShutDown();
@@ -224,7 +226,7 @@ void main(int argc, char *argv[])
      
 /*        FreeMap(d);     */  
 
-        out=PathAsLocates(prob->path,prob->dist->l);
+        out=PathAsLocates(insprob->prob->path,insprob->prob->dist->l);
         WriteLocates(out,"default.dat");
         FreeLocates(out);
     }

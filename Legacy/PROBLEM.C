@@ -64,7 +64,6 @@ PROBLEM *NewProblem(DISTANCES *dist)
 
     ret->dist=dist;
 
-    ret->outpath=salloc(dist->size,sizeof(int));
     ret->path=NULL;
     ret->vmask=NewViewMask(dist->size,city_out,citysize);
 
@@ -74,13 +73,7 @@ PROBLEM *NewProblem(DISTANCES *dist)
 
 void ProblemReset(PROBLEM *prob,int free)
 {
-    int x;
-    
-    prob->endo=(prob->dist->size);
-    for (x=0;x<(prob->dist->size);x++)
-    {
-        prob->outpath[x]=x;
-    }
+    SetMask(prob->vmask,city_out,citysize);    
     if (free) FreePath(prob->path);
 }
 
@@ -100,15 +93,37 @@ double PathLength(PATH *p,DISTANCES *d)
     return ret;
 }
 
-void CityDel(PROBLEM *prob,int citynum)
-/* deletes citynum from the problems outpath */
+double InsertCost(PROBLEM *prob,int I, int A, int B)
+/* returns cost of inserting I between A and B */
 {
-    int pos;
-    pos=PosOf(citynum,prob->outpath,(prob->dist->size));
-    if (pos==-1) printf("%d Not In Out List.\n",citynum);
-    prob->endo-=1;
-    prob->outpath[pos]=prob->outpath[prob->endo];
+    return prob->dist->array[A][I]+
+            prob->dist->array[I][B]-
+            prob->dist->array[B][A];
+}
 
+void BestInsert(PROBLEM *prob,int citynum,int *a,int *b)
+{
+    int pA,pB,x;
+    double thiscost,bestcost;
+
+    PathStart(prob->path);
+    PathPair(prob->path,&pA,&pB);
+    bestcost=InsertCost(prob,citynum,pA,pB);
+    *a=pA;*b=pB;
+
+    PathNext(prob->path);
+
+    for (x=1;x<(prob->path->size);x++)
+    {
+        PathPair(prob->path,&pA,&pB);
+        thiscost=InsertCost(prob,citynum,pA,pB);
+        if (thiscost<bestcost)
+        {
+            bestcost=thiscost;
+            *a=pA;*b=pB;
+        }
+        PathNext(prob->path);
+    }
 }
 
 void HiliteCityGroup(PROBLEM *prob,int main,int maincol,int city1, int city2,int col)

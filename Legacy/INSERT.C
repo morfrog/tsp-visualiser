@@ -9,6 +9,29 @@
 #include "problem.h"
 #include "insert.h"
 
+INSPROB *NewInsProb(DISTANCES *dist)
+{
+    INSPROB *ret=salloc(1,sizeof(INSPROB));
+
+    ret->prob=NewProblem(dist);
+    ret->outpath=salloc(dist->size,sizeof(int));
+
+    InsProbReset(ret,0);
+    return ret;
+}
+
+void InsProbReset(INSPROB *insprob,int free)
+{
+    int x;
+    
+    insprob->endo=(insprob->prob->dist->size);
+    for (x=0;x<(insprob->prob->dist->size);x++)
+    {
+        insprob->outpath[x]=x;
+    }
+    ProblemReset(insprob->prob,free);
+}
+
 void PrintInit(int init)
 {
     switch (init) {
@@ -33,48 +56,40 @@ void PrintMethod(int method)
     }
 }
 
-double InsertCost(PROBLEM *prob,int I, int A, int B)
-/* returns cost of inserting I between A and B */
+void NNeighbourStartPath(INSPROB *insprob)
 {
-    return prob->dist->array[A][I]+
-            prob->dist->array[I][B]-
-            prob->dist->array[B][A];
-}
-
-void NNeighbourStartPath(PROBLEM *prob)
-{
-    int A,max=prob->dist->size;
+    int A,max=insprob->prob->dist->size;
     StartRandom();
     A=Random(max);
-    CityDel(prob,A);
-    prob->path=NewPath(1,A);
-    SetMaskAt(prob->vmask,city_in,citysize,A);
+    CityDel(insprob,A);
+    insprob->prob->path=NewPath(1,A);
+    SetMaskAt(insprob->prob->vmask,city_in,citysize,A);
 }
 
-void RndStartPath(PROBLEM *prob)
+void RndStartPath(INSPROB *insprob)
 {
-    int A,B,C,max=prob->dist->size;
+    int A,B,C,max=insprob->prob->dist->size;
 
     StartRandom();
     A=Random(max);
     do B=Random(max); while (B==A);
     do C=Random(max); while ((C==B) || (C==A));
-    CityDel(prob,A);
-    CityDel(prob,B);
-    CityDel(prob,C);
-    prob->path=NewPath(3,A,B,C);
-    SetMaskAt(prob->vmask,city_in,citysize,A);
-    SetMaskAt(prob->vmask,city_in,citysize,B);
-    SetMaskAt(prob->vmask,city_in,citysize,C);
+    CityDel(insprob,A);
+    CityDel(insprob,B);
+    CityDel(insprob,C);
+    insprob->prob->path=NewPath(3,A,B,C);
+    SetMaskAt(insprob->prob->vmask,city_in,citysize,A);
+    SetMaskAt(insprob->prob->vmask,city_in,citysize,B);
+    SetMaskAt(insprob->prob->vmask,city_in,citysize,C);
 }
 
-void FStartPath(int (* func)(double,double),PROBLEM *prob)
+void FStartPath(int (* func)(double,double),INSPROB *insprob)
 {
     int A=0,B=1,C=2,x,y,z;
-    int max=(prob->dist->size);
-    double best=prob->dist->array[A][B]
-                +prob->dist->array[B][C]
-                +prob->dist->array[C][A];
+    int max=(insprob->prob->dist->size);
+    double best=insprob->prob->dist->array[A][B]
+                +insprob->prob->dist->array[B][C]
+                +insprob->prob->dist->array[C][A];
     double thisdist;
     
     
@@ -84,44 +99,55 @@ void FStartPath(int (* func)(double,double),PROBLEM *prob)
                 for (z=0;z<max;z++)
                     if ((z!=y) && (z!=x))
                     {
-                        thisdist=prob->dist->array[x][y]
-                                +prob->dist->array[y][z]
-                                +prob->dist->array[z][x];
+                        thisdist=insprob->prob->dist->array[x][y]
+                                +insprob->prob->dist->array[y][z]
+                                +insprob->prob->dist->array[z][x];
                         if (func(thisdist,best))
                         {
                             A=x;B=y;C=z;
                             best=thisdist;
                         }
                     }
-    CityDel(prob,A);
-    CityDel(prob,B);
-    CityDel(prob,C);
-    prob->path=NewPath(3,A,B,C);
-    SetMaskAt(prob->vmask,city_in,citysize,A);
-    SetMaskAt(prob->vmask,city_in,citysize,B);
-    SetMaskAt(prob->vmask,city_in,citysize,C);
+    CityDel(insprob,A);
+    CityDel(insprob,B);
+    CityDel(insprob,C);
+    insprob->prob->path=NewPath(3,A,B,C);
+    SetMaskAt(insprob->prob->vmask,city_in,citysize,A);
+    SetMaskAt(insprob->prob->vmask,city_in,citysize,B);
+    SetMaskAt(insprob->prob->vmask,city_in,citysize,C);
 
 }
 
-int FNeighbour(int (* func)(double,double),PROBLEM *prob,int citynum)
+void CityDel(INSPROB *insprob,int citynum)
+/* deletes citynum from the problems outpath */
+{
+    int pos;
+    pos=PosOf(citynum,insprob->outpath,(insprob->prob->dist->size));
+    if (pos==-1) printf("%d Not In Out List.\n",citynum);
+    insprob->endo-=1;
+    insprob->outpath[pos]=insprob->outpath[insprob->endo];
+
+}
+
+int FNeighbour(int (* func)(double,double),INSPROB *insprob,int citynum)
 /* returns the nearest/furthest neightbour of citynum in type path */
 {
     int x,bestcity,thiscity;
     double bestdist,thisdist;
 
-    if (prob->outpath[0]==citynum)  // * func city to x is not x
-        bestcity=prob->outpath[1];
+    if (insprob->outpath[0]==citynum)  // * func city to x is not x
+        bestcity=insprob->outpath[1];
     else
-        bestcity=prob->outpath[0];
+        bestcity=insprob->outpath[0];
 
-    bestdist=prob->dist->array[citynum][bestcity];
+    bestdist=insprob->prob->dist->array[citynum][bestcity];
 
-    for (x=0;x<(prob->endo);x++)
+    for (x=0;x<(insprob->endo);x++)
     {
-        thiscity=prob->outpath[x];
+        thiscity=insprob->outpath[x];
         if (thiscity!=citynum)      // * func city to x is not x
         {
-            thisdist=prob->dist->array[citynum][thiscity];
+            thisdist=insprob->prob->dist->array[citynum][thiscity];
             if (func(thisdist,bestdist)) {
                 bestdist=thisdist;
                 bestcity=thiscity;
@@ -131,12 +157,12 @@ int FNeighbour(int (* func)(double,double),PROBLEM *prob,int citynum)
     return bestcity;
 }
 
-int RndNext(PROBLEM *prob)
+int RndNext(INSPROB *insprob)
 {
-    return prob->outpath[Random(prob->endo)];
+    return insprob->outpath[Random(insprob->endo)];
 }
 
-int FNextCost(int (* func)(double,double),PROBLEM *prob,int *A,int *B)
+int FNextCost(int (* func)(double,double),INSPROB *insprob,int *A,int *B)
 /* returns the cheapest/dearest for insertion of an outpath between a & b */
 {
     int best;
@@ -144,29 +170,29 @@ int FNextCost(int (* func)(double,double),PROBLEM *prob,int *A,int *B)
     int pA,pB;
     double bestlen,thislen;
 
-    best=prob->outpath[0];
+    best=insprob->outpath[0];
 
-    PathStart(prob->path);
-    PathPair(prob->path,A,B);
-    bestlen=InsertCost(prob,best,*A,*B);
+    PathStart(insprob->prob->path);
+    PathPair(insprob->prob->path,A,B);
+    bestlen=InsertCost(insprob->prob,best,*A,*B);
 
-    for (listc=0;listc<prob->endo;listc++)
+    for (listc=0;listc<insprob->endo;listc++)
     {
-        for (pathc=0;pathc<(prob->path->size);pathc++)
+        for (pathc=0;pathc<(insprob->prob->path->size);pathc++)
         {
-            PathPair(prob->path,&pA,&pB);
-            thislen=InsertCost(prob,prob->outpath[listc],pA,pB);
+            PathPair(insprob->prob->path,&pA,&pB);
+            thislen=InsertCost(insprob->prob,insprob->outpath[listc],pA,pB);
             if (func(thislen,bestlen))
             {
-                best=prob->outpath[listc];*A=pA;*B=pB;bestlen=thislen;
+                best=insprob->outpath[listc];*A=pA;*B=pB;bestlen=thislen;
             }
-            PathNext(prob->path);
+            PathNext(insprob->prob->path);
         }
     }
     return best;
 }
 
-int FNextDist(int (* func)(double,double),int (* func2)(double,double),PROBLEM *prob,int *fcity)
+int FNextDist(int (* func)(double,double),int (* func2)(double,double),INSPROB *insprob,int *fcity)
 /* returns the func of the func2 Nearest Neighbour, looking in outpath
  * e.g. FNextDist(Greater,Lesser,p);
  */
@@ -175,63 +201,38 @@ int FNextDist(int (* func)(double,double),int (* func2)(double,double),PROBLEM *
     double bestlen,thislen;
     int x,city;
 
-    PathStart(prob->path);
-    PathCurrent(prob->path,&city);
+    PathStart(insprob->prob->path);
+    PathCurrent(insprob->prob->path,&city);
 
-    best=FNeighbour(*func2,prob,city);
-    bestlen=prob->dist->array[best][city];
+    best=FNeighbour(*func2,insprob,city);
+    bestlen=insprob->prob->dist->array[best][city];
 
-    for (x=0;x<(prob->path->size);x++)
+    for (x=0;x<(insprob->prob->path->size);x++)
     {
 
-        PathCurrent(prob->path,&city);
-        this=FNeighbour(*func2,prob,city);
+        PathCurrent(insprob->prob->path,&city);
+        this=FNeighbour(*func2,insprob,city);
 
-        thislen=prob->dist->array[this][city];
+        thislen=insprob->prob->dist->array[this][city];
         if (func(thislen,bestlen))
         {
             *fcity=city;
             best=this;
             bestlen=thislen;
         }
-        PathNext(prob->path);
+        PathNext(insprob->prob->path);
     }
     return best;
 }
 
-void BestInsert(PROBLEM *prob,int citynum,int *a,int *b)
-{
-    int pA,pB,x;
-    double thiscost,bestcost;
-
-    PathStart(prob->path);
-    PathPair(prob->path,&pA,&pB);
-    bestcost=InsertCost(prob,citynum,pA,pB);
-    *a=pA;*b=pB;
-
-    PathNext(prob->path);
-
-    for (x=1;x<(prob->path->size);x++)
-    {
-        PathPair(prob->path,&pA,&pB);
-        thiscost=InsertCost(prob,citynum,pA,pB);
-        if (thiscost<bestcost)
-        {
-            bestcost=thiscost;
-            *a=pA;*b=pB;
-        }
-        PathNext(prob->path);
-    }
-}
-
-double ControlRand(PROBLEM *prob,int graphics)
+double ControlRand(INSPROB *insprob,int graphics)
 {
     int next,Ia,Ib;
     clock_t now;
     clock_t time_seg=TotalDelay(-1)/3;
     char buffer[50];
     static int col=WHITE;
-    int total=prob->endo;
+    int total=insprob->endo;
 
     if (graphics) {sprintf(buffer,"Random Method\n");
                    ShowText(buffer,1,1,GREEN);}
@@ -239,38 +240,38 @@ double ControlRand(PROBLEM *prob,int graphics)
     do {
         if (col==WHITE) col=LTWHITE; else col=WHITE;
         now=clock();
-        next=RndNext(prob);
+        next=RndNext(insprob);
 
         if (graphics) {sprintf(buffer,"Insert is %3d.  \n\n",next);
                        ShowText(buffer,1,4,col);}
 
-        if (graphics) {HiliteCity(prob,next,1);WaitTill(now+time_seg);}
+        if (graphics) {HiliteCity(insprob->prob,next,1);WaitTill(now+time_seg);}
 
-        CityDel(prob,next);
-        BestInsert(prob,next,&Ia,&Ib);
+        CityDel(insprob,next);
+        BestInsert(insprob->prob,next,&Ia,&Ib);
 
         if (graphics) {sprintf(buffer,"Between %3d and %3d.\n\n",Ia,Ib);
                        ShowText(buffer,1,6,col);}
         
-        if (graphics) {HiliteCityGroup(prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
+        if (graphics) {HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
 
-        InsertPath(prob->path,next,Ia,Ib);
-        SetMaskAt(prob->vmask,city_in,citysize,next);
+        InsertPath(insprob->prob->path,next,Ia,Ib);
+        SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
 
-        if (graphics) {sprintf(buffer,"%3d%% Complete.\n\n",100*(total-prob->endo)/total);
+        if (graphics) {sprintf(buffer,"%3d%% Complete.\n\n",100*(total-insprob->endo)/total);
                        ShowText(buffer,1,12,LTBLUE);}
         
-        if (graphics) {DrawNorm(prob,1);WaitTill(now+(3*time_seg));}
+        if (graphics) {DrawNorm(insprob->prob,1);WaitTill(now+(3*time_seg));}
 
-    } while (prob->endo);
+    } while (insprob->endo);
 
     if (graphics) {sprintf(buffer,"F I N I S H E D");
                    ShowText(buffer,1,16,LTRED);}
 
-    return PathLength(prob->path,prob->dist);
+    return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 
-double ControlNearN(PROBLEM *prob,int graphics)
+double ControlNearN(INSPROB *insprob,int graphics)
 {
     int x,next,this;
     clock_t now;
@@ -281,30 +282,34 @@ double ControlNearN(PROBLEM *prob,int graphics)
                                   "     Method\n");
                    ShowText(buffer,1,1,GREEN);}
 
-    PathEnd(prob->path);
-    PathCurrent(prob->path,&this);
+    PathEnd(insprob->prob->path);
+    PathCurrent(insprob->prob->path,&this);
 
     do {
         now=clock();
-        next=FNeighbour(Lesser,prob,this);
+        next=FNeighbour(Lesser,insprob,this);
 
         if (graphics) {sprintf(buffer,"Last Was %d.\n\nThis Is %d.",this,next);
                        ShowText(buffer,1,4,WHITE);}
 
-        if (graphics) {HiliteCity(prob,next,0);WaitTill(now+time_seg);}
+        if (graphics) {HiliteCity(insprob->prob,next,0);WaitTill(now+time_seg);}
 
-        CityDel(prob,next);
-        InsertPathEnd(prob->path,next);
-        SetMaskAt(prob->vmask,city_in,citysize,next);
+        CityDel(insprob,next);
+        InsertPathEnd(insprob->prob->path,next);
+        SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
         
-        if (graphics) {DrawNorm(prob,0);WaitTill(now+(2*time_seg));}
+        if (graphics) {DrawNorm(insprob->prob,0);WaitTill(now+(2*time_seg));}
         this=next;
 
-    } while (prob->endo);
-    return PathLength(prob->path,prob->dist);
+    } while (insprob->endo);
+
+    if (graphics) {sprintf(buffer,"F I N I S H E D");
+                   ShowText(buffer,1,16,LTRED);}
+
+    return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 
-double ControlFurthest(PROBLEM *prob,int graphics)
+double ControlFurthest(INSPROB *insprob,int graphics)
 {
     int next,Ia,Ib,it;
     clock_t now;
@@ -318,28 +323,32 @@ double ControlFurthest(PROBLEM *prob,int graphics)
 
     do {
         now=clock();
-        next=FNextDist(Greater,Lesser,prob,&it);
+        next=FNextDist(Greater,Lesser,insprob,&it);
 
         if (graphics) {sprintf(buffer,"Last Was %d.\n\nThis Is %d.",it,next);
                        ShowText(buffer,1,4,WHITE);}
         
-        if (graphics) {HiliteCity(prob,next,1);WaitTill(now+time_seg);}
+        if (graphics) {HiliteCity(insprob->prob,next,1);WaitTill(now+time_seg);}
 
-        CityDel(prob,next);
-        BestInsert(prob,next,&Ia,&Ib);
+        CityDel(insprob,next);
+        BestInsert(insprob->prob,next,&Ia,&Ib);
 
-        if (graphics) {HiliteCityGroup(prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
+        if (graphics) {HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
 
-        InsertPath(prob->path,next,Ia,Ib);
-        SetMaskAt(prob->vmask,city_in,citysize,next);
+        InsertPath(insprob->prob->path,next,Ia,Ib);
+        SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
 
-        if (graphics) {DrawNorm(prob,1);WaitTill(now+(3*time_seg));}
+        if (graphics) {DrawNorm(insprob->prob,1);WaitTill(now+(3*time_seg));}
 
-    } while (prob->endo);
-    return PathLength(prob->path,prob->dist);
+    } while (insprob->endo);
+
+    if (graphics) {sprintf(buffer,"F I N I S H E D");
+                   ShowText(buffer,1,16,LTRED);}
+
+    return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 
-double ControlNearest(PROBLEM *prob,int graphics)
+double ControlNearest(INSPROB *insprob,int graphics)
 {
     int next,Ia,Ib,it;
     clock_t now;
@@ -352,25 +361,29 @@ double ControlNearest(PROBLEM *prob,int graphics)
 
     do {
         now=clock();
-        next=FNextDist(Lesser,Lesser,prob,&it);
+        next=FNextDist(Lesser,Lesser,insprob,&it);
 
-        if (graphics) {HiliteCity(prob,next,1);WaitTill(now+time_seg);}
+        if (graphics) {HiliteCity(insprob->prob,next,1);WaitTill(now+time_seg);}
 
-        CityDel(prob,next);
-        BestInsert(prob,next,&Ia,&Ib);
+        CityDel(insprob,next);
+        BestInsert(insprob->prob,next,&Ia,&Ib);
 
-        if (graphics) {HiliteCityGroup(prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
+        if (graphics) {HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
 
-        InsertPath(prob->path,next,Ia,Ib);
-        SetMaskAt(prob->vmask,city_in,citysize,next);
+        InsertPath(insprob->prob->path,next,Ia,Ib);
+        SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
 
-        if (graphics) {DrawNorm(prob,1);WaitTill(now+(3*time_seg));}
+        if (graphics) {DrawNorm(insprob->prob,1);WaitTill(now+(3*time_seg));}
 
-    } while (prob->endo);
-    return PathLength(prob->path,prob->dist);
+    } while (insprob->endo);
+
+    if (graphics) {sprintf(buffer,"F I N I S H E D");
+                   ShowText(buffer,1,16,LTRED);}
+
+    return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 
-double ControlDear(PROBLEM *prob,int graphics)
+double ControlDear(INSPROB *insprob,int graphics)
 {
     int next,pA,pB;
     clock_t now;
@@ -384,21 +397,25 @@ double ControlDear(PROBLEM *prob,int graphics)
 
     do {
         now=clock();
-        next=FNextCost(Greater,prob,&pA,&pB);
-        BestInsert(prob,next,&pA,&pB);
-        if (graphics) {HiliteCity(prob,next,1);WaitTill(now+(time_seg));}
-        if (graphics) {HiliteCityGroup(prob,next,YELLOW,pA,pB,BLUE);WaitTill(now+(2*time_seg));}
-        CityDel(prob,next);
-        InsertPath(prob->path,next,pA,pB);
-        SetMaskAt(prob->vmask,city_in,citysize,next);
+        next=FNextCost(Greater,insprob,&pA,&pB);
+        BestInsert(insprob->prob,next,&pA,&pB);
+        if (graphics) {HiliteCity(insprob->prob,next,1);WaitTill(now+(time_seg));}
+        if (graphics) {HiliteCityGroup(insprob->prob,next,YELLOW,pA,pB,BLUE);WaitTill(now+(2*time_seg));}
+        CityDel(insprob,next);
+        InsertPath(insprob->prob->path,next,pA,pB);
+        SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
 
-        if (graphics) {DrawNorm(prob,1);WaitTill(now+(3*time_seg));}
+        if (graphics) {DrawNorm(insprob->prob,1);WaitTill(now+(3*time_seg));}
 
-    } while (prob->endo);
-    return PathLength(prob->path,prob->dist);
+    } while (insprob->endo);
+
+    if (graphics) {sprintf(buffer,"F I N I S H E D");
+                   ShowText(buffer,1,16,LTRED);}
+
+    return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 
-double ControlCheap(PROBLEM *prob,int graphics)
+double ControlCheap(INSPROB *insprob,int graphics)
 {
     int next,pA,pB;
     clock_t now;
@@ -412,17 +429,21 @@ double ControlCheap(PROBLEM *prob,int graphics)
 
     do {
         now=clock();
-        next=FNextCost(Lesser,prob,&pA,&pB);
+        next=FNextCost(Lesser,insprob,&pA,&pB);
 
-        if (graphics) {HiliteCity(prob,next,1);WaitTill(now+(time_seg));}
-        if (graphics) {HiliteCityGroup(prob,next,YELLOW,pA,pB,BLUE);WaitTill(now+(2*time_seg));}
-        CityDel(prob,next);
-        InsertPath(prob->path,next,pA,pB);
-        SetMaskAt(prob->vmask,city_in,citysize,next);
+        if (graphics) {HiliteCity(insprob->prob,next,1);WaitTill(now+(time_seg));}
+        if (graphics) {HiliteCityGroup(insprob->prob,next,YELLOW,pA,pB,BLUE);WaitTill(now+(2*time_seg));}
+        CityDel(insprob,next);
+        InsertPath(insprob->prob->path,next,pA,pB);
+        SetMaskAt(insprob->prob->vmask,city_in,citysize,next);
 
-        if (graphics) {DrawNorm(prob,1);WaitTill(now+(3*time_seg));}
+        if (graphics) {DrawNorm(insprob->prob,1);WaitTill(now+(3*time_seg));}
 
-    } while (prob->endo);
-    return PathLength(prob->path,prob->dist);
+    } while (insprob->endo);
+
+    if (graphics) {sprintf(buffer,"F I N I S H E D");
+                   ShowText(buffer,1,16,LTRED);}
+
+    return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 

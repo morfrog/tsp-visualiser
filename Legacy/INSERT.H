@@ -15,22 +15,32 @@
 #define NoGraphics 0
 #define Graphics   1
 
-double InsertCost(PROBLEM *prob,int I, int A, int B);
-void   BestInsert(PROBLEM *prob,int citynum,int *a,int *b);
-void   NNeighbourStartPath(PROBLEM *prob);
-void   RndStartPath(PROBLEM *prob);
-int    FNeighbour(int (* func)(double,double),PROBLEM *prob,int citynum);
-void   FStartPath(int (* func)(double,double),PROBLEM *prob);
-int    FNextCost(int (* func)(double,double),PROBLEM *prob,int *A,int *B);
-int    FNextDist(int (* func)(double,double),int (* func2)(double,double),PROBLEM *prob,int *fcity);
-int    RndNext(PROBLEM *prob);
+struct iprob
+{
+    PROBLEM *prob;
+    int endo;
+    int *outpath;
+};
+
+typedef struct iprob INSPROB;
+
+void   InsProbReset(INSPROB *insprob,int free);
+INSPROB *NewInsProb(DISTANCES *dist);
+void   CityDel(INSPROB *insprob,int citynum);
+void   NNeighbourStartPath(INSPROB *insprob);
+void   RndStartPath(INSPROB *insprob);
+int    FNeighbour(int (* func)(double,double),INSPROB *insprob,int citynum);
+void   FStartPath(int (* func)(double,double),INSPROB *insprob);
+int    FNextCost(int (* func)(double,double),INSPROB *insprob,int *A,int *B);
+int    FNextDist(int (* func)(double,double),int (* func2)(double,double),INSPROB *insprob,int *fcity);
+int    RndNext(INSPROB *insprob);
 void   PrintInit(int init);
 void   PrintMethod(int method);
-double ControlRand(PROBLEM *prob,int graphics);
-double ControlNearN(PROBLEM *prob,int graphics);
-double ControlFurthest(PROBLEM *prob,int graphics);
-double ControlNearest(PROBLEM *prob,int graphics);
-double ControlDear(PROBLEM *prob,int graphics);
-double ControlCheap(PROBLEM *prob,int graphics);
+double ControlRand(INSPROB *insprob,int graphics);
+double ControlNearN(INSPROB *insprob,int graphics);
+double ControlFurthest(INSPROB *insprob,int graphics);
+double ControlNearest(INSPROB *insprob,int graphics);
+double ControlDear(INSPROB *insprob,int graphics);
+double ControlCheap(INSPROB *insprob,int graphics);
 
 #endif
