@@ -57,6 +57,7 @@ int _FAR InitScreen(int videomode);
 int _FAR ShutDown( void );
 SWIN _FAR *NewWin(int t,int l,int b,int r);
 void _FAR SetWin(SWIN *w);
+int       MapPixToText(int pix,int x);
 void _FAR SetTextWin(SWIN *w);
 void _FAR ResetWin(SWIN *w,int l,int t,int r,int b);
 void _FAR MoveWin(SWIN *w,int l,int t,int r,int b);

@@ -162,14 +162,19 @@ void _FAR SetWin(SWIN *w)
     _setviewport(w->l+1,w->t+1,w->r-1,w->b-1);
 }
 
+int MapPixToText(int pix,int x)
+{
+    if (x) return (pix*VC.numtextcols)/VC.numxpixels;
+    else   return (pix*VC.numtextrows)/VC.numypixels;
+}
+
 void _FAR SetTextWin(SWIN *w)
 {
-    int a=(w->l*VC.numtextcols)/VC.numxpixels,
-        b=(w->t*VC.numtextrows)/VC.numypixels,
-        c=(w->r*VC.numtextcols)/VC.numxpixels,
-        d=(w->b*VC.numtextrows)/VC.numypixels;
-    _settextwindow(b+2,a+2,d-1,c-1);
-    /* +2 is roundup + gap */
+    int a=MapPixToText(w->l+1,1),
+        b=MapPixToText(w->t+1,0),
+        c=MapPixToText(w->r-1,1),
+        d=MapPixToText(w->b-1,0);
+    _settextwindow(b+2,a+2,d,c);
     _wrapon(_GWRAPON);
 }
 
@@ -202,8 +207,6 @@ void _FAR BorderWin(SWIN *w,int color)
     _setactivepage(0);
     _rectangle(_GBORDER,w->l,w->t,w->r,w->b);
     _setactivepage(a);
-
-
 }
 
 void _FAR ClearSection(int x1,int y1,int x2,int y2)

@@ -6,7 +6,10 @@
 #include <graph.h>
 #include <direct.h>
 #include "sys.h"
+#include "file.h"
 #include "screen.h"
+#include "path.h"
+#include "problem.h"
 #include "mouse.h"
 
 #define TITLEHEIGHT 15
@@ -17,10 +20,15 @@
 #define METHODWIDTH 120
 #define BTNHEIGHT ((MSGBOXTOP-VIEWBOTTOM) / 5)
 #define BTNSTART (FILESWIDTH+8+(METHODWIDTH*3))
+#define INPUTWIDTH 200
+#define INPUTHEIGHT 150
+
 
 #define CURRENT 0
 #define SET     1
 #define WHERE   2
+#define BORDER  3
+#define CLEAR   4
 
 #define title   0 
 #define files   1   
@@ -119,7 +127,7 @@ void DrawList(char **list,int size,int chosen)
 }
 
 int WinManager(int mode,int win,int x,int y)
-// * mode in {CURRENT,SET,WHERE}
+// * mode in {CURRENT,SET,WHERE,BORDER,CLEAR}
 // * SET sets the current window, CURRENT returns the current window,
 // * WHERE returns which window is at x,y - NULL if isn't one.
 // * WinManager(SET,text1,0,0);
@@ -141,6 +149,7 @@ int WinManager(int mode,int win,int x,int y)
     static SWIN *wrndbtn;
     static SWIN *wgobtn;
     static SWIN *wquitbtn;
+    SWIN *tmp;
     static int currenti;
     static char **map;
 
@@ -178,6 +187,31 @@ int WinManager(int mode,int win,int x,int y)
     else
     {
         switch (mode) {
+            case BORDER : case CLEAR :
+                switch (win) {
+                    case title   : tmp=wtitle;  break;
+                    case files   : tmp=wfiles;  break; 
+                    case fview   : tmp=wfview;  break;
+                    case solver  : tmp=wsolver; break; 
+                    case msgbox  : tmp=wmsgbox; break; 
+                    case help    : tmp=whelp;   break;
+                    case method  : tmp=wmethod; break; 
+                    case init    : tmp=winit;   break;
+                    case newbtn  : tmp=wnewbtn; break; 
+                    case savebtn : tmp=wsavebtn;break;  
+                    case rndbtn  : tmp=wrndbtn; break; 
+                    case gobtn   : tmp=wgobtn;  break;
+                    case quitbtn : tmp=wquitbtn;break;  
+                    default      : tmp=wtitle;break;  
+                }
+                if (mode==BORDER) BorderWin(tmp,x);
+                else
+                {
+                    ClearSection(tmp->l+1,tmp->t+1,tmp->r-1,tmp->b-1);
+                }
+
+                break;
+            
             case SET :
                 currenti = win;
                 switch (win) {
@@ -246,36 +280,81 @@ void Msg(char *string,int color)
     DrawText(string,1,2,color);
 }
 
+char *InputBox(char *msg)
+{
+    static int initialised=0;
+    static int isize;
+    static char *image;
+    static char *tmp;
+    static SWIN *inputbox;
+    
+    if (!(initialised))
+    {
+        inputbox=NewWin(201,101,200+INPUTWIDTH,100+INPUTHEIGHT);
+        isize=_imagesize(0,0,INPUTWIDTH,INPUTHEIGHT);
+        image=salloc(isize,sizeof(char));
+        tmp=salloc(isize,sizeof(char));        
+        SetWin(inputbox);
+        _clearscreen(_GVIEWPORT);
+        BorderWin(inputbox,border_col);
+        _rectangle(250,100+INPUTHEIGHT-50,300,100+INPUTHEIGHT-10,_GBORDER);
+        SetTextWin(inputbox);
+        DrawText("OK",10,5,GREEN);    
+        _getimage(201,101,200+INPUTWIDTH,100+INPUTHEIGHT,image);
+        initialised=1;
+    }
+    else
+    {
+        _getimage(201,101,200+INPUTWIDTH,100+INPUTHEIGHT,tmp);
+        // * save what was there * //
+        _putimage(201,101,image,_GPSET);
+        SetTextWin(inputbox);
+        DrawText(msg,2,2,GREEN);
+        getch();
+        _putimage(201,101,tmp,_GPSET);
+    }
+    return "hi";
+}
+
+void UpdateFileView(PROBLEM *currentprob)
+{
+    WinManager(CLEAR,fview,0,0);
+    WinManager(SET,fview,0,0);
+    DrawCities(currentprob->dist->l,currentprob->vmask);
+    DrawPath(currentprob->path,currentprob->dist->l,1);
+}
 void main()
 {
-    int pos=320;
+    int pos=320,RequestUpdate=0,line;
     MouseStatus m;
     char buffer[40];
     char **directory;
     char **tmp;
-    int size,x,filenum=0,solvernum=0,at=title,last=title;
-    char **messages=allocate_N_by_N_array(14,50,sizeof(char),"Messages");
-    strcpy(messages[0],"Title Bar                                   ");
-    strcpy(messages[1],"Choose A File                               ");
-    strcpy(messages[2],"View of File                                ");
-    strcpy(messages[3],"Choose a TSP method                         ");
-    strcpy(messages[4],"This is the message box                     ");
-    strcpy(messages[5],"Help on this program                        ");
-    strcpy(messages[6],"Choose an 'TSP method' method               ");
-    strcpy(messages[7],"Choose an 'TSP method' initialisation method");
-    strcpy(messages[8],"Creates a new random map                    ");
-    strcpy(messages[9],"Saves the current map                       ");
-    strcpy(messages[10],"Randomizes the map                         ");
-    strcpy(messages[11],"Start with the current settings            ");    
-    strcpy(messages[12],"Quit the program                           ");
+    int size,x,filenum=0,select,solvernum=0,at=title,last=title;
+    PROBLEM *currentprob;
+
+//    char **messages=allocate_N_by_N_array(14,50,sizeof(char),"Messages");
+
+    char messages[13][45]={"Title Bar                                   ",
+                           "Choose A File                               ",
+                           "View of File                                ",
+                           "Choose a TSP method                         ",
+                           "This is the message box                     ",
+                           "Help on this program                        ",
+                           "Choose an 'TSP method' method               ",
+                           "Choose an 'TSP method' initialisation method",
+                           "Creates a new random map                    ",
+                           "Saves the current map                       ",
+                           "Randomizes the map                          ",
+                           "Start with the current settings             ",
+                           "Quit the program                            "};
 
     directory=GetDirectory( getcwd( NULL, 0 ),"TSP",&size );
     printf("%d files found\n",size);
-    
+
     InitScreen(16);
     _setactivepage(0);
     _setvisualpage(1);
-    
     
     WinManager(SET,title,0,0);
     DrawText("Visualisation Tool For The Travelling Salesman Problem - "
@@ -284,6 +363,10 @@ void main()
 
     WinManager(SET,files,0,0);
     DrawList(directory,size,filenum);
+
+    currentprob=NewProblem(NewMap(NewLocates(directory[filenum])));
+    currentprob->path=LocatesAsPath(currentprob->dist->l);
+    UpdateFileView(currentprob);
     
     WinManager(SET,solver,0,0);
     tmp=allocate_N_by_N_array(3,13,sizeof(char),"Directory");
@@ -295,40 +378,82 @@ void main()
     Msg("This is the message box!",GREEN);
     
     WinManager(SET,newbtn,0,0);
-    DrawText("New",4,2,GREEN);
+    DrawText("New",7,2,GREEN);
 
     WinManager(SET,savebtn,0,0);
-    DrawText("Save",4,2,GREEN);
+    DrawText("Save",7,2,GREEN);
     
     WinManager(SET,rndbtn,0,0);
-    DrawText("Randomize",1,3,GREEN);
+    DrawText("Randomize",4,3,GREEN);
 
     WinManager(SET,quitbtn,0,0);
-    DrawText("Quit",4,2,GREEN);
+    DrawText("Quit",7,2,GREEN);
 
     WinManager(SET,gobtn,0,0);
-    DrawText("GO!",4,2,GREEN);
+    DrawText("GO!",7,2,GREEN);
 
     _setvisualpage(0);
+
+/*
+    _setactivepage(1);
+    _clearscreen(_GCLEARSCREEN);
+    InputBox(NULL);
+    _clearscreen(_GCLEARSCREEN);
+    _setactivepage(0);
+*/    
     SetMousePage(0);
     ResetMouse();
     SetMousePos(0,0);
     ShowMouse();
 
-    UseMouseCur(CROSS);
+    UseMouseCur(ARROW);
     do
     {
         MouseStat(&m);
         if (ButtonDown(&m))
         {
-            if (WinManager(CURRENT,NULL,0,0)==quitbtn)
-            {
+            switch (WinManager(CURRENT,NULL,0,0)) {
+            case quitbtn :
                 ShutDown();
                 exit(1);
+            case files :
+                line=MapPixToText(m.ypos,0)-2;
+                if (line<1) select=0;
+                else if (line>=size) select=size-1;
+                else select=line;
+
+                if (select!=filenum)
+                {
+                    filenum=select;
+                    currentprob=NULL;
+                    currentprob=NewProblem(NewMap(NewLocates(directory[filenum])));
+                    currentprob->path=LocatesAsPath(currentprob->dist->l);
+                    HideMouse();
+                    UpdateFileView(currentprob);
+                    WinManager(SET,files,0,0);
+                    DrawList(directory,size,filenum);
+                    ShowMouse();
             
+                }
+
+                break;
+            case solver :
+                line = MapPixToText(m.ypos-VIEWBOTTOM,0);
+                if (line<1) select=0;
+                else if (line>=3) select=2;
+                else select=line;
+                if (select!=solvernum)
+                {
+                    solvernum=select;
+                    HideMouse();
+                    WinManager(SET,solver,0,0);
+                    DrawList(tmp,3,solvernum);
+                    ShowMouse();
+                }
+                break;
             }
         }
-        if (MouseMoved())
+        if (MouseMoved() || (RequestUpdate))
         {
             at=WinManager(WHERE,NULL,m.xpos,m.ypos);
             if (at!=last)
@@ -342,13 +467,13 @@ void main()
                 }
                 else if (at==init)
                 {
-                    sprintf(buffer,"%s Initialisation Method           ",
+                    sprintf(buffer,"Choose an %s Initialisation Method           ",
                         tmp[solvernum]);
                     Msg(buffer,GREEN);
                 }
                 else if (at==method)
                 {
-                   sprintf(buffer,"%s Operation Method           ",
+                   sprintf(buffer,"Choose an %s Operation Method           ",
                         tmp[solvernum]);
                     Msg(buffer,GREEN);
                 }
@@ -358,6 +483,8 @@ void main()
         }
     }
     while (!(kbhit()));
+    getch();
+    InputBox("Enter The Cooling Rate :");
     getch();
 }
 
