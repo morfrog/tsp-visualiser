@@ -13,8 +13,10 @@
 #define MSGBOXTOP 320
 #define FILESWIDTH 120
 #define VIEWXPOS 350 
-#define VIEWBOTTOM 180
+#define VIEWBOTTOM 178
 #define METHODWIDTH 120
+#define BTNHEIGHT ((MSGBOXTOP-VIEWBOTTOM) / 5)
+#define BTNSTART (FILESWIDTH+8+(METHODWIDTH*3))
 
 #define CURRENT 0
 #define SET     1
@@ -28,11 +30,12 @@
 #define help    5
 #define method  6
 #define init    7
-#define savebtn 8
-#define quitbtn 9
-#define gobtn   10
-#define helpbtn 11
-#define current 12
+#define newbtn  8
+#define savebtn 9
+#define rndbtn  10
+#define gobtn   11
+#define quitbtn 12
+#define current 13
 
 int ScrAsMouseX(int m)
 {
@@ -133,6 +136,11 @@ int WinManager(int mode,int win,int x,int y)
     static SWIN *wmethod;
     static SWIN *winit;
     static SWIN *wcurrent;
+    static SWIN *wnewbtn;
+    static SWIN *wsavebtn;
+    static SWIN *wrndbtn;
+    static SWIN *wgobtn;
+    static SWIN *wquitbtn;
     static int currenti;
     static char **map;
 
@@ -141,11 +149,16 @@ int WinManager(int mode,int win,int x,int y)
         wtitle=NewWin(1,1,639,TITLEHEIGHT);
         wfiles=NewWin(1,TITLEHEIGHT+2,FILESWIDTH,MSGBOXTOP-2);
         wfview=NewWin(FILESWIDTH+2,TITLEHEIGHT+2,VIEWXPOS,VIEWBOTTOM);
-        wmsgbox=NewWin(1,MSGBOXTOP,639,349);
+        wmsgbox=NewWin(1,MSGBOXTOP,BTNSTART-2,349);
         whelp=NewWin(352,TITLEHEIGHT+2,639,VIEWBOTTOM);
         wsolver=NewWin(FILESWIDTH+2,VIEWBOTTOM+2,FILESWIDTH+2+METHODWIDTH,MSGBOXTOP-2);
         wmethod=NewWin(FILESWIDTH+4+METHODWIDTH,VIEWBOTTOM+2,FILESWIDTH+4+(METHODWIDTH*2),MSGBOXTOP-2);
         winit=NewWin(FILESWIDTH+6+(METHODWIDTH*2),VIEWBOTTOM+2,FILESWIDTH+6+(METHODWIDTH*3),MSGBOXTOP-2);
+        wnewbtn=NewWin(BTNSTART,VIEWBOTTOM+2,639,VIEWBOTTOM+BTNHEIGHT);
+        wsavebtn=NewWin(BTNSTART,VIEWBOTTOM+2+(BTNHEIGHT),639,VIEWBOTTOM+(BTNHEIGHT*2));
+        wrndbtn=NewWin(BTNSTART,VIEWBOTTOM+2+(BTNHEIGHT*2),639,VIEWBOTTOM+(BTNHEIGHT*3));
+        wgobtn=NewWin(BTNSTART,VIEWBOTTOM+2+(BTNHEIGHT*3),639,VIEWBOTTOM+(BTNHEIGHT*5));
+        wquitbtn=NewWin(BTNSTART,MSGBOXTOP,639,349);
         wcurrent=title;
         initialised=1;
         SetMousePos(wcurrent->t+1,wcurrent->l+1);
@@ -155,7 +168,12 @@ int WinManager(int mode,int win,int x,int y)
         BorderWin(wsolver,border_col);
         BorderWin(whelp,border_col);
         BorderWin(wmethod,border_col);
-        BorderWin(winit,border_col);    
+        BorderWin(winit,border_col);
+        BorderWin(wnewbtn,border_col);
+        BorderWin(wsavebtn,border_col);
+        BorderWin(wrndbtn,border_col);
+        BorderWin(wgobtn,border_col);
+        BorderWin(wquitbtn,border_col);
     }
     else
     {
@@ -171,32 +189,51 @@ int WinManager(int mode,int win,int x,int y)
                     case help   : SetTextWin(whelp);   wcurrent=whelp; break;
                     case method : SetTextWin(wmethod); wcurrent=wmethod; break;
                     case init   : SetTextWin(winit);   wcurrent=winit; break;
+                    case newbtn : SetTextWin(wnewbtn); wcurrent=wnewbtn; break;
+                    case savebtn : SetTextWin(wsavebtn); wcurrent=wsavebtn; break;
+                    case rndbtn : SetTextWin(wrndbtn); wcurrent=wrndbtn; break;
+                    case gobtn : SetTextWin(wgobtn); wcurrent=wgobtn; break;
+                    case quitbtn : SetTextWin(wquitbtn); wcurrent=wquitbtn; break;
                     default     : SetWin(wcurrent); break;                    
                 } break;
             case CURRENT :
                 return currenti; break;
             case WHERE :
-                if       (y>MSGBOXTOP) return msgbox;
-                else if (y<TITLEHEIGHT) return title;
-                else if (x<FILESWIDTH) return files;
+                if       (y>MSGBOXTOP)
+                    if (x>BTNSTART)
+                        currenti=quitbtn;
+                    else
+                        currenti=msgbox;
+                else if (y<TITLEHEIGHT) currenti=title;
+                else if (x<FILESWIDTH) currenti=files;
                 else if (y<VIEWBOTTOM) // * help or view * //
                 {
                     if (x>VIEWXPOS)
-                        return help;
+                        currenti=help;
                     else
-                        return fview;
+                        currenti=fview;
                 }
                 else
                 {
-                    if (x>FILESWIDTH+6+(METHODWIDTH*3))
-                        return quitbtn;
+                    if (x>FILESWIDTH+6+(METHODWIDTH*3)) // * is a button * //
+                    {
+                        if (y>VIEWBOTTOM+2+(BTNHEIGHT*3))
+                            currenti=gobtn;
+                        else if (y>VIEWBOTTOM+2+(BTNHEIGHT*2))
+                            currenti=rndbtn;
+                        else if (y>VIEWBOTTOM+2+(BTNHEIGHT))
+                            currenti=savebtn;
+                        else
+                            currenti=newbtn;
+                    }
                     else if (x>FILESWIDTH+4+(METHODWIDTH*2))
-                        return init;
+                        currenti=init;
                     else if (x>FILESWIDTH+2+METHODWIDTH)
-                        return method;
+                        currenti=method;
                     else
-                        return solver;
-                } 
+                        currenti=solver;
+                }
+                return currenti; 
                 break;
         }
     }
@@ -217,7 +254,7 @@ void main()
     char **directory;
     char **tmp;
     int size,x,filenum=0,solvernum=0,at=title,last=title;
-    char **messages=allocate_N_by_N_array(12,50,sizeof(char),"Messages");
+    char **messages=allocate_N_by_N_array(14,50,sizeof(char),"Messages");
     strcpy(messages[0],"Title Bar                                   ");
     strcpy(messages[1],"Choose A File                               ");
     strcpy(messages[2],"View of File                                ");
@@ -226,11 +263,12 @@ void main()
     strcpy(messages[5],"Help on this program                        ");
     strcpy(messages[6],"Choose an 'TSP method' method               ");
     strcpy(messages[7],"Choose an 'TSP method' initialisation method");
-    strcpy(messages[8],"Saves the current map                       ");
-    strcpy(messages[9],"Press to quit the program                   ");
-    strcpy(messages[10],"Run the chosen methods                     ");
-    strcpy(messages[11],"Press for extended help                    ");    
-    
+    strcpy(messages[8],"Creates a new random map                    ");
+    strcpy(messages[9],"Saves the current map                       ");
+    strcpy(messages[10],"Randomizes the map                         ");
+    strcpy(messages[11],"Start with the current settings            ");    
+    strcpy(messages[12],"Quit the program                           ");
+
     directory=GetDirectory( getcwd( NULL, 0 ),"TSP",&size );
     printf("%d files found\n",size);
     
@@ -256,6 +294,21 @@ void main()
     
     Msg("This is the message box!",GREEN);
     
+    WinManager(SET,newbtn,0,0);
+    DrawText("New",4,2,GREEN);
+
+    WinManager(SET,savebtn,0,0);
+    DrawText("Save",4,2,GREEN);
+    
+    WinManager(SET,rndbtn,0,0);
+    DrawText("Randomize",1,3,GREEN);
+
+    WinManager(SET,quitbtn,0,0);
+    DrawText("Quit",4,2,GREEN);
+
+    WinManager(SET,gobtn,0,0);
+    DrawText("GO!",4,2,GREEN);
+
     _setvisualpage(0);
     SetMousePage(0);
     ResetMouse();
@@ -265,9 +318,18 @@ void main()
     UseMouseCur(CROSS);
     do
     {
+        MouseStat(&m);
+        if (ButtonDown(&m))
+        {
+            if (WinManager(CURRENT,NULL,0,0)==quitbtn)
+            {
+                ShutDown();
+                exit(1);
+            
+            }
+        }
         if (MouseMoved())
         {
-            MouseStat(&m);
             at=WinManager(WHERE,NULL,m.xpos,m.ypos);
             if (at!=last)
             {
