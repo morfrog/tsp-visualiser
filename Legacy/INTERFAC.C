@@ -1,3 +1,4 @@
+// INTERFAC_C
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
@@ -947,6 +948,7 @@ void main()
     int x,y,select,at,last,mx=0,my=0,tinit,tmethod,currentwin=none;
     int keypress,keywin;
     int lastleftx=0,lastlefty=0,lastrightx=0,lastrighty=0;
+    int done;
     INSPROB *insprob;
     PROBLEM *currentprob=NULL;
     PROBLEM *tempprob=NULL; // * should save path, not entire problem * //
@@ -1050,7 +1052,8 @@ void main()
                             }
                            break;
                 case 'V' : /* WriteScreen2BMP(); */
-                           Beep(100,100); WriteScreen2File(); keypress=FALSE; 
+                           Beep(100,100); WriteScreen2File(); keypress=FALSE;
+                           Beep(300,100);
                            IntWinManager(SET,IntWinManager(CURRENT,NULL,0,0),0,0); 
                 default  : keypress=FALSE; break;
             }
@@ -1170,7 +1173,18 @@ void main()
                                  "to Quit...        \n"
                                  "                  ",1,19,LTRED);
                     
-                        while (getch()!=27) {}
+                        done = 0;
+                        while (!done)
+                        {
+                            switch(getch())
+                            {
+                                case 27 : done=1; break;
+                                case 'V': Beep(100,100);
+                                          WriteScreen2File();
+                                          Beep(300,100);
+                                          break;
+                            }
+                        }
                         WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
                         SetFile(&currentprob,number_of_files-1,FALSE);
                     }

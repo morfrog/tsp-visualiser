@@ -1,3 +1,4 @@
+// PROBLEM_C
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -6,6 +7,7 @@
 #include <graph.h>
 #include <dos.h>
 #include <ctype.h>
+#include <string.h>
 #include "sys.h"
 #include "file.h"
 #include "path.h"
@@ -123,7 +125,9 @@ int DoInput(char ch)
                   break;
         case 'V':
                   Beep(100,100); WriteScreen2File();
+                  Beep(300,100);
                   _setviewport(0,0,460,350); //  <- poxy but works for now
+                  return 0;
                   break;
         default : if ((ch>=49) && (ch<=57))
                   {

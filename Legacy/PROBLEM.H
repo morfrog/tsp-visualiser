@@ -68,4 +68,5 @@ int ControlVarOverlay(PROBLEM *prob,int startx,int starty,int endx,int endy,int 
                       int l,int t,int r,int b,int (* func)(int,int),int stopwidth,
                       int stopheight,int stoptimes);
 void _FAR ShowText(char string[],int start,int line,int color);
+void WriteScreen2File(void);
 #endif
