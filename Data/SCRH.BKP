@@ -1,0 +1,44 @@
+#ifndef SCREEN_H
+
+#if defined ( __386__ )
+    #define _FAR
+    #define _HUGE
+#else
+    #define _FAR    __far
+    #define _HUGE   __huge
+#endif
+
+
+/* colours */
+#define normal_col  _RED
+#define change_col  _BLUE
+#define line_change _LIGHTGREEN
+#define city_col    _GRAY
+#define text_col    _LIGHTRED
+#define line_col    _GREEN
+#define border_col  _WHITE
+
+struct win
+{
+    int t; /* top */
+    int l; /* left */
+    int b; /* bottom */
+    int r; /* right */
+};
+
+typedef struct win SWIN;
+
+int _FAR InitScreen(int videomode);
+int _FAR ShutDown( void );
+SWIN _FAR *NewWin(int t,int l,int b,int r);
+void _FAR SetWin(SWIN *w);
+void _FAR SetTextWin(SWIN *w,int border);
+void _FAR ResetWin(SWIN *w,int t,int l,int b,int r);
+void _FAR FreeWin(SWIN *w);
+void _FAR BorderWin();
+void _FAR DrawLine(double x1,double y1,double x2,double y2,int color);
+void _FAR DrawCity(char name[],double x,double y,double size,int color);
+void _FAR DrawText(char string[],int start,int line,int color);
+void _FAR TextWindow(int rows,int cols);
+void _FAR SwapPage();
+#endif
