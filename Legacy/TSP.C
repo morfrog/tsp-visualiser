@@ -74,20 +74,12 @@ int ProcessCmdLine(int argc, char *argv[],char **filename,int *InitType,
 
 void PrintCmdLine(char *filename,int InitType,int InsType,int delay,int optimal)
 {
-    printf("Running With Parameters :\nFilename   : %s\nInitType   : ",filename);
-    PrintInit(InitType);
-    printf("\nInsType    : ");
-    PrintMethod(InsType);
-    printf("\nDelay Type : ");
-    switch (delay) {
-        case -1 : printf("Wait-For-Keypress");  break;
-        case 0  : printf("Run-Through-To-End"); break;
-        case -2 : printf("Benchmark Option");   break;
-        case -3 : printf("All Benchmark Option, Optimal = %10.6f",optimal);
-        default : printf("%d Seconds",delay/CLOCKS_PER_SEC);break;
-    }
-    printf("\n");
-   
+    printf("Running With Parameters :\n"
+           "Filename   : %s\n"
+           "InitType   : %s\n"
+           "InsType    : %s\n"
+           "Delay Type : %s\n",filename,InitStr(InitType),MethodStr(InsType),
+                               DelayStr(delay,optimal));
 }
 
 void main(int argc, char *argv[])
@@ -110,7 +102,8 @@ void main(int argc, char *argv[])
 
         if (PRINTON) printf("Reading Map From File '%s'...\n",filename);
         insprob=NewInsProb(NewMap(NewLocates(filename)));
-        if (PRINTON) {
+        if (PRINTON)
+        {
             printf("Map Read...\n");
             PrintMap(insprob->prob->dist);
             mygetch();
@@ -122,38 +115,16 @@ void main(int argc, char *argv[])
 
             printf("Init      File/Insert-> ");
             for (method=InsRand;method<=InsFurthest;method++)
-                {PrintMethod(method);printf(" ");}
+                {printf("%s",MethodStr(method));printf(" ");}
             printf("\n");
 
             for (init=InitRand;init<=InitFurthest;init++)
             {
-                PrintInit(init);
+                printf("%s",InitStr(init));
                 printf("%12s",filename);
                 for (method=InsRand;method<=InsFurthest;method++)
                 {
-                    if (method==InsNearN)
-                    {
-                        NNeighbourStartPath(insprob);
-                        length=ControlNearN(insprob,NoGraphics);break;
-                    }
-                    else
-                    {
-                        switch (inittype) {
-                            case InitClosest : FStartPath(Lesser,insprob);  break;
-                            case InitFurthest: FStartPath(Greater,insprob); break;
-                            default : RndStartPath(insprob);             break;
-                        }
-                    
-
-                        switch (method) {
-                            case InsCheap   : length=ControlCheap(insprob,NoGraphics);break;
-                            case InsDear    : length=ControlDear(insprob,NoGraphics);break;
-                            case InsNearest : length=ControlNearest(insprob,NoGraphics);break;
-                            case InsFurthest: length=ControlFurthest(insprob,NoGraphics);break;
-                            default/*Rand*/ : length=ControlRand(insprob,NoGraphics); break;
-        
-                        }
-                    }
+                    length=ControlAllIns(insprob,init,method,NoGraphics);
                     printf("%10.5f",length/optimal);
                     InsProbReset(insprob,1);
                 }
@@ -166,75 +137,37 @@ void main(int argc, char *argv[])
             printf("%10.5f\n",length/optimal);
 
         }
+        else if (tdelay==-2) { /* benchmark only - no graphics */
+
+                length=ControlAllIns(insprob,inittype,instype,NoGraphics);
+                printf("Length was %.5f\n",length);
+        }
         else
         {
-            
-            if (instype==InsNearN)
-            {
-                NNeighbourStartPath(insprob);
-            }
-            else
-            {
-                switch (inittype) {
-                    case InitClosest : FStartPath(Lesser,insprob);  break;
-                    case InitFurthest: FStartPath(Greater,insprob); break;
-                    default : RndStartPath(insprob);             break;
-                }
-            }
-            if (tdelay==-2) { /* benchmark only - no graphics */
-            
-                switch (instype) {
-                    case InsCheap   : length=ControlCheap(insprob,NoGraphics);break; 
-                    case InsDear    : length=ControlDear(insprob,NoGraphics);break; 
-                    case InsNearN   : length=ControlNearN(insprob,NoGraphics);break;
-                    case InsNearest : length=ControlNearest(insprob,NoGraphics);break;
-                    case InsFurthest: length=ControlFurthest(insprob,NoGraphics);break;
-                    default/*Rand*/ : length=ControlRand(insprob,NoGraphics); break;
-            
-                }
 
-                printf("Length was %.5f\n",length);
-            }
-            else
-            {
-                InitScreen(16);
-                SwapPage();
-    
-                WinManager(Main);
-                WinManager(Text);
+            InitScreen(16);
+            SwapPage();
+
+            WinManager(Main);
+            WinManager(Text);
+
+            ShowText("Hit Esc to Quit,\n\n"
+                 "Any other key \n"
+                 "To continue..",1,20,BLUE);
+
+
+            length=ControlAllIns(insprob,inittype,instype,tdelay!=0);
         
-                DrawNorm(insprob->prob,1);
-                delay(tdelay>0?tdelay:0);
-    
-                switch (instype) {
-                    case InsCheap   : length=ControlCheap(insprob,((tdelay!=0) && Graphics)); break;
-                    case InsDear    : length=ControlDear(insprob,((tdelay!=0) && Graphics)); break;
-                    case InsNearN   : length=ControlNearN(insprob,((tdelay!=0) && Graphics)); break;
-                    case InsNearest : length=ControlNearest(insprob,((tdelay!=0) && Graphics));break;
-                    case InsFurthest: length=ControlFurthest(insprob,((tdelay!=0) && Graphics));break;
-                    default/*Rand*/ : length=ControlRand(insprob,((tdelay!=0) && Graphics)); break;
-        
-                }
-                DrawNorm(insprob->prob,1);
-                if (Graphics)
-                {
-                    sprintf(buffer,"F I N I S H E D");
-                    ShowText(buffer,1,16,LTRED);
-                    sprintf(buffer,"Length Is %8.6f",length);
-                    ShowText(buffer,1,18,YELLOW);
-                }
-                
+            DrawNorm(insprob->prob,1);
 
-                getch();
-
-                ShutDown();
-            }
-
-
-                
-
+            sprintf(buffer,"F I N I S H E D");
+            ShowText(buffer,1,16,LTRED);
+            sprintf(buffer,"Length Is %8.6f",length);
+            ShowText(buffer,1,18,YELLOW);
+                           
+            getch();
+            ShutDown();
         }
-        
 
 /*        FreeWin(main);    */  
      
@@ -243,7 +176,7 @@ void main(int argc, char *argv[])
         out=PathAsLocates(insprob->prob->path,insprob->prob->dist->l);
         WriteLocates(out,"default.dat");
         FreeLocates(out);
-        if (tdelay>=0) printf("File 'default.dat' written...\n");
+        if (tdelay>=-1) printf("File 'default.dat' written...\n");
     }
 
 }

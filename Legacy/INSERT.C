@@ -32,28 +32,32 @@ void InsProbReset(INSPROB *insprob,int free)
     ProblemReset(insprob->prob,free);
 }
 
-void PrintInit(int init)
+char *InitStr(int init)
 {
+    char *buffer=salloc(20,sizeof(char));
     switch (init) {
-        case InitNearN   : printf("NearN    "); break;
-        case InitRand    : printf("Random   "); break;
-        case InitClosest : printf("Closest  "); break;
-        case InitFurthest: printf("Furthest "); break;
-        default :          printf("Illegal Value.");break; 
+        case InitNearN   : sprintf(buffer,"Nearest Neighbour"); break;
+        case InitRand    : sprintf(buffer,"Random");            break;
+        case InitClosest : sprintf(buffer,"Closest");           break;
+        case InitFurthest: sprintf(buffer,"Furthest");          break;
+        default :          buffer=NULL;                         break; 
     }
+    return buffer;
 }
 
-void PrintMethod(int method)
+char *MethodStr(int method)
 {
+    char *buffer=salloc(20,sizeof(char));
     switch (method) {
-        case InsRand    : printf("Random   "); break;
-        case InsCheap   : printf("Cheapest "); break;
-        case InsDear    : printf("Dearest  "); break;
-        case InsNearN   : printf("NNeigbour"); break;
-        case InsNearest : printf("Nearest  "); break;
-        case InsFurthest: printf("Furthest "); break;
-        default         : printf("Illegal Value."); break;
+        case InsRand    : sprintf(buffer,"Random");             break;
+        case InsCheap   : sprintf(buffer,"Cheapest");           break;
+        case InsDear    : sprintf(buffer,"Dearest");            break;
+        case InsNearN   : sprintf(buffer,"Nearest Neigbour");   break;
+        case InsNearest : sprintf(buffer,"Nearest");            break;
+        case InsFurthest: sprintf(buffer,"Furthest");           break;
+        default         : buffer=NULL;                          break; 
     }
+    return buffer;
 }
 
 void NNeighbourStartPath(INSPROB *insprob)
@@ -223,9 +227,6 @@ double ControlRand(INSPROB *insprob,int graphics)
     static int col=WHITE;
     int total=insprob->endo;
 
-    if (graphics) {sprintf(buffer,"Random Method\n");
-                   ShowText(buffer,1,1,GREEN);}
-
     do {
         if (col==WHITE) col=LTWHITE; else col=WHITE;
         now=clock();
@@ -264,10 +265,6 @@ double ControlNearN(INSPROB *insprob,int graphics)
     clock_t time_seg=TotalDelay(-1)/2;
     char buffer[50];
 
-    if (graphics) {sprintf(buffer,"Nearest Neighbour\n"
-                                  "     Method\n");
-                   ShowText(buffer,1,1,GREEN);}
-
     PathEnd(insprob->prob->path);
     PathCurrent(insprob->prob->path,&this);
 
@@ -298,11 +295,6 @@ double ControlFurthest(INSPROB *insprob,int graphics)
     clock_t now;
     clock_t time_seg=TotalDelay(-1)/3;
     char buffer[50];
-
-    if (graphics) {sprintf(buffer,"    Furthest\n"
-                                  "     Method\n");
-                   ShowText(buffer,1,1,GREEN);}
-    
 
     do {
         now=clock();
@@ -335,10 +327,6 @@ double ControlNearest(INSPROB *insprob,int graphics)
     clock_t time_seg=TotalDelay(-1)/3;
     char buffer[50];
 
-    if (graphics) {sprintf(buffer,"    Nearest\n"
-                                  "     Method\n");
-                   ShowText(buffer,1,1,GREEN);}
-
     do {
         now=clock();
         next=FNextDist(Lesser,Lesser,insprob,&it);
@@ -367,11 +355,6 @@ double ControlDear(INSPROB *insprob,int graphics)
     clock_t time_seg=TotalDelay(-1)/3;
     char buffer[50];
 
-    if (graphics) {sprintf(buffer,"    Dearest\n"
-                                  "     Method\n");
-                   ShowText(buffer,1,1,GREEN);}
-
-
     do {
         now=clock();
         next=FNextCost(Greater,insprob,&pA,&pB);
@@ -396,11 +379,6 @@ double ControlCheap(INSPROB *insprob,int graphics)
     clock_t time_seg=TotalDelay(-1)/3;
     char buffer[50];
 
-    if (graphics) {sprintf(buffer,"    Cheapest\n"
-                                  "     Method\n");
-                   ShowText(buffer,1,1,GREEN);}
-
-
     do {
         now=clock();
         next=FNextCost(Lesser,insprob,&pA,&pB);
@@ -418,3 +396,35 @@ double ControlCheap(INSPROB *insprob,int graphics)
     return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 
+double ControlAllIns(INSPROB *insprob,int init,int method,int graphics)
+{
+
+    char buffer[40];
+    if (graphics)
+    {
+        sprintf(buffer,"%s\nMethod\n",MethodStr(method));
+        ShowText(buffer,1,1,GREEN);
+    }
+
+    if (method==InsNearN)
+    {
+        NNeighbourStartPath(insprob);
+        return ControlNearN(insprob,graphics);
+    }
+    else
+    {
+        switch (init) {
+            case InitClosest : FStartPath(Lesser,insprob);  break;
+            case InitFurthest: FStartPath(Greater,insprob); break;
+            default          : RndStartPath(insprob);       break;
+        }
+                    
+        switch (method) {
+            case InsCheap   : return ControlCheap(insprob,graphics);    break;
+            case InsDear    : return ControlDear(insprob,graphics);     break;
+            case InsNearest : return ControlNearest(insprob,graphics);  break;
+            case InsFurthest: return ControlFurthest(insprob,graphics); break;
+            default/*Rand*/ : return ControlRand(insprob,graphics);     break;
+        }
+    }
+}

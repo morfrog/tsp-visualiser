@@ -49,7 +49,7 @@ int NodalDist(NODE *a,NODE *b,int max)
 }
 
 
-int Reversal(PATH *p,NODE *left,NODE *right)
+void Reversal(PATH *p,NODE *left,NODE *right)
 {
     NODE *look1=left;
     NODE *look2=right;
@@ -179,6 +179,7 @@ int _FAR DeletePath(PATH *p,int city)
     tmp->next->prev=tmp->prev;
     if (p->head==tmp) p->head=tmp->next;
     sfree(tmp);
+    p->size-=1;
     return 1;
 }
 
@@ -204,6 +205,7 @@ PATH *RemovePathSection(PATH *p,int A,int B,int C, int D)
         {
             ret->size=pB-pC;
         }
+        return ret;
     }
     else return NULL; // * integrity absent - abort * //
 }

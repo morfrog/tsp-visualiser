@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <i86.h>
+#include <conio.h>
 #include "sys.h"
 #include "path.h"
 #include "file.h"
@@ -31,7 +32,7 @@ int ProcessCmdLine(int argc,char *argv[],char **filein,char **fileout,int *metho
                 "       time    = n is take n 10ths of seconds for each insert\n"
                 "       time    =-2 is Benchmark Mode - Simply returns length\n"
                 "       time    =-3 double is Benchmark for all methods, double=optimal\n"
-                "       No time = wait for keypress between each insert\n");
+                "       No time = wait for keypress between each optimize step\n");
 
 
         return 0;
@@ -67,66 +68,88 @@ int ProcessCmdLine(int argc,char *argv[],char **filein,char **fileout,int *metho
 void main(int argc,char *argv[])
 {
     int x;
-    PROBLEM *prob;
+    PROBLEM *prob1,*prob2,*prob3;
     LOCATES *out=NULL;
+    DISTANCES *dtemp;
     char *filein,*fileout;
     int method,y,max=6,*i,tdelay;
-    double optimal,length;
+    double optimal,length,oldpl;
+    char buffer[50];
 
     if (ProcessCmdLine(argc,argv,&filein,&fileout,&method,&tdelay,&optimal)) {
         TotalDelay(tdelay);
-
-        prob=NewProblem(NewMap(NewLocates(filein)));
-        prob->path=LocatesAsPath(prob->dist->l);
+        dtemp=NewMap(NewLocates(filein));
+        prob1=NewProblem(dtemp);
+        prob1->path=LocatesAsPath(prob1->dist->l);
 
         if (tdelay==-3)
         {
+            prob2=NewProblem(dtemp);
+            prob2->path=LocatesAsPath(prob2->dist->l);
+            prob3=NewProblem(dtemp);
+            prob3->path=LocatesAsPath(prob3->dist->l);
+
             printf("             1opt     2opt     3opt\n"
                    "%12s ",filein);
-            printf("%8.6f\n",ControlOneOpt(prob,0)/optimal);
-            ProblemReset(prob,1);
-            prob->path=LocatesAsPath(prob->dist->l);
-
-            printf("%8.6f\n",ControlTwoOpt(prob,0)/optimal);
-            ProblemReset(prob,1);
-            prob->path=LocatesAsPath(prob->dist->l);
-
-            printf("%8.6f\n",ControlKOpt(prob,3,0)/optimal);
+            printf("%8.5f  %8.5f  %8.5f\n",ControlOneOpt(prob1,0)/optimal,
+            ControlTwoOpt(prob2,0)/optimal,ControlKOpt(prob3,3,0)/optimal);
+        }
+        else if (tdelay==-2) 
+        {
+            switch (method) {
+                case opt1 : length=ControlOneOpt(prob1,((tdelay==-1) || (tdelay>0)));break;
+                case opt2 : length=ControlTwoOpt(prob1,((tdelay==-1) || (tdelay>0)));break;
+                case opt3 : length=ControlKOpt(prob1,3,((tdelay==-1) || (tdelay>0)));break;
+                default : break;
+            }
+            printf("Length was %8.6f\n",length);
         }
         else
         {
-            if (tdelay>=-1) {
-                InitScreen(16);
+        
+            InitScreen(16);
     
-                SwapPage();
-                WinManager(Main);
-                WinManager(Text);
-    
-                DrawNorm(prob,1);
-                delay(1000);
-            }
+            SwapPage();
+            WinManager(Main);
+            WinManager(Text);
+
+            ShowText("Hit Esc to Quit,\n\n"
+                 "Any other key \n"
+                 "To continue..",1,20,BLUE);
+                
+            DrawNorm(prob1,1);
+            oldpl=PathLength(prob1->path,prob1->dist);
+            
             switch (method) {
-                case opt1 : length=ControlOneOpt(prob,((tdelay==-1) || (tdelay>0)));break;
-                case opt2 : length=ControlTwoOpt(prob,((tdelay==-1) || (tdelay>0)));break;
-                case opt3 : length=ControlKOpt(prob,3,((tdelay==-1) || (tdelay>0)));break;
+                case opt1 : length=ControlOneOpt(prob1,((tdelay==-1) || (tdelay>0)));break;
+                case opt2 : length=ControlTwoOpt(prob1,((tdelay==-1) || (tdelay>0)));break;
+                case opt3 : length=ControlKOpt(prob1,3,((tdelay==-1) || (tdelay>0)));break;
                 default : break;
             }
-            if (tdelay>=-1) {
-                DrawNorm(prob,1);
-                delay(1000);
-                if (DEBUG) ShowPath(prob->path);
+
+            DrawNorm(prob1,1);
+
+            ShowText("F I N I S H E D",1,11,RED);
+            sprintf(buffer,"Lengths\n"
+                   "Old = %.6f\n"
+                   "New = %.6f\n",oldpl,length);
+            ShowText(buffer,1,12,YELLOW);
+
+
+            
+            if (DEBUG) ShowPath(prob1->path);
     
-                mygetch();
-                ShutDown();
-            }
-            if (tdelay==-2) printf("Length was %8.6f\n",length);
+            getch();
+            ShutDown();
+            
+        }    
     
         
-            out=PathAsLocates(prob->path,prob->dist->l);
-            WriteLocates(out,fileout);
-            FreeLocates(out);
+        out=PathAsLocates(prob1->path,prob1->dist->l);
+        WriteLocates(out,fileout);
+        FreeLocates(out);
 
-        }
+        
     }
 }
 

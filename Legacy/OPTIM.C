@@ -62,11 +62,35 @@ int NextOneOpt(PROBLEM *prob,int *next,int *oA,int *oB,int *nA,int *nB)
     return 1;
 }
 
+double HiliteOneOpt(PROBLEM *prob,int A,int B,int C,int color)
+{
+    LOCATES *l=prob->dist->l;
+
+    _clearscreen(_GVIEWPORT);
+    DrawPath(prob->path,l,1);
+
+    DrawCitiesLine(l,A,B,color);
+    DrawCitiesLine(l,B,C,color);
+
+    SetMasks(prob->vmask,3,A,color,citysize,
+                           B,color,citysize*2,
+                           C,color,citysize);
+    
+    DrawCities(l,prob->vmask);
+    
+    SetMasks(prob->vmask,3,A,city_in,citysize,
+                           B,city_in,citysize,
+                           C,city_in,citysize);
+
+    BorderWin();
+    SwapPage();
+
+}
+
 double ControlOneOpt(PROBLEM *prob,int graphics)
 {
     int next,oldA,oldB,newA,newB,times=0;
     char buffer[50];
-    double oldpl=PathLength(prob->path,prob->dist),newpl;
     clock_t now;
     clock_t time_seg=TotalDelay(-1)/3;
     
@@ -74,6 +98,7 @@ double ControlOneOpt(PROBLEM *prob,int graphics)
         sprintf(buffer,"One Opt Method\n");
         ShowText(buffer,1,1,GREEN);
     }
+
     while (NextOneOpt(prob,&next,&oldA,&oldB,&newA,&newB))
     {
 
@@ -81,15 +106,17 @@ double ControlOneOpt(PROBLEM *prob,int graphics)
 
         if (graphics) {
             sprintf(buffer,"Run %d\n",times);
-            ShowText(buffer,1,3,BLUE);
+            ShowText(buffer,1,3,YELLOW);
             ++times;
-            HiliteCityGroup(prob,next,YELLOW,oldA,oldB,BLUE);
+            sprintf(buffer,"%2d from %2d,%2d",next,oldA,oldB);
+            ShowText(buffer,1,4,BLUE);
+            HiliteOneOpt(prob,oldA,next,oldB,BLUE);
             WaitTill(now+(time_seg));
     
-            HiliteCityGroup(prob,next,YELLOW,newA,newB,BLUE);
+            sprintf(buffer,"%2d to %2d,%2d  ",next,newA,newB);
+            ShowText(buffer,1,4,PURPLE);
+            HiliteOneOpt(prob,newA,next,newB,PURPLE);
             WaitTill(now+(time_seg*2));
-            sprintf(buffer,"%2d to %2d,%2d",next,newA,newB);
-            ShowText(buffer,1,4,GREEN);
         }
 
         DeletePath(prob->path,next);
@@ -102,14 +129,8 @@ double ControlOneOpt(PROBLEM *prob,int graphics)
             
         
     }
-    newpl=PathLength(prob->path,prob->dist);
-    if (graphics) {
-        sprintf(buffer,"Lengths\n"
-                   "Old = %.6f\n"
-                   "New = %.6f\n",oldpl,newpl);
-        ShowText(buffer,1,6,YELLOW);
-    }
-    return newpl;
+    
+    return PathLength(prob->path,prob->dist);
 }
 
 int NextTwoOpt(PROBLEM *prob,int *A,int *B,int *C,int *D)
@@ -234,7 +255,6 @@ double ControlTwoOpt(PROBLEM *prob,int graphics)
 {
     int A,B,C,D;
     char buffer[80];
-    double oldpl=PathLength(prob->path,prob->dist),newpl;
     double dab,dcd,dac,dbd;
     clock_t now;
     clock_t time_seg=TotalDelay(-1)/3;
@@ -280,14 +300,8 @@ double ControlTwoOpt(PROBLEM *prob,int graphics)
         }
         if (DEBUG) ShowPath(prob->path);
     }
-    newpl=PathLength(prob->path,prob->dist);
-    if (graphics) {
-        sprintf(buffer,"Lengths\n"
-                   "Old = %.6f\n"
-                   "New = %.6f\n",oldpl,newpl);
-        ShowText(buffer,1,12,YELLOW);
-    }
-    return newpl;
+    
+    return PathLength(prob->path,prob->dist);
 }
 
 #define Reverse   1
@@ -478,13 +492,12 @@ double ControlKOpt(PROBLEM *p,int k,int graphics)
                 iarray->array[6]?"Rev":"No ",iarray->array[7]?"Rev":"No ",
                 iarray->array[8]?"Rev":"No ");
 
-            ShowText(buffer,1,12,YELLOW);
+            ShowText(buffer,1,5,YELLOW);
             HiliteKOpt(p,iarray,0);
             WaitTill(now+(time_seg));
         }
         if (DEBUG) {printf("%s",buffer);mygetch();}
 
-        Working();
         MakeKOptTransition(p,iarray);
         if (graphics) {
             DrawNorm(p,1);

@@ -63,6 +63,20 @@ void DrawPath(PATH *p,LOCATES *loc,int returnp)
     }
 }
 
+char *DelayStr(int delay,double optimal)
+{
+    char *buffer=salloc(50,sizeof(char));
+    switch (delay) {
+        case -1 : sprintf(buffer,"Wait-For-Keypress");              break;
+        case 0  : sprintf(buffer,"Run-Through-To-End");             break;
+        case -2 : sprintf(buffer,"Benchmark Option");               break;
+        case -3 : sprintf(buffer,"All Benchmark Option, Optimal = %10.6f",
+                  optimal);                                         break;
+        default : sprintf(buffer,"%d Seconds",delay/CLOCKS_PER_SEC);break;
+    }
+    return buffer;
+}
+
 PROBLEM *NewProblem(DISTANCES *dist)
 {
     PROBLEM *ret=salloc(1,sizeof(PROBLEM));

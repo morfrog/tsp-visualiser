@@ -27,9 +27,10 @@ struct prob {
 typedef struct prob PROBLEM;
 
 void    WaitTill(clock_t it);
-void DrawCitiesLine(LOCATES *loc,int A,int B,int col);
+void    DrawCitiesLine(LOCATES *loc,int A,int B,int col);
 void    DrawCities(LOCATES *loc,MASK *m);
 void    DrawPath(PATH *p,LOCATES *loc,int returnp);
+char    *DelayStr(int delay,double optimal);
 PROBLEM *NewProblem(DISTANCES *d);
 double  PathLength(PATH *p,DISTANCES *d);
 void    ProblemReset(PROBLEM *prob,int free);

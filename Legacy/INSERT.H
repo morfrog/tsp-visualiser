@@ -34,13 +34,13 @@ void   FStartPath(int (* func)(double,double),INSPROB *insprob);
 int    FNextCost(int (* func)(double,double),INSPROB *insprob,int *A,int *B);
 int    FNextDist(int (* func)(double,double),int (* func2)(double,double),INSPROB *insprob,int *fcity);
 int    RndNext(INSPROB *insprob);
-void   PrintInit(int init);
-void   PrintMethod(int method);
+char   *InitStr(int init);
+char   *MethodStr(int method);
 double ControlRand(INSPROB *insprob,int graphics);
 double ControlNearN(INSPROB *insprob,int graphics);
 double ControlFurthest(INSPROB *insprob,int graphics);
 double ControlNearest(INSPROB *insprob,int graphics);
 double ControlDear(INSPROB *insprob,int graphics);
 double ControlCheap(INSPROB *insprob,int graphics);
-
+double ControlAllIns(INSPROB *insprob,int init,int method,int graphics);
 #endif
