@@ -22,14 +22,21 @@ int TotalDelay(int tdelay)
 void WaitTill(clock_t it)
 // * Waits until the clock() returns >= it * //
 {
-    if (TotalDelay(-1)<0) getch(); // * if Wait_For_Keypress option * //
+    char ch=' ';
+    if (TotalDelay(-1)<0) ch=getch(); // * if Wait_For_Keypress option * //
     else
     {
         while (clock()<it)
         {
-            if (kbhit()) {getch();break;}
+            if (kbhit()) {ch=getch();break;}
         }
     }
+    if (ch==27) {while (kbhit()) getch(); _clearscreen(_GCLEARSCREEN); exit(1);}
+}
+
+void DrawCitiesLine(LOCATES *loc,int A,int B,int col)
+{
+    DrawLine(loc->at[A].x,loc->at[A].y,loc->at[B].x,loc->at[B].y,col);
 }
 
 void DrawCities(LOCATES *loc,MASK *m)
@@ -51,9 +58,7 @@ void DrawPath(PATH *p,LOCATES *loc,int returnp)
     for (count=0;count<max;count++)
     {
         PathPair(p,&a,&b);  // get the current path pair
-        DrawLine(loc->at[a].x,loc->at[a].y,
-                 loc->at[b].x,loc->at[b].y,
-                 line_col);
+        DrawCitiesLine(loc,a,b,line_col);
         PathNext(p);
     }
 }
@@ -258,7 +263,7 @@ LOCATES *PathAsLocates(PATH *path,LOCATES *loc)
     int x,A;
 
     PathStart(path);
-    for (x=0;x<path->size;x++) {
+    for (x=0;x<loc->num;x++) {
         PathCurrent(path,&A);
         ret->at[x].x=loc->at[A].x;
         ret->at[x].y=loc->at[A].y;

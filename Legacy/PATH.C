@@ -4,7 +4,7 @@
 #include "sys.h"
 #include "path.h"
 
-NODE *FindPathCity(PATH *p,int citynum)
+NODE *FindPathCity(PATH *p,int citynum,int *pos)
 // * returns NULL if city not in path else returns the pointer to the node * //
 {
     NODE *ret=p->head;
@@ -12,11 +12,73 @@ NODE *FindPathCity(PATH *p,int citynum)
 
     ret=p->head;
     for (x=0;x<p->size;x++) {
-        if (ret->citynum==citynum) {found=1;break;}
+        if (ret->citynum==citynum) {found=1;*pos=x;break;}
         ret=ret->next;
     }
     if (!found) return NULL; // * city not in path * //
     return ret;
+}
+
+int FindNodes(PATH *p,int city1,NODE **c1,int city2,NODE **c2)
+{
+    NODE *look=p->head;
+    int x;
+    *c1=NULL;
+    *c2=NULL;
+
+    for (x=0;x<(p->size);x++)
+    {
+        if (look->citynum==city1) *c1=look;
+        if (look->citynum==city2) *c2=look;
+        if (((*c1)!=NULL) && ((*c2)!=NULL)) return 1;
+        look=look->next;
+    }
+    return 0;
+}
+
+int NodalDist(NODE *a,NODE *b,int max)
+{
+    NODE *look=a;
+    int ret=0,x;
+    for (x=0;x<max;x++)
+    {
+        if (look==b) return ret;
+        else {++ret;look=look->next;}
+    }
+    return -1;
+}
+
+
+int Reversal(PATH *p,NODE *left,NODE *right)
+{
+    NODE *look1=left;
+    NODE *look2=right;
+    int tmp;
+    int x;
+    int swaps=(NodalDist(left,right,p->size)+1)/2;
+    
+    for (x=0;x<swaps;x++)
+    {
+        tmp=look1->citynum;
+        look1->citynum=look2->citynum;
+        look2->citynum=tmp;
+
+        look1=look1->next;
+        look2=look2->prev;
+    }
+}
+
+int ReverseSubPath(PATH *p,int keepl,int subl,int subr,int keepr)
+{
+    NODE *a,*b;
+
+    FindNodes(p,subl,&a,subr,&b);
+    if ((a->prev->citynum==keepl) && (b->next->citynum==keepr))
+        Reversal(p,a,b);
+    else if ((a->next->citynum==keepl) && (b->prev->citynum==keepr))
+        Reversal(p,b,a);
+    else return 0;
+    return 1;
 }
 
 PATH _FAR *NewPath(int points, ...)
@@ -110,7 +172,8 @@ int _FAR InsertPath(PATH *p,int city,int city1,int city2)
 }
 int _FAR DeletePath(PATH *p,int city)
 {
-    NODE *tmp=FindPathCity(p,city);
+    int t;
+    NODE *tmp=FindPathCity(p,city,&t);
     if (tmp==NULL) return 0;
     tmp->prev->next=tmp->next;
     tmp->next->prev=tmp->prev;
@@ -119,12 +182,50 @@ int _FAR DeletePath(PATH *p,int city)
     return 1;
 }
 
-int TmpPathDel(PATH *p,int citynum,int *A,int *B)
+PATH *RemovePathSection(PATH *p,int A,int B,int C, int D)
+{
+    PATH *ret=NULL;
+    NODE *look=p->head;
+    NODE *nodeA=NULL,*nodeB=NULL,*nodeC=NULL,*nodeD=NULL;
+    int pA,pB,pC,pD;
+    nodeA=FindPathCity(p,A,&pA);
+    nodeB=FindPathCity(p,B,&pB);
+    nodeC=FindPathCity(p,C,&pC);
+    nodeD=FindPathCity(p,D,&pD);
+    if ((nodeA->next==nodeB) && (nodeC->next==nodeD))
+    {
+        ret=salloc(1,sizeof(PATH));
+        if (pB<pC)
+        {
+            ret->size=pC-pB;
+            ret->head=nodeB;
+        }
+        else
+        {
+            ret->size=pB-pC;
+        }
+    }
+    else return NULL; // * integrity absent - abort * //
+}
+
+void InsertPathSection(PATH *p,int citystart,int cityend)
 {
 
+
+}
+
+void ReversePath(PATH *p)
+{
+
+
+}
+
+int TmpPathDel(PATH *p,int citynum,int *A,int *B)
+{
+    int f;
     if (p->save!=NULL) return 0; // * already has a node saved * //
     
-    p->save=FindPathCity(p,citynum);
+    p->save=FindPathCity(p,citynum,&f);
     if (p->save==NULL) return 0; // * city not in path * //
 
     *A=p->save->prev->citynum;
@@ -207,9 +308,9 @@ void _FAR PathNext(PATH *p)
     p->current=p->current->next;
 }
 
-int _FAR *PathToArray(PATH *p)
+int _FAR *PathToArray(PATH *p,int circular)
 {
-    int *array=salloc(p->size,sizeof(int));
+    int *array=salloc(p->size+(circular?1:0),sizeof(int));
     NODE *look=p->head;
     int count;
 
@@ -218,7 +319,17 @@ int _FAR *PathToArray(PATH *p)
         array[count]=(look->citynum);
         look=look->next;
     }
+    if (circular) array[p->size]=array[0];
     return array;
+}
+
+PATH _FAR *ArrayToPath(int *array,int size,int circular)
+{
+    int max=size-(circular?1:0),x;
+    PATH *ret=NewPath(3,array[0],array[1],array[2]);
+    for (x=3;x<max;x++)
+        InsertPathEnd(ret,array[x]);
+    return ret;
 }
 
 
@@ -228,8 +339,8 @@ int _FAR EqualPaths(PATH *a,PATH *b)
  */
 {
     int count,equal_found=0;
-    int *aarray=PathToArray(a);
-    int *barray=PathToArray(b);
+    int *aarray=PathToArray(a,1);
+    int *barray=PathToArray(b,1);
 
     if ((a->size)!=(b->size))
         return 0; /* different size therefore not equal */
@@ -261,18 +372,17 @@ int _FAR EqualPaths(PATH *a,PATH *b)
     }
     return 1;
 }
-
-
-
 /*
 void main()
 {
-    PATH *path=NewPath(2,5,0);
-    PATH *new=NewPath(2,7,8);
-    int **a=NULL;
-
-    printf("-----------------\n");
+    NODE *a,*b;
+    PATH *path=NewPath(10,0,1,2,3,4,5,6,7,8,9);
+   
     ShowPath(path);
-    ShowPath(new);
+    FindNodes(path,0,&a,9,&b);
+    printf("%d %d\ndist=%d\n",a->citynum,b->citynum,NodalDist(a,b,10));
+    ReverseSubPath(path,8,9,2,3);
+    printf("1 0 9 3 4 5 6 7 8 2\n");ShowPath(path);
+    mygetch();
 }
 */

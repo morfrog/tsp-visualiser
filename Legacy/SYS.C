@@ -69,8 +69,8 @@ int sfree(void *ptr)
 {
     if (ptr==NULL)
         return 0;
-/*    else
-        free(ptr);*/
+    else
+        free(ptr);
     return 1;
 
 }

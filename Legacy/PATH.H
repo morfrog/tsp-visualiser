@@ -50,7 +50,10 @@ void _FAR PathCurrent(PATH *p,int *a);
 void _FAR PathPair(PATH *p,int *a,int *b);
 void _FAR PathNext(PATH *p);
 
-int _FAR *PathToArray(PATH *p);
+int ReverseSubPath(PATH *p,int keepl,int subl,int subr,int keepr);
+
+int _FAR *PathToArray(PATH *p,int circlular);
+PATH _FAR *ArrayToPath(int *array,int size,int circular);
 int _FAR EqualPaths(PATH *a,PATH *b);
 
 #endif
