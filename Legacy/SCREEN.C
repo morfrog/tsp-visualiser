@@ -159,12 +159,12 @@ SWIN _FAR *NewWin(int l,int t,int r,int b)
 
 void _FAR SetWin(SWIN *w)
 {
-    _setviewport(w->l,w->t,w->r,w->b);
+    _setviewport(w->l+1,w->t+1,w->r-1,w->b-1);
     _setcharsize_w(citysize*4/3,citysize*4/3);
     _setcharspacing_w(-(citysize/2));
 }
 
-void _FAR SetTextWin(SWIN *w,int border)
+void _FAR SetTextWin(SWIN *w)
 {
     int a=(w->l*VC.numtextcols)/VC.numxpixels,
         b=(w->t*VC.numtextrows)/VC.numypixels,
@@ -172,15 +172,10 @@ void _FAR SetTextWin(SWIN *w,int border)
         d=(w->b*VC.numtextrows)/VC.numypixels;
     _settextwindow(b+2,a+2,d-1,c-1);
     /* +2 is roundup + gap */
-    if (border) {
-        _setcolor(border_col);
-        _rectangle(_GBORDER,w->l,w->t,w->r-1,w->b-1);
-    }
-
     _wrapon(_GWRAPON);
 }
 
-void _FAR ResetWin(SWIN *w,int t,int l,int b,int r)
+void _FAR ResetWin(SWIN *w,int l,int t,int r,int b)
 /* resets the window to the cooords specified, -1 indicates no change */
 {
     if (t>=0) w->t=t;
@@ -189,10 +184,28 @@ void _FAR ResetWin(SWIN *w,int t,int l,int b,int r)
     if (r>=0) w->r=r;
 }
 
-void _FAR BorderWin()
+void _FAR MoveWin(SWIN *w,int l,int t,int r,int b)
+/* Increments each border of the window by the amount given */
 {
-    _setcolor(border_col);
-    _rectangle_w(_GBORDER,-0.05,-0.05,1.05,1.05);
+    w->t+=t;
+    w->l+=l;
+    w->r+=r;
+    w->b+=b;
+}
+
+void _FAR BorderWin(SWIN *w,int color)
+{
+    int a;
+    if (color<0) _setcolor(border_col);
+    else _setcolor(color);
+    a=_getactivepage();
+    _setactivepage(1);
+    _rectangle(_GBORDER,w->l,w->t,w->r,w->b);
+    _setactivepage(0);
+    _rectangle(_GBORDER,w->l,w->t,w->r,w->b);
+    _setactivepage(a);
+
+
 }
 
 void _FAR FreeWin(SWIN *w)
@@ -224,6 +237,8 @@ void _FAR DrawCity(char name[],double x,double y,double size,int color)
     _setcolor(color);
     _ellipse_w(_GFILLINTERIOR,l,t,r,b);
     _setcolor(text_col);
+    _setcharsize_w(size*4/3,size*4/3);
+    _setcharspacing_w(-(size/2));
     _settextalign(_CENTER,_HALF);
     _grtext_w(x, y, name);
 }

@@ -12,43 +12,79 @@
 
 int TotalDelay(int tdelay)
 {
-    static int tot_delay=-1; // * defaults to getkeypress option * //
+    static int tot_delay=WAITKEY; // * defaults to getkeypress option * //
     
-    if (tdelay<0) return tot_delay;
-    tot_delay=tdelay;
-    return -1;
+    if (tdelay==REQUEST)
+        return tot_delay;
+    else {
+        tot_delay=tdelay;
+        return -2; // * was set - not request * //
+    }
 }
 
 void Init2TimeSegs(clock_t *a,clock_t *b)
 {
-    int y=TotalDelay(-1);
-    *a=y;
-    *b=y*2;
+    int y=TotalDelay(REQUEST);
+    *a=y/2;
+    *b=y;
 }
 
 void Init3TimeSegs(clock_t *a,clock_t *b,clock_t *c)
 {
-    int y=TotalDelay(-1);
-    *a=y;
-    *b=y*2;
-    *c=y*3;
+    int y=TotalDelay(REQUEST);
+    *a=y/3;
+    *b=(y*2)/3;
+    *c=y;
 }
 
+void ProcessInput(int timesegs,clock_t *a,clock_t *b,clock_t *c)
+{
+    char ch;
+    if (kbhit())
+    {
+        if (timesegs==3)
+            Init3TimeSegs(a,b,c);
+        else
+            Init2TimeSegs(a,b);
 
+        ch=getch();
+        switch (ch) {
+            case 27 : {
+                        while (kbhit()) getch(); // * clear buffer * //
+                        ShutDown();
+                        exit(1);
+                      } break;
+            case '0': TotalDelay(1); break;
+            case 13 : TotalDelay(WAITKEY); break;
+            default : break;
+        }
+
+    }
+}
 
 void WaitTill(clock_t it)
 // * Waits until the clock() returns >= it * //
 {
-    char ch=' ';
-    if (TotalDelay(-1)<0) ch=getch(); // * if Wait_For_Keypress option * //
+    char ch='~';
+    if (TotalDelay(REQUEST)<0) ch=getch(); // * if Wait_For_Keypress option * //
     else
     {
+
         while (clock()<it)
         {
             if (kbhit()) {ch=getch();break;}
         }
     }
-    if (ch==27) {while (kbhit()) getch(); _clearscreen(_GCLEARSCREEN); exit(1);}
+    switch (ch) {
+        case 27 : {
+                    while (kbhit()) getch(); // * clear buffer * //
+                    ShutDown();
+                    exit(1);
+                  } break;
+        case '0': TotalDelay(1); break;
+        case 13 : TotalDelay(WAITKEY); break;
+        default : break;
+    }
 }
 
 void DrawCitiesLine(LOCATES *loc,int A,int B,int col)
@@ -207,7 +243,6 @@ void HiliteCityGroup(PROBLEM *prob,int main,int maincol,int city1, int city2,int
     SetMaskAt(prob->vmask,C,citysize,city2);
 
     DrawLine(l->at[city1].x,l->at[city1].y,l->at[city2].x,l->at[city2].y,col);
-    BorderWin();
     SwapPage();
 }
 
@@ -225,7 +260,7 @@ void HiliteCityPair(PROBLEM *prob,int city1,int city2,int col)
     SetMaskAt(prob->vmask,A,citysize,city1);
     SetMaskAt(prob->vmask,B,citysize,city2);
 
-    BorderWin();
+
     SwapPage();
 }
 
@@ -239,7 +274,6 @@ void HiliteCity(PROBLEM *prob,int citynum,int returnp)
     A=SetMaskAt(prob->vmask,city_hi,citysize*2,citynum);
     DrawCities(l,prob->vmask);
     SetMaskAt(prob->vmask,A,citysize*2,citynum);
-    BorderWin();
     SwapPage();
 }
 
@@ -250,7 +284,6 @@ void DrawNorm(PROBLEM *prob,int returnp)
     _clearscreen(_GVIEWPORT);
     DrawPath(prob->path,l,returnp);
     DrawCities(l,prob->vmask);
-    BorderWin();
 }
 
 MASK _FAR *NewViewMask(int size,int color,double csize)

@@ -15,6 +15,8 @@ void HiliteOneOpt(PROBLEM *prob,int A,int B,int C,int color,int lines);
 double ControlOneOpt(PROBLEM *prob,int graphics);
 
 int NextTwoOpt(PROBLEM *prob,int *A,int *B,int *C,int *D);
+void MakeTwoOptTransition(PROBLEM *p,int A,int B,int C,int D);
+void HiliteTwoOpt(PROBLEM *prob,int A,int B,int C,int D,int type);
 double ControlTwoOpt(PROBLEM *prob,int graphics);
 
 double Control3Opt(PROBLEM *p,int graphics);

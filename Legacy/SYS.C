@@ -103,6 +103,12 @@ void PrintList(int *list,int listsize)
     printf("\n");
 }
 
+int Same(int A,int B,int C, int D)
+{
+    return ( ((A==D) && (B==C)) || ((A==C) && (B==D)) );
+
+}
+
 int PosOf(int num,int *list,int listsize)
 /* returns pos of num in unsorted list, -1 of not in list */
 {

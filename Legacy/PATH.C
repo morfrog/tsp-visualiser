@@ -209,7 +209,7 @@ PATH *RemovePathSection(PATH *p,int A,int B,int C, int D)
     }
     else return NULL; // * integrity absent - abort * //
 }
-
+/*
 void InsertPathSection(PATH *p,int citystart,int cityend)
 {
 
@@ -221,6 +221,7 @@ void ReversePath(PATH *p)
 
 
 }
+*/
 
 int TmpPathDel(PATH *p,int citynum,int *A,int *B)
 {

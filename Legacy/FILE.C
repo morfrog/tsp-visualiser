@@ -8,7 +8,8 @@
 #include "sys.h"
 #include "file.h"
 
-#define PRINTON 0
+// #define PRINTON 1
+
 /*
 void main()
 {
@@ -186,9 +187,11 @@ LOCATES *NewLocates(char *filename)
             SkipLine(input);
 
         }
-        if (PRINTON) ShowLocates(loc);
-        if (PRINTON) printf("loc->num=%d\n",loc->num);
-        if (PRINTON) mygetch();
+#ifdef PRINTON
+    ShowLocates(loc);
+    printf("loc->num=%d\n",loc->num);
+    mygetch();
+#endif
         fclose(input);
         return loc;
     }
@@ -209,7 +212,9 @@ DISTANCES *NewMap(LOCATES *loc)
     dist->size=loc->num;      /* the number of points */
     dist->array=
     allocate_N_by_N_array(dist->size,dist->size,sizeof(double),"Distance");        
-    if (PRINTON) printf(" %.4f\n",dist->size);
+#ifdef PRINTON
+    printf(" %.4f\n",dist->size);
+#endif
 
     n=(loc->num);
     for (count=0;count<n;count++) 

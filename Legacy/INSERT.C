@@ -289,7 +289,7 @@ double ControlRand(INSPROB *insprob,int graphics)
 
 double ControlNearN(INSPROB *insprob,int graphics)
 {
-    int x,next,this;
+    int next,this;
     clock_t now;
     clock_t time_seg=TotalDelay(-1)/2;
     char buffer[50];
@@ -482,13 +482,15 @@ void _FAR WinManager(int which)
     static SWIN *text;
 
     if (!init) {
-        main=NewWin(1,1,460,350);
-        text=NewWin(465,1,640,350);
+        main=NewWin(1,1,460,349);
+        text=NewWin(465,1,639,349);
+        BorderWin(main,-1);
+        BorderWin(text,-1);
         init=1;
     }
     switch (which) {
         case Main : SetWin(main);  break;
-        case Text : SetTextWin(text,1);  break;
+        case Text : SetTextWin(text);  break;
     }
 }
 

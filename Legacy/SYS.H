@@ -16,6 +16,7 @@ char mygetch();
 void StartRandom();
 int Random(int num);
 void PrintList(int *list,int listsize);
+int Same(int A,int B,int C, int D);
 int PosOf(int num,int *list,int listsize);
 int Lesser(double this,double best);
 int Greater(double this,double best);

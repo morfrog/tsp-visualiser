@@ -11,7 +11,7 @@
 
 #define VERSION 1.01
 
-#define DEBUG 0
+// #define DEBUG 0
 
 int ProcessCmdLine(int argc,char *argv[],char **filein,char **fileout,int *method,int *tdelay,double *optimal)
 {
@@ -64,12 +64,11 @@ int ProcessCmdLine(int argc,char *argv[],char **filein,char **fileout,int *metho
 
 void main(int argc,char *argv[])
 {
-    int x;
     PROBLEM *prob1,*prob2,*prob3;
     LOCATES *out=NULL;
     DISTANCES *dtemp;
     char *filein,*fileout;
-    int method,y,max=6,*i,tdelay;
+    int method,tdelay;
     double optimal,length,oldpl;
     char buffer[50];
 
@@ -122,20 +121,22 @@ void main(int argc,char *argv[])
             DrawNorm(prob1,1);
             SwapPage();
 
-            ShowText("F I N I S H E D",1,11,RED);
+            ShowText("F I N I S H E D",1,13,RED);
             sprintf(buffer,"Lengths\n"
                    "Old = %.6f\n"
                    "New = %.6f\n",oldpl,length);
-            ShowText(buffer,1,12,YELLOW);
+            ShowText(buffer,1,14,YELLOW);
 
 
             
-            if (DEBUG) ShowPath(prob1->path);
+#ifdef DEBUG
+    ShowPath(prob1->path);
+#endif
     
             ShowText("Hit Esc         \n"
-                     "to Quit...      \n",1,20,LTRED);
+                     "to Quit...      \n",1,19,LTRED);
             ShowText("                \n"
-                     "                ",1,22,BLACK);
+                     "                ",1,21,BLACK);
             
             while (getch()!=27) {}
             

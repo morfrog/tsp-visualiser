@@ -11,13 +11,7 @@
 #include "problem.h"
 #include "optim.h"
 
-#define DEBUG 0
-
-int Same(int A,int B,int C, int D)
-{
-    return ( ((A==D) && (B==C)) || ((A==C) && (B==D)) );
-
-}
+// #define DEBUG 0
 
 char *OptStr(int method)
 {
@@ -38,9 +32,10 @@ double ControlAllOpt(PROBLEM *prob,int method,int graphics,int tdelay)
     switch (method) {
         case opt1 : return ControlOneOpt(prob,graphics);break;
         case opt2 : return ControlTwoOpt(prob,graphics);break;
-        case opt3 : return Control3Opt(prob,graphics);break;
-        default : break;
+        case opt3 : return Control3Opt(prob,graphics);  break;
+        default : printf("Invalid Method");exit(0);     break;
     }
+    return 0.0;
 }
 
 int NextOneOpt(PROBLEM *prob,int *next,int *oA,int *oB,int *nA,int *nB,double *improve)
@@ -59,19 +54,25 @@ int NextOneOpt(PROBLEM *prob,int *next,int *oA,int *oB,int *nA,int *nB,double *i
     {
             I=path[insert];
             TmpPathDel(prob->path,I,&A,&B);
-            if (DEBUG) printf("Checking %d from %d->%d\n",I,A,B);
-
+#ifdef DEBUG
+    printf("Checking %d from %d->%d\n",I,A,B);
+#endif
 
             removal=(prob->dist->array[A][B])
                    -(prob->dist->array[I][A])
                    -(prob->dist->array[I][B]);
-            if (DEBUG) printf("Removal is %.4f\n",removal);
+#ifdef DEBUG
+    printf("Removal is %.4f\n",removal);
+#endif
             
             BestInsert(prob,I,&C,&D);
             insertion=InsertCost(prob,I,C,D);
-            if (DEBUG) printf("Insertion between %d,%d is %.4f\n",C,D,insertion);
+
+#ifdef DEBUG
+    printf("Insertion between %d,%d is %.4f\n",C,D,insertion);
+    printf("This %.4f Best %.4f\n",thisimp,improve);
+#endif
             thisimp=insertion+removal;
-            if (DEBUG) printf("This %.4f Best %.4f\n",thisimp,improve);
             if ((thisimp<*improve) && (!(Same(A,B,C,D))) )
             {
                 *improve=thisimp;
@@ -92,7 +93,7 @@ void HiliteOneOpt(PROBLEM *prob,int A,int B,int C,int color,int lines)
 {
     LOCATES *l=prob->dist->l;
 
-    _clearscreen(_GWINDOW);
+    _clearscreen(_GVIEWPORT);
     DrawPath(prob->path,l,1);
 
     if (lines) {
@@ -108,9 +109,6 @@ void HiliteOneOpt(PROBLEM *prob,int A,int B,int C,int color,int lines)
     SetMasks(prob->vmask,3,A,city_in,citysize,
                            B,city_in,citysize,
                            C,city_in,citysize);
-
-    BorderWin();
-    SwapPage();
 
 }
 
@@ -139,17 +137,18 @@ double ControlOneOpt(PROBLEM *prob,int graphics)
             ++times;
             sprintf(buffer,"%2d from %2d,%2d\n"
                            "                \n",next,oldA,oldB);
-            ShowText(buffer,1,4,BLUE);
+            ShowText(buffer,1,4,hilite_1);
             sprintf(buffer,"                   \n"
                            "                   \n");
             ShowText(buffer,1,6,BLACK);
-            HiliteOneOpt(prob,oldA,next,oldB,BLUE,1);
+            HiliteOneOpt(prob,oldA,next,oldB,hilite_1,1);
+            SwapPage();
             WaitTill(now+seg1);
     
             sprintf(buffer,"%2d to %2d,%2d  ",next,newA,newB);
-            ShowText(buffer,1,5,PURPLE);
-            HiliteOneOpt(prob,newA,next,newB,PURPLE,0);
-
+            ShowText(buffer,1,5,hilite_2);
+            HiliteOneOpt(prob,newA,next,newB,hilite_2,0);
+            SwapPage();
             WaitTill(now+seg2);
         }
 
@@ -165,10 +164,7 @@ double ControlOneOpt(PROBLEM *prob,int graphics)
 
             WaitTill(now+seg3);
         }
-            
-        
     }
-    
     return PathLength(prob->path,prob->dist);
 }
 
@@ -186,7 +182,9 @@ int NextTwoOpt(PROBLEM *prob,int *A,int *B,int *C,int *D)
             mC=array[y];mD=array[y+1];
 
             if (mA!=mD) {
-                if (DEBUG) printf("%d %d | %d %d\n",mA,mB,mC,mD);
+#ifdef DEBUG
+    printf("%d %d | %d %d\n",mA,mB,mC,mD);
+#endif
 
                 change=prob->dist->array[mA][mC]+prob->dist->array[mB][mD]
                       -prob->dist->array[mA][mB]-prob->dist->array[mC][mD];
@@ -242,11 +240,9 @@ void Test()
 
 void MakeTwoOptTransition(PROBLEM *p,int A,int B,int C,int D)
 {
-    int *array;
-    int x,size=p->path->size;
-    int start=-1,end=-1;
-
-    if (DEBUG) {printf("%d,%d,%d,%d ",A,B,C,D);ShowPath(p->path);}
+#ifdef DEBUG
+    printf("%d,%d,%d,%d ",A,B,C,D);ShowPath(p->path);
+#endif
 
     ReverseSubPath(p->path,A,B,C,D);
    
@@ -255,10 +251,7 @@ void MakeTwoOptTransition(PROBLEM *p,int A,int B,int C,int D)
 void HiliteTwoOpt(PROBLEM *prob,int A,int B,int C,int D,int type)
 {
     LOCATES *l=prob->dist->l;
-    int col=BLUE,x,this;
-
-
-    int city,city2;
+    int col=hilite_1,x,this;
 
     _clearscreen(_GVIEWPORT);
 
@@ -267,9 +260,9 @@ void HiliteTwoOpt(PROBLEM *prob,int A,int B,int C,int D,int type)
     {
         PathCurrent(prob->path,&this);
         if (this==B)
-            col=PURPLE;
+            col=hilite_2;
         else if (this==D)
-            col=BLUE;
+            col=hilite_1;
         SetMaskAt(prob->vmask,col,citysize,this);
         PathNext(prob->path);
     }
@@ -283,21 +276,20 @@ void HiliteTwoOpt(PROBLEM *prob,int A,int B,int C,int D,int type)
     }
     DrawCities(l,prob->vmask);
     SetMask(prob->vmask,city_out,citysize);
-
-    BorderWin();
-    SwapPage();
 }
-
 
 double ControlTwoOpt(PROBLEM *prob,int graphics)
 {
     int A,B,C,D;
-    char buffer[80];
+    char buffer[60];
     double dab,dcd,dac,dbd;
     clock_t now;
     clock_t time_seg=TotalDelay(-1)/3;
 
-    if (DEBUG) ShowPath(prob->path);
+#ifdef DEBUG
+    ShowPath(prob->path);
+#endif
+
     if (graphics) {
         sprintf(buffer,"Two Opt Method\n");
         ShowText(buffer,1,1,GREEN);
@@ -305,32 +297,40 @@ double ControlTwoOpt(PROBLEM *prob,int graphics)
     while (NextTwoOpt(prob,&A,&B,&C,&D))
     {
         now=clock();
-        if (DEBUG) printf("Next is %d %d to %d %d\n",A,B,C,D);
+#ifdef DEBUG
+    printf("Next is %d %d to %d %d\n",A,B,C,D);
+#endif
         if (graphics) {
             HiliteTwoOpt(prob,A,B,C,D,0);
+            SwapPage();
             sprintf(buffer,"Paths %2d->%2d\n",B,C);
-            ShowText(buffer,1,3,PURPLE);
+            ShowText(buffer,1,3,hilite_2);
             sprintf(buffer,"And   %2d->%2d\n",A,D);
-            ShowText(buffer,1,4,BLUE);                           
+            ShowText(buffer,1,4,hilite_1);                           
 
             dab=prob->dist->array[A][B];
             dcd=prob->dist->array[C][D];
             dac=prob->dist->array[A][C];
             dbd=prob->dist->array[B][D];
-            sprintf(buffer,"%2d->%2d = %8.6f\n"
-                           "%2d->%2d = %8.6f\n"
+            sprintf(buffer,"Breaking\n"
                            "%2d->%2d = %8.6f\n"
                            "%2d->%2d = %8.6f\n",
                            A,B,dab,
-                           C,D,dcd,
+                           C,D,dcd);
+            ShowText(buffer,1,5,GREEN);
+
+            sprintf(buffer,"Adding\n"
+                           "%2d->%2d = %8.6f\n"
+                           "%2d->%2d = %8.6f\n",
                            A,C,dac,
                            B,D,dbd);
-            ShowText(buffer,1,5,GREEN);
+            ShowText(buffer,1,8,GREEN);
             sprintf(buffer,"Path Length\n"
-                           "Decrease = %8.6f\n",-(dac+dbd-dab-dcd));
-            ShowText(buffer,1,9,YELLOW);
+                           "Decrease = %8.6f\n",0.0-(dac-dab+dbd-dcd));
+            ShowText(buffer,1,11,YELLOW);
             WaitTill(now+(time_seg));
             HiliteTwoOpt(prob,A,B,C,D,1);
+            SwapPage();
             WaitTill(now+(time_seg*2));
 
         }
@@ -340,7 +340,9 @@ double ControlTwoOpt(PROBLEM *prob,int graphics)
             SwapPage();
             WaitTill(now+(time_seg*3));
         }
-        if (DEBUG) ShowPath(prob->path);
+#ifdef DEBUG
+    ShowPath(prob->path);
+#endif
     }
     
     return PathLength(prob->path,prob->dist);
@@ -352,9 +354,7 @@ double ControlTwoOpt(PROBLEM *prob,int graphics)
 double SingleChange(PROBLEM *p,INTARRAY *points)
 // * adds up the cost of the point breaks * //
 {
-    int max=((points->size*2)/3)-1,x;
     double total=0.0;
-
 
     total+=p->dist->array[points->array[1]][points->array[2]];
     total+=p->dist->array[points->array[3]][points->array[4]];
@@ -363,7 +363,7 @@ double SingleChange(PROBLEM *p,INTARRAY *points)
     return total;
 }
 
-void SingleRevs(PROBLEM *p,INTARRAY *points,int revA,int revB,int revC)
+void SingleRevs(INTARRAY *points,int revA,int revB,int revC)
 {
     if (revA==Reverse) Swap(&(points->array[0]),&(points->array[1]));
     if (revB==Reverse) Swap(&(points->array[2]),&(points->array[3]));
@@ -378,9 +378,9 @@ double FindChange(PROBLEM *p,INTARRAY *points,int revA,int revB,int revC)
     else
     {
         change-=SingleChange(p,points);
-        SingleRevs(p,points,revA,revB,revC); // apply //
+        SingleRevs(points,revA,revB,revC); // apply //
         change+=SingleChange(p,points);
-        SingleRevs(p,points,revA,revB,revC); // return to normal //
+        SingleRevs(points,revA,revB,revC); // return to normal //
         return change;
     }
 }
@@ -389,7 +389,6 @@ double FindBestRevs(PROBLEM *p,INTARRAY *points)
 {
     int x,y,z;
     double bestchange=0.0,thischange;
-    int at=(points->size*2)/3;
 
     points->array[6]=0;
     points->array[7]=0;
@@ -417,16 +416,14 @@ INTARRAY *Next3Opt(PROBLEM *p)
     INTARRAY *result=NewIntArray(elems,0);     // * 3=p1,p2,rev * //
     INTARRAY *this=NewIntArray(elems,0);     // * 3=p1,p2,rev * //
     int *parray=PathToArray(p->path,1);
-    int max=(p->path->size),x,y,z,pos,count;
+    int max=(p->path->size),x,y,z,pos;
     double bestval=0.0,thisval;
 
-    char tmp[12];
-
-    if (DEBUG) {
+#ifdef DEBUG
         for (x=0;x<=p->path->size;x++)
             printf("%d ",parray[x]);
         printf("\n");
-    }
+#endif
     
     
     for (x=0;x<max-2;x++)
@@ -458,7 +455,7 @@ INTARRAY *Next3Opt(PROBLEM *p)
                 // printf("%d,%d  %d,%d  %d,%d\n",this[0],this[1],
                 //                                this[2],this[3],
                 //                                this[4],this[5]);
-                // SingleRevs(p,this,k,1,1,0);
+                // SingleRevs(this,k,1,1,0);
                 // 
                 // printf("%d,%d  %d,%d  %d,%d\n",this[0],this[1],
                 //                                this[2],this[3],
@@ -478,10 +475,7 @@ INTARRAY *Next3Opt(PROBLEM *p)
 void Hilite3Opt(PROBLEM *prob,INTARRAY *points,int lines)
 {
     LOCATES *l=prob->dist->l;
-    int col=BLUE,x,this;
-
-
-    int city,city2;
+    int col=hilite_1,x,this;
 
     _clearscreen(_GVIEWPORT);
 
@@ -493,9 +487,9 @@ void Hilite3Opt(PROBLEM *prob,INTARRAY *points,int lines)
     {
         PathCurrent(prob->path,&this);
         if (this==points->array[2])
-            col=PURPLE;
+            col=hilite_2;
         else if (this==points->array[4])
-            col=ORANGE;
+            col=hilite_3;
         SetMaskAt(prob->vmask,col,citysize,this);
         PathNext(prob->path);
     }
@@ -503,7 +497,6 @@ void Hilite3Opt(PROBLEM *prob,INTARRAY *points,int lines)
     DrawCities(l,prob->vmask);
     SetMask(prob->vmask,city_out,citysize);
 
-    BorderWin();
     SwapPage();
 
 }
@@ -543,18 +536,21 @@ double Control3Opt(PROBLEM *p,int graphics)
         if (graphics) {
             sprintf(buffer,"%2d->%2d %s\n",
                 iarray->array[0],iarray->array[1],iarray->array[6]?"Rev":"No ");
-            ShowText(buffer,1,5,BLUE);
+            ShowText(buffer,1,5,hilite_1);
             sprintf(buffer,"%2d->%2d %s\n",
                 iarray->array[2],iarray->array[3],iarray->array[7]?"Rev":"No ");
-            ShowText(buffer,1,6,PURPLE);
+            ShowText(buffer,1,6,hilite_2);
             sprintf(buffer,"%2d->%2d %s\n",
                 iarray->array[4],iarray->array[5],iarray->array[8]?"Rev":"No ");
-            ShowText(buffer,1,7,ORANGE);
+            ShowText(buffer,1,7,hilite_3);
 
             Hilite3Opt(p,iarray,0);
             WaitTill(now+(time_seg));
         }
-        if (DEBUG) {printf("%s",buffer);mygetch();}
+#ifdef DEBUG
+    printf("%s",buffer);
+    mygetch();
+#endif
 
         Make3OptTransition(p,iarray);
         if (graphics) {
@@ -576,13 +572,15 @@ void _FAR WinManager(int which)
     static SWIN *text;
 
     if (!init) {
-        main=NewWin(1,1,460,350);
-        text=NewWin(465,1,640,350);
+        main=NewWin(1,1,460,349);
+        text=NewWin(465,1,639,349);
+        BorderWin(main,border_col);
+        BorderWin(text,border_col);
         init=1;
     }
     switch (which) {
         case Main : SetWin(main);  break;
-        case Text : SetTextWin(text,1);  break;
+        case Text : SetTextWin(text);  break;
     }
 }
 

@@ -14,8 +14,8 @@
 
 #define VERSION 1.01
 
-#define DEBUG 1
-#define PRINTON 0
+// #define DEBUG 1
+// #define PRINTON 0
 
 int ProcessCmdLine(int argc, char *argv[],char **filename,int *InitType,
                     int *InsType,int *tdelay,double *optimal)
@@ -101,23 +101,22 @@ void main(int argc, char *argv[])
 
     int init,method;
 
-    char buffer[50];
+    char buffer[60];
 
     if (ProcessCmdLine(argc,argv,&filename,&inittype,&instype,&tdelay,&optimal))
     {
         TotalDelay(tdelay);
-        if (PRINTON) PrintCmdLine(filename,inittype,instype,tdelay,optimal);
-
-        if (PRINTON) printf("Reading Map From File '%s'...\n",filename);
+#ifdef PRINTON
+    PrintCmdLine(filename,inittype,instype,tdelay,optimal);
+    printf("Reading Map From File '%s'...\n",filename);
+#endif
         insprob=NewInsProb(NewMap(NewLocates(filename)));
-        if (PRINTON)
-        {
+#ifdef PRINTON
             printf("Map Read...\n");
             PrintMap(insprob->prob->dist);
             mygetch();
             printf("Delay = %d \n",tdelay);
-        }
-        
+#endif        
 
         if (tdelay==-3) { /* all benchmark with optimal - no graphics */
 
@@ -161,7 +160,7 @@ void main(int argc, char *argv[])
 
             ShowText("Hit Esc to Quit,\n\n"
                  "Any other key \n"
-                 "To continue..",1,20,BLUE);
+                 "To continue..",1,21,BLUE);
 
 
             length=ControlAllIns(insprob,inittype,instype,tdelay!=0);
@@ -174,10 +173,10 @@ void main(int argc, char *argv[])
             sprintf(buffer,"Length Is %8.6f",length);
             ShowText(buffer,1,18,YELLOW);
 
-            ShowText("Hit Esc         \n"
-                     "to Quit...      \n",1,20,LTRED);
             ShowText("                \n"
-                     "                ",1,22,BLACK);
+                     "Hit Esc         \n"
+                     "to Quit...   \n"
+                     "               ",1,19,LTRED);
             
             while (getch()!=27) {}
             ShutDown();

@@ -34,14 +34,14 @@
 #define normal_col  RED
 #define line_change BLUE
 #define city_hi     YELLOW
-#define city_in     CYAN
+#define city_in     WHITE
 #define city_out    GREY
-#define text_col    LTRED
-#define line_col    GREEN
+#define text_col    BLACK
+#define line_col    LTRED
 #define border_col  PURPLE
 #define hilite_1    BLUE
-#define hilite_2    WHITE
-#define hilite_3    ORANGE
+#define hilite_2    YELLOW
+#define hilite_3    PINK
 
 struct win
 {
@@ -57,10 +57,11 @@ int _FAR InitScreen(int videomode);
 int _FAR ShutDown( void );
 SWIN _FAR *NewWin(int t,int l,int b,int r);
 void _FAR SetWin(SWIN *w);
-void _FAR SetTextWin(SWIN *w,int border);
-void _FAR ResetWin(SWIN *w,int t,int l,int b,int r);
+void _FAR SetTextWin(SWIN *w);
+void _FAR ResetWin(SWIN *w,int l,int t,int r,int b);
+void _FAR MoveWin(SWIN *w,int l,int t,int r,int b);
 void _FAR FreeWin(SWIN *w);
-void _FAR BorderWin();
+void _FAR BorderWin(SWIN *w,int color);
 void _FAR DrawLine(double x1,double y1,double x2,double y2,int color);
 void _FAR DrawCity(char name[],double x,double y,double size,int color);
 void _FAR DrawText(char string[],int start,int line,int color);
