@@ -7,5 +7,9 @@ int sfree(void *ptr);
 char mygetch();
 void StartRandom();
 int Random(int num);
+void PrintList(int *list,int listsize);
+int PosOf(int num,int *list,int listsize);
+int Lesser(double this,double best);
+int Greater(double this,double best);
 
 #endif

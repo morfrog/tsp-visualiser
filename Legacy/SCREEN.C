@@ -18,35 +18,37 @@ void main()
 {
     char str[40];
     double tmp;
-    SWIN *main=NewWin(1,1,480,480);
-    SWIN *text=NewWin(480,10,640,170);
+    SWIN *main=NewWin(1,1,480,350);
+    SWIN *text=NewWin(485,1,640,350);
     
     printf("Mem Free = %d size_t\n",(int)_memavl());
     getch();
     
     InitScreen(16);
-
+    SwapPage();
     _setcolor(line_col);
 
     SetWin(main);
     BorderWin();
+    SetTextWin(text,1);
+    BorderWin();
+
 
     _setcolor(line_col);
-    DrawLine(0.5,0.2,0.8,0.2);
-    DrawLine(0.8,0.2,0.5,0.7);
-    _setcolor(city_col);
-    DrawCity("A",0.5,0.2,citysize);
-    DrawCity("B",0.8,0.2,citysize);
-    DrawCity("C",0.5,0.7,citysize);
-    DrawCity("D",0.2,0.2,citysize);
+    DrawLine(0.5,0.2,0.8,0.2,city_out);
+    DrawLine(0.8,0.2,0.5,0.7,city_out);
+    _setcolor(city_hi);
+    DrawCity("A",0.5,0.2,citysize,city_out);
+    DrawCity("B",0.8,0.2,citysize,city_out);
+    DrawCity("C",0.5,0.7,citysize,city_out);
+    DrawCity("D",0.2,0.2,citysize,city_out);
 
-    SetTextWin(text,1);
 
     sprintf(str,"Inserting %s Between %s and %s","C","A","B");
-    DrawText(str,1,5,BLUE);
+    DrawText(str,6,1,BLUE);
     sprintf(str,"Inserting %s At %s End","D","B");
-    DrawText(str,-1,6,RED);
-
+    DrawText(str,1,6,RED);
+    SwapPage();
     getch();
     ShutDown();
     FreeWin(main);
@@ -130,6 +132,7 @@ int _FAR InitScreen(int videomode)
     _setwindow(0,-0.05,-0.05,1.05,1.05);
     _setcharsize_w(citysize*4/3,citysize*4/3);
     _registerfonts( "*.fon" );
+    _setfont("t'Modern'");
     _setactivepage(0);
     _setvisualpage(1);
     return( 1 );
@@ -156,27 +159,34 @@ SWIN _FAR *NewWin(int l,int t,int r,int b)
 
 void _FAR SetWin(SWIN *w)
 {
-    _setviewport(w->t,w->l,w->b,w->r);
+    _setviewport(w->l,w->t,w->r,w->b);
     _setcharsize_w(citysize*4/3,citysize*4/3);
-    _setcharspacing_w(-0.015);
+    _setcharspacing_w(-(citysize/2));
 }
 
 void _FAR SetTextWin(SWIN *w,int border)
 {
-    int px=VC.numxpixels/VC.numtextcols; /* pixels / col */
-    int py=VC.numypixels/VC.numtextrows; /* pixels / col */
-    _settextwindow((w->t)/py,(w->l)/px+2,(w->b)/py,(w->r)/px+2);
+    int a=(w->l*VC.numtextcols)/VC.numxpixels,
+        b=(w->t*VC.numtextrows)/VC.numypixels,
+        c=(w->r*VC.numtextcols)/VC.numxpixels,
+        d=(w->b*VC.numtextrows)/VC.numypixels;
+    _settextwindow(b+2,a+2,d-1,c-1);
     /* +2 is roundup + gap */
-    if (border) _rectangle(_GBORDER,w->l,w->t,w->r,w->b);
+    if (border) {
+        _setcolor(border_col);
+        _rectangle(_GBORDER,w->l,w->t,w->r,w->b);
+    }
+
+    _wrapon(_GWRAPON);
 }
 
 void _FAR ResetWin(SWIN *w,int t,int l,int b,int r)
 /* resets the window to the cooords specified, -1 indicates no change */
 {
     if (t>=0) w->t=t;
-    if (t>=0) w->l=l;
-    if (t>=0) w->b=b;
-    if (t>=0) w->r=r;
+    if (l>=0) w->l=l;
+    if (b>=0) w->b=b;
+    if (r>=0) w->r=r;
 }
 
 void _FAR BorderWin()
@@ -202,9 +212,9 @@ void _FAR DrawLine(double x1,double y1,double x2,double y2,int color)
  *  post : scales points and draws line in <out> box
  */
 {
-        _setcolor(color);
-        _moveto_w(x1,y1);
-        _lineto_w(x2,y2);
+    _setcolor(color);
+    _moveto_w(x1,y1);
+    _lineto_w(x2,y2);
 }
 
 void _FAR DrawCity(char name[],double x,double y,double size,int color)
@@ -220,7 +230,7 @@ void _FAR DrawCity(char name[],double x,double y,double size,int color)
 
 void _FAR TextWindow(int rows,int cols)
 {
-    _settextwindow(12,12,rows,cols);
+    _settextwindow(1,1,rows,cols);
 }
 
 void _FAR DrawText(char string[],int start,int line,int color)
@@ -241,3 +251,31 @@ void _FAR SwapPage()
     _setactivepage(viewpage);
 }
 
+void _FAR WinManager(int which)
+{
+    static int init=0;
+    static SWIN *main;
+    static SWIN *text;
+
+    if (!init) {
+        main=NewWin(1,1,460,350);
+        text=NewWin(465,1,640,350);
+        init=1;
+    }
+    switch (which) {
+        case Main : SetWin(main);  break;
+        case Text : SetTextWin(text,1);  break;
+    }
+}
+
+void _FAR ShowText(char string[],int start,int line,int color)
+{
+    int startpage=_getactivepage();
+    WinManager(Text);
+    _setactivepage(1);
+    DrawText(string,start,line,color);
+    _setactivepage(0);
+    DrawText(string,start,line,color);
+    _setactivepage(startpage);
+    WinManager(Main);
+}

@@ -40,6 +40,9 @@
 #define line_col    GREEN
 #define border_col  PURPLE
 
+#define Text 0    // WinManager
+#define Main 1    // WinManager
+
 struct win
 {
     int t; /* top */
@@ -62,6 +65,7 @@ void _FAR DrawLine(double x1,double y1,double x2,double y2,int color);
 void _FAR DrawCity(char name[],double x,double y,double size,int color);
 void _FAR DrawText(char string[],int start,int line,int color);
 void _FAR TextWindow(int rows,int cols);
-void _FAR SwapPage();
-
+int _FAR SwapPage();
+void _FAR WinManager(int which);
+void _FAR ShowText(char string[],int start,int line,int color);
 #endif

@@ -3,11 +3,60 @@
 #include <stdarg.h>
 #include <time.h>
 #include <conio.h>
+#include <graph.h>
 #include "sys.h"
 #include "file.h"
 #include "path.h"
 #include "screen.h"
 #include "problem.h"
+
+int TotalDelay(int tdelay)
+{
+    static int tot_delay=-1; // * defaults to getkeypress option * //
+    
+    if (tdelay<0) return tot_delay;
+    tot_delay=tdelay;
+    return -1;
+}
+
+void WaitTill(clock_t it)
+// * Waits until the clock() returns >= it * //
+{
+    if (TotalDelay(-1)<0) getch(); // * if Wait_For_Keypress option * //
+    else
+    {
+        while (clock()<it)
+        {
+            if (kbhit()) {getch();break;}
+        }
+    }
+}
+
+void DrawCities(LOCATES *loc,MASK *m)
+{
+    char num[3]="00\0";
+    int count;
+    for (count=0;count<(loc->num);count++)
+    {
+        sprintf(num,"%d",loc->at[count].citynum);
+        DrawCity(num,loc->at[count].x,loc->at[count].y,m->array[count].size,m->array[count].color);
+    }
+}
+
+void DrawPath(PATH *p,LOCATES *loc,int returnp)
+{
+    int count,a,b,max=p->size-(returnp?0:1);
+
+    PathStart(p);
+    for (count=0;count<max;count++)
+    {
+        PathPair(p,&a,&b);  // get the current path pair
+        DrawLine(loc->at[a].x,loc->at[a].y,
+                 loc->at[b].x,loc->at[b].y,
+                 line_col);
+        PathNext(p);
+    }
+}
 
 PROBLEM *NewProblem(DISTANCES *dist)
 {
@@ -51,31 +100,6 @@ double PathLength(PATH *p,DISTANCES *d)
     return ret;
 }
 
-double InsertCost(PROBLEM *prob,int I, int A, int B)
-/* returns cost of inserting I between A and B */
-{
-    return  prob->dist->array[A][I]+
-            prob->dist->array[I][B]-
-            prob->dist->array[B][A];
-}
-
-void PrintList(int *list,int listsize)
-{
-    int x;
-    for (x=0;x<listsize;x++)
-        printf("%2d ",list[x]);
-    printf("\n");
-}
-
-int PosOf(int num,int *list,int listsize)
-/* returns pos of num in unsorted list, -1 of not in list */
-{
-    int x;
-    for (x=0;x<listsize;x++)
-        if (list[x]==num) return x;
-    return -1;
-}
-
 void CityDel(PROBLEM *prob,int citynum)
 /* deletes citynum from the problems outpath */
 {
@@ -87,199 +111,69 @@ void CityDel(PROBLEM *prob,int citynum)
 
 }
 
-int Lesser(double this,double best)
+void HiliteCityGroup(PROBLEM *prob,int main,int maincol,int city1, int city2,int col)
 {
-    if (this<best) return 1;
-    return 0;
+    LOCATES *l=prob->dist->l;
+    int A,B,C;
+
+    _clearscreen(_GVIEWPORT);
+    DrawPath(prob->path,l,1);
+    A=SetMaskAt(prob->vmask,maincol,citysize*2,main);
+    B=SetMaskAt(prob->vmask,col,citysize*2,city1);
+    C=SetMaskAt(prob->vmask,col,citysize*2,city2);
+
+    DrawCities(l,prob->vmask);
+
+    SetMaskAt(prob->vmask,A,citysize,main);
+    SetMaskAt(prob->vmask,B,citysize,city1);
+    SetMaskAt(prob->vmask,C,citysize,city2);
+
+    DrawLine(l->at[city1].x,l->at[city1].y,l->at[city2].x,l->at[city2].y,col);
+    BorderWin();
+    SwapPage();
 }
 
-int Greater(double this,double best)
+void HiliteCityPair(PROBLEM *prob,int city1,int city2,int col)
 {
-    if (this>best) return 1;
-    return 0;
+    LOCATES *l=prob->dist->l;
+    int A,B;
+
+    _clearscreen(_GVIEWPORT);
+    DrawPath(prob->path,l,1);
+
+    A=SetMaskAt(prob->vmask,city_hi,citysize,city1);
+    B=SetMaskAt(prob->vmask,city_hi,citysize,city2);
+    DrawCities(l,prob->vmask);
+    SetMaskAt(prob->vmask,A,citysize,city1);
+    SetMaskAt(prob->vmask,B,citysize,city2);
+
+    BorderWin();
+    SwapPage();
 }
 
-void NNeighbourStartPath(PROBLEM *prob)
+void HiliteCity(PROBLEM *prob,int citynum,int returnp)
 {
-    int A,max=prob->dist->size;
-    StartRandom();
-    A=Random(max);
-    CityDel(prob,A);
-    prob->path=NewPath(1,A);
-    SetMaskAt(prob->vmask,city_in,citysize,A);
+    LOCATES *l=prob->dist->l;
+    int A;
+    _clearscreen(_GVIEWPORT);
+    DrawPath(prob->path,l,returnp);
+
+    A=SetMaskAt(prob->vmask,city_hi,citysize*2,citynum);
+    DrawCities(l,prob->vmask);
+    SetMaskAt(prob->vmask,A,citysize*2,citynum);
+    BorderWin();
+    SwapPage();
 }
 
-void RndStartPath(PROBLEM *prob)
+void DrawNorm(PROBLEM *prob,int returnp)
 {
-    int A,B,C,max=prob->dist->size;
+    LOCATES *l=prob->dist->l;
 
-    StartRandom();
-    A=Random(max);
-    do B=Random(max); while (B==A);
-    do C=Random(max); while ((C==B) || (C==A));
-    CityDel(prob,A);
-    CityDel(prob,B);
-    CityDel(prob,C);
-    prob->path=NewPath(3,A,B,C);
-    SetMaskAt(prob->vmask,city_in,citysize,A);
-    SetMaskAt(prob->vmask,city_in,citysize,B);
-    SetMaskAt(prob->vmask,city_in,citysize,C);
-}
-
-void FStartPath(int (* func)(double,double),PROBLEM *prob)
-{
-    int A=0,B=1,C=2,x,y,z;
-    int max=(prob->dist->size);
-    double best=prob->dist->array[A][B]
-                +prob->dist->array[B][C]
-                +prob->dist->array[C][A];
-    double thisdist;
-    
-    
-    for (x=0;x<max;x++)
-        for (y=0;y<max;y++)
-            if (x!=y)
-                for (z=0;z<max;z++)
-                    if ((z!=y) && (z!=x))
-                    {
-                        thisdist=prob->dist->array[x][y]
-                                +prob->dist->array[y][z]
-                                +prob->dist->array[z][x];
-                        if (func(thisdist,best))
-                        {
-                            A=x;B=y;C=z;
-                            best=thisdist;
-                        }
-                    }
-    CityDel(prob,A);
-    CityDel(prob,B);
-    CityDel(prob,C);
-    prob->path=NewPath(3,A,B,C);
-    SetMaskAt(prob->vmask,city_in,citysize,A);
-    SetMaskAt(prob->vmask,city_in,citysize,B);
-    SetMaskAt(prob->vmask,city_in,citysize,C);
-
-}
-
-int FNeighbour(int (* func)(double,double),PROBLEM *prob,int citynum)
-/* returns the nearest/furthest neightbour of citynum in type path */
-{
-    int x,bestcity,thiscity;
-    double bestdist,thisdist;
-
-    if (prob->outpath[0]==citynum)  // * func city to x is not x
-        bestcity=prob->outpath[1];
-    else
-        bestcity=prob->outpath[0];
-
-    bestdist=prob->dist->array[citynum][bestcity];
-
-    for (x=0;x<(prob->endo);x++)
-    {
-        thiscity=prob->outpath[x];
-        if (thiscity!=citynum)      // * func city to x is not x
-        {
-            thisdist=prob->dist->array[citynum][thiscity];
-            if (func(thisdist,bestdist)) {
-                bestdist=thisdist;
-                bestcity=thiscity;
-            }
-        }
-    }
-    return bestcity;
-}
-
-int RndNext(PROBLEM *prob)
-{
-    return prob->outpath[Random(prob->endo)];
-}
-
-int FNextCost(int (* func)(double,double),PROBLEM *prob,int *A,int *B)
-/* returns the cheapest/dearest for insertion of an outpath between a & b */
-{
-    int best;
-    int listc,pathc;
-    int pA,pB;
-    double bestlen,thislen;
-
-    best=prob->outpath[0];
-
-    PathStart(prob->path);
-    PathPair(prob->path,A,B);
-    bestlen=InsertCost(prob,best,*A,*B);
-
-    for (listc=0;listc<prob->endo;listc++)
-    {
-        for (pathc=0;pathc<(prob->path->size);pathc++)
-        {
-            PathPair(prob->path,&pA,&pB);
-            thislen=InsertCost(prob,prob->outpath[listc],pA,pB);
-            if (func(thislen,bestlen))
-            {
-                best=prob->outpath[listc];*A=pA;*B=pB;bestlen=thislen;
-            }
-            PathNext(prob->path);
-        }
-    }
-    return best;
-}
-
-int FNextDist(int (* func)(double,double),int (* func2)(double,double),PROBLEM *prob,int *fcity)
-/* returns the func of the func2 Nearest Neighbour, looking in outpath
- * e.g. FNextDist(Greater,Lesser,p);
- */
-{
-    int best,this;
-    double bestlen,thislen;
-    int x,city;
-
-    PathStart(prob->path);
-    PathCurrent(prob->path,&city);
-
-    best=FNeighbour(*func2,prob,city);
-    bestlen=prob->dist->array[best][city];
-
-    for (x=0;x<(prob->path->size);x++)
-    {
-
-        PathCurrent(prob->path,&city);
-        this=FNeighbour(*func2,prob,city);
-
-        thislen=prob->dist->array[this][city];
-        if (func(thislen,bestlen))
-        {
-            *fcity=city;
-            best=this;
-            bestlen=thislen;
-        }
-        PathNext(prob->path);
-    }
-    return best;
-}
-
-void BestInsert(PROBLEM *prob,int citynum,int *a,int *b)
-{
-    int pA,pB,x;
-    double thiscost,bestcost;
-
-    PathStart(prob->path);
-    PathPair(prob->path,&pA,&pB);
-    bestcost=InsertCost(prob,citynum,pA,pB);
-    *a=pA;*b=pB;
-
-    PathNext(prob->path);
-
-    for (x=1;x<(prob->path->size);x++)
-    {
-        PathPair(prob->path,&pA,&pB);
-        thiscost=InsertCost(prob,citynum,pA,pB);
-        if (thiscost<bestcost)
-        {
-            bestcost=thiscost;
-            *a=pA;*b=pB;
-        }
-        PathNext(prob->path);
-    }
+    _clearscreen(_GVIEWPORT);
+    DrawPath(prob->path,l,returnp);
+    DrawCities(l,prob->vmask);
+    BorderWin();
+    SwapPage();
 }
 
 MASK _FAR *NewViewMask(int size,int color,double csize)
@@ -339,6 +233,24 @@ void _FAR SetMasks(MASK *m,int num, ...) // int pos,int color,double size
         m->array[pos].size=size;
     }
     va_end(ap);
+}
+
+LOCATES *PathAsLocates(PATH *path,LOCATES *loc)
+// * returns loc reordered in path order
+// pre : path->size == loc->num
+{
+    LOCATES *ret=InitLocates(0,loc);
+    int x,A;
+
+    PathStart(path);
+    for (x=0;x<path->size;x++) {
+        PathCurrent(path,&A);
+        ret->at[x].x=loc->at[A].x;
+        ret->at[x].y=loc->at[A].y;
+        ret->at[x].citynum=loc->at[A].citynum;
+        PathNext(path);
+    }
+    return ret;
 }
 
 /*

@@ -93,4 +93,33 @@ int Random(int num)
     return (rand() % num); /* 0..num-1 */
 }
 
+void PrintList(int *list,int listsize)
+{
+    int x;
+    for (x=0;x<listsize;x++)
+        printf("%2d ",list[x]);
+    printf("\n");
+}
+
+int PosOf(int num,int *list,int listsize)
+/* returns pos of num in unsorted list, -1 of not in list */
+{
+    int x;
+    for (x=0;x<listsize;x++)
+        if (list[x]==num) return x;
+    return -1;
+}
+
+int Lesser(double this,double best)
+{
+    if (this<best) return 1;
+    return 0;
+}
+
+int Greater(double this,double best)
+{
+    if (this>best) return 1;
+    return 0;
+}
+
 
