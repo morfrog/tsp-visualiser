@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <time.h>
 #include <conio.h>
 #include "sys.h"
@@ -100,17 +101,12 @@ int Greater(double this,double best)
 
 void NNeighbourStartPath(PROBLEM *prob)
 {
-    int A,B,C,max=prob->dist->size;
+    int A,max=prob->dist->size;
+    StartRandom();
     A=Random(max);
     CityDel(prob,A);
-    B=FNeighbour(Lesser,prob,A);
-    CityDel(prob,B);
-    C=FNeighbour(Lesser,prob,B);
-    CityDel(prob,C);
-    prob->path=NewPath(A,B,C);
+    prob->path=NewPath(1,A);
     SetMaskAt(prob->vmask,city_in,citysize,A);
-    SetMaskAt(prob->vmask,city_in,citysize,B);
-    SetMaskAt(prob->vmask,city_in,citysize,C);
 }
 
 void RndStartPath(PROBLEM *prob)
@@ -124,7 +120,7 @@ void RndStartPath(PROBLEM *prob)
     CityDel(prob,A);
     CityDel(prob,B);
     CityDel(prob,C);
-    prob->path=NewPath(A,B,C);
+    prob->path=NewPath(3,A,B,C);
     SetMaskAt(prob->vmask,city_in,citysize,A);
     SetMaskAt(prob->vmask,city_in,citysize,B);
     SetMaskAt(prob->vmask,city_in,citysize,C);
@@ -158,7 +154,7 @@ void FStartPath(int (* func)(double,double),PROBLEM *prob)
     CityDel(prob,A);
     CityDel(prob,B);
     CityDel(prob,C);
-    prob->path=NewPath(A,B,C);
+    prob->path=NewPath(3,A,B,C);
     SetMaskAt(prob->vmask,city_in,citysize,A);
     SetMaskAt(prob->vmask,city_in,citysize,B);
     SetMaskAt(prob->vmask,city_in,citysize,C);
@@ -168,26 +164,29 @@ void FStartPath(int (* func)(double,double),PROBLEM *prob)
 int FNeighbour(int (* func)(double,double),PROBLEM *prob,int citynum)
 /* returns the nearest/furthest neightbour of citynum in type path */
 {
-    int x,bestcityx;
-    double dist,bestdist;
+    int x,bestcity,thiscity;
+    double bestdist,thisdist;
 
-    if (prob->outpath[0]==citynum)
-        bestcityx=1;
+    if (prob->outpath[0]==citynum)  // * func city to x is not x
+        bestcity=prob->outpath[1];
     else
-        bestcityx=0;
+        bestcity=prob->outpath[0];
 
-    bestdist=prob->dist->array[citynum][bestcityx];
+    bestdist=prob->dist->array[citynum][bestcity];
 
     for (x=0;x<(prob->endo);x++)
-        if (prob->outpath[x]!=citynum)
+    {
+        thiscity=prob->outpath[x];
+        if (thiscity!=citynum)      // * func city to x is not x
         {
-            dist=prob->dist->array[citynum][prob->outpath[x]];
-            if (func(dist,bestdist)) {
-                bestdist=dist;
-                bestcityx=x;
+            thisdist=prob->dist->array[citynum][thiscity];
+            if (func(thisdist,bestdist)) {
+                bestdist=thisdist;
+                bestcity=thiscity;
             }
         }
-    return prob->outpath[bestcityx];
+    }
+    return bestcity;
 }
 
 int RndNext(PROBLEM *prob)
@@ -321,6 +320,25 @@ int _FAR SetMaskAt(MASK *m,int color,double size,int pos)
     if (color>-1)  m->array[pos].color=color;
     if (size>-1.0) m->array[pos].size=size;
     return ret;
+}
+
+void _FAR SetMasks(MASK *m,int num, ...) // int pos,int color,double size
+{
+    va_list ap;
+    int x,pos,color;
+    double size;
+
+    va_start(ap,num);
+
+    for (x=0;x<num;x++)
+    {
+        pos=va_arg(ap,int);
+        color=va_arg(ap,int);
+        size=va_arg(ap,double);
+        m->array[pos].color=color;
+        m->array[pos].size=size;
+    }
+    va_end(ap);
 }
 
 /*

@@ -147,7 +147,7 @@ int WriteLocates(LOCATES *loc,char *filename)
     if (output==NULL) return 0;
     fprintf(output,"%d\n",loc->num);
     for (x=0;x<loc->num;x++)
-        fprintf(output,"%8.6f %8.6f\n",loc->at[x].x,loc->at[x].y);
+        fprintf(output,"%8.7f %8.7f\n",loc->at[x].x,loc->at[x].y);
     fclose(output);
     return 1;
 }

@@ -47,5 +47,6 @@ void _FAR SetMask(MASK *m,int color,double size);
 void _FAR SetMaskCol(MASK *m,int color);
 void _FAR SetMaskSize(MASK *m,double size);
 int _FAR SetMaskAt(MASK *m,int color,double size,int pos);
+int _FAR SetMasks(MASK *m,int num, ...); // int pos,int color,double size
 
 #endif

@@ -1,27 +1,42 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include "sys.h"
 #include "path.h"
 
-PATH _FAR *NewPath(int city1,int city2,int city3)
+PATH _FAR *NewPath(int points, ...)
 {
-    NODE *CityOne=salloc(1,sizeof(NODE));
-    NODE *CityTwo=salloc(1,sizeof(NODE));
-    NODE *CityThree=salloc(1,sizeof(NODE));
-    PATH *t=salloc(1,sizeof(PATH));
-    t->head=CityOne;
-    t->current=CityOne;
-    t->size=3;
+    int x,a;
+    NODE *ins=NULL;
+    PATH *path=salloc(1,sizeof(PATH));
+    va_list ap;
 
-    CityOne->citynum=city1;
-    CityTwo->citynum=city2;
-    CityThree->citynum=city3;
+    path->head=NULL;
+    path->tail=NULL;
+    path->current=NULL;
+    path->size=0;
+    va_start(ap,points);
 
-    CityOne->next=CityTwo;
-    CityTwo->next=CityThree;
-    CityThree->next=CityOne;
-
-    return t;
+    for (x=0;x<points;x++)
+    {
+        a=va_arg(ap, int);
+        ins=salloc(1,sizeof(NODE));
+        ins->citynum=a;
+        if (path->size==0) {
+            path->head=ins;
+            path->tail=ins;
+            path->current=ins;
+        }
+        else
+        {
+            path->tail->next=ins;
+            path->tail=ins;
+        }
+        ins->next=path->head;
+        path->size+=1;
+    }
+    va_end(ap);
+    return path;
 }
 
 void _FAR FreePath(PATH *p)
@@ -39,6 +54,18 @@ void _FAR FreePath(PATH *p)
     if (!(sfree(p))) printf("Failed To Free Path Structure.\n");
 
 
+}
+
+void _FAR InsertPathEnd(PATH *path,int city)
+{
+    NODE *new=salloc(1,sizeof(NODE));
+
+    new->citynum=city;
+    new->next=path->head;
+
+    path->tail->next=new;
+    path->tail=new;
+    path->size+=1;
 }
 
 int _FAR InsertPath(PATH *p,int city,int city1,int city2)
@@ -82,6 +109,11 @@ void _FAR ShowPath(PATH *p)
 void _FAR PathStart(PATH *p)
 {
     p->current=p->head;
+}
+
+void _FAR PathEnd(PATH *p)
+{
+    p->current=p->tail;
 }
 
 void _FAR PathCurrent(PATH *p,int *a)

@@ -19,9 +19,10 @@
 #define InsNearN   -1
 #define InsRand     0
 #define InsCheap    1
-#define InsNearest  2
-#define InsFurthest 3
-#define InsMinEdge  4
+#define InsDear     2
+#define InsNearest  3
+#define InsFurthest 4
+#define InsMinEdge  5
 
 #define NoGraphics 0
 #define Graphics   1
@@ -55,12 +56,12 @@ void DrawCities(LOCATES *loc,MASK *m)
     }
 }
 
-void DrawPath(PATH *p,LOCATES *loc)
+void DrawPath(PATH *p,LOCATES *loc,int returnp)
 {
-    int count,a,b;
+    int count,a,b,max=p->size-(returnp?0:1);
 
     PathStart(p);
-    for (count=0;count<(p->size);count++)
+    for (count=0;count<max;count++)
     {
         PathPair(p,&a,&b);  // get the current path pair
         DrawLine(loc->at[a].x,loc->at[a].y,
@@ -80,9 +81,9 @@ int ProcessCmdLine(int argc, char *argv[],char **filename,int *InitType,
         printf("Usage: %s filename init method [time].\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
                 argv[0],
                "Where   init    in {Random,Furthest,Closest}",
-               "        method  in {Random,Cheap,NearN,Nearest,Furthest,MinEdge}",
+               "        method  in {Random,Cheap,Dear,NearN,Nearest,Furthest,MinEdge}",
                "        time    = 0 is calculate to end",
-               "        time    = n is wait n seconds between each insert",
+               "        time    = n is take n 10ths of seconds for each insert",
                "        time    =-2 is Benchmark Mode - Simply returns length",
                "        time    =-3 double is Benchmark for all methods, double=optimal",
                "        No time = wait for keypress between each insert");
@@ -106,13 +107,14 @@ int ProcessCmdLine(int argc, char *argv[],char **filename,int *InitType,
                                   break;
             case 'F' : case 'f' : *InsType=InsFurthest; break;
             case 'M' : case 'm' : *InsType=InsMinEdge; break;
+            case 'D' : case 'd' : *InsType=InsDear; break;
             default  :            *InsType=InsRand; break;
         }
         if (argc>=5) /* optional time taken */
         {
             wait_time=atoi(argv[4]);
             if (wait_time>0)
-                *tdelay=wait_time*CLOCKS_PER_SEC;
+                *tdelay=wait_time*(CLOCKS_PER_SEC/10);
             else if (wait_time<-2)
             {
                 *tdelay=-3; /* benchmark only - no graphics, do all, optimal */
@@ -133,9 +135,9 @@ void PrintInit(int init)
 {
     switch (init) {
         case InitNearN   : printf("NearN    "); break;
-        case InitRand    : printf("Random   ");  break;
+        case InitRand    : printf("Random   "); break;
         case InitClosest : printf("Closest  "); break;
-        case InitFurthest: printf("Furthest ");break;
+        case InitFurthest: printf("Furthest "); break;
         default :          printf("Illegal Value.");break; 
     }
 }
@@ -143,13 +145,14 @@ void PrintInit(int init)
 void PrintMethod(int method)
 {
     switch (method) {
-        case InsRand    : printf("Random   ");     break;
-        case InsCheap   : printf("Cheapest ");   break;
+        case InsRand    : printf("Random   "); break;
+        case InsCheap   : printf("Cheapest "); break;
+        case InsDear    : printf("Dearest  "); break;
         case InsNearN   : printf("NNeigbour"); break;
-        case InsNearest : printf("Nearest  ");    break;
-        case InsFurthest: printf("Furthest ");   break;
+        case InsNearest : printf("Nearest  "); break;
+        case InsFurthest: printf("Furthest "); break;
         case InsMinEdge : printf("Minimum Edge Distance"); break;
-        default         : printf("Illegal Value.");
+        default         : printf("Illegal Value."); break;
     }
 }
 
@@ -177,7 +180,7 @@ void HiliteCityGroup(PROBLEM *prob,int main,int maincol,int city1, int city2,int
     int A,B,C;
 
     _clearscreen(_GVIEWPORT);
-    DrawPath(prob->path,l);
+    DrawPath(prob->path,l,1);
     A=SetMaskAt(prob->vmask,maincol,citysize*2,main);
     B=SetMaskAt(prob->vmask,col,citysize*2,city1);
     C=SetMaskAt(prob->vmask,col,citysize*2,city2);
@@ -200,7 +203,7 @@ void HiliteCityPair(PROBLEM *prob,int city1,int city2,int col)
     int A,B;
 
     _clearscreen(_GVIEWPORT);
-    DrawPath(prob->path,l);
+    DrawPath(prob->path,l,1);
 
     A=SetMaskAt(prob->vmask,city_hi,citysize,city1);
     B=SetMaskAt(prob->vmask,city_hi,citysize,city2);
@@ -212,26 +215,27 @@ void HiliteCityPair(PROBLEM *prob,int city1,int city2,int col)
     SwapPage();
 }
 
-void HiliteCity(PROBLEM *prob,int citynum)
+void HiliteCity(PROBLEM *prob,int citynum,int returnp)
 {
     LOCATES *l=prob->dist->l;
     int A;
-
     _clearscreen(_GVIEWPORT);
-    DrawPath(prob->path,l);
-    A=SetMaskAt(prob->vmask,city_hi,citysize,citynum);
+    DrawPath(prob->path,l,returnp);
+
+    A=SetMaskAt(prob->vmask,city_hi,citysize*2,citynum);
     DrawCities(l,prob->vmask);
-    SetMaskAt(prob->vmask,A,citysize,citynum);
+    SetMaskAt(prob->vmask,A,citysize*2,citynum);
     BorderWin();
     SwapPage();
 }
 
-void DrawNorm(PROBLEM *prob)
+void DrawNorm(PROBLEM *prob,int returnp)
 {
     LOCATES *l=prob->dist->l;
 
     _clearscreen(_GVIEWPORT);
-    DrawPath(prob->path,l);
+    DrawPath(prob->path,l,returnp);
+
     DrawCities(l,prob->vmask);
     BorderWin();
     SwapPage();
@@ -246,7 +250,7 @@ double ControlRand(PROBLEM *prob,int graphics)
         now=clock();
         next=RndNext(prob);
 
-        if (graphics) {HiliteCity(prob,next);WaitTill(now+time_seg);}
+        if (graphics) {HiliteCity(prob,next,1);WaitTill(now+time_seg);}
 
         CityDel(prob,next);
         BestInsert(prob,next,&Ia,&Ib);
@@ -256,7 +260,7 @@ double ControlRand(PROBLEM *prob,int graphics)
         InsertPath(prob->path,next,Ia,Ib);
         SetMaskAt(prob->vmask,city_in,citysize,next);
 
-        if (graphics) {DrawNorm(prob);WaitTill(now+(3*time_seg));}
+        if (graphics) {DrawNorm(prob,1);WaitTill(now+(3*time_seg));}
 
     } while (prob->endo);
     return PathLength(prob->path,prob->dist);
@@ -264,27 +268,25 @@ double ControlRand(PROBLEM *prob,int graphics)
 
 double ControlNearN(PROBLEM *prob,int graphics)
 {
-    int x,this,next,first;
+    int x,next,this;
     clock_t now;
     clock_t time_seg=tot_delay/2;
 
-    PathStart(prob->path);
-    PathCurrent(prob->path,&first);
-    for (x=1;x<(prob->path->size);x++) PathNext(prob->path);
-    PathCurrent(prob->path,&this); /* the last element in the path */
+    PathEnd(prob->path);
+    PathCurrent(prob->path,&this);
 
     do {
         now=clock();
         next=FNeighbour(Lesser,prob,this);
 
-        if (graphics) {HiliteCity(prob,next);WaitTill(now+time_seg);}
+        if (graphics) {HiliteCity(prob,next,0);WaitTill(now+time_seg);}
 
         CityDel(prob,next);
-        InsertPath(prob->path,next,this,first);
+        InsertPathEnd(prob->path,next);
         SetMaskAt(prob->vmask,city_in,citysize,next);
+        
+        if (graphics) {DrawNorm(prob,0);WaitTill(now+(2*time_seg));}
         this=next;
-
-        if (graphics) {DrawNorm(prob);WaitTill(now+(2*time_seg));}
 
     } while (prob->endo);
     return PathLength(prob->path,prob->dist);
@@ -300,7 +302,7 @@ double ControlFurthest(PROBLEM *prob,int graphics)
         now=clock();
         next=FNextDist(Greater,Lesser,prob,&it);
 
-        if (graphics) {HiliteCity(prob,next);WaitTill(now+time_seg);}
+        if (graphics) {HiliteCity(prob,next,1);WaitTill(now+time_seg);}
 
         CityDel(prob,next);
         BestInsert(prob,next,&Ia,&Ib);
@@ -310,7 +312,7 @@ double ControlFurthest(PROBLEM *prob,int graphics)
         InsertPath(prob->path,next,Ia,Ib);
         SetMaskAt(prob->vmask,city_in,citysize,next);
 
-        if (graphics) {DrawNorm(prob);WaitTill(now+(3*time_seg));}
+        if (graphics) {DrawNorm(prob,1);WaitTill(now+(3*time_seg));}
 
     } while (prob->endo);
     return PathLength(prob->path,prob->dist);
@@ -326,7 +328,7 @@ double ControlNearest(PROBLEM *prob,int graphics)
         now=clock();
         next=FNextDist(Lesser,Lesser,prob,&it);
 
-        if (graphics) {HiliteCity(prob,next);WaitTill(now+time_seg);}
+        if (graphics) {HiliteCity(prob,next,1);WaitTill(now+time_seg);}
 
         CityDel(prob,next);
         BestInsert(prob,next,&Ia,&Ib);
@@ -336,7 +338,29 @@ double ControlNearest(PROBLEM *prob,int graphics)
         InsertPath(prob->path,next,Ia,Ib);
         SetMaskAt(prob->vmask,city_in,citysize,next);
 
-        if (graphics) {DrawNorm(prob);WaitTill(now+(3*time_seg));}
+        if (graphics) {DrawNorm(prob,1);WaitTill(now+(3*time_seg));}
+
+    } while (prob->endo);
+    return PathLength(prob->path,prob->dist);
+}
+
+double ControlDear(PROBLEM *prob,int graphics)
+{
+    int next,pA,pB;
+    clock_t now;
+    clock_t time_seg=tot_delay/3;
+
+    do {
+        now=clock();
+        next=FNextCost(Greater,prob,&pA,&pB);
+        BestInsert(prob,next,&pA,&pB);
+        if (graphics) {HiliteCity(prob,next,1);WaitTill(now+(time_seg));}
+        if (graphics) {HiliteCityGroup(prob,next,YELLOW,pA,pB,BLUE);WaitTill(now+(2*time_seg));}
+        CityDel(prob,next);
+        InsertPath(prob->path,next,pA,pB);
+        SetMaskAt(prob->vmask,city_in,citysize,next);
+
+        if (graphics) {DrawNorm(prob,1);WaitTill(now+(3*time_seg));}
 
     } while (prob->endo);
     return PathLength(prob->path,prob->dist);
@@ -352,13 +376,13 @@ double ControlCheap(PROBLEM *prob,int graphics)
         now=clock();
         next=FNextCost(Lesser,prob,&pA,&pB);
 
-        if (graphics) {HiliteCity(prob,next);WaitTill(now+(time_seg));}
+        if (graphics) {HiliteCity(prob,next,1);WaitTill(now+(time_seg));}
         if (graphics) {HiliteCityGroup(prob,next,YELLOW,pA,pB,BLUE);WaitTill(now+(2*time_seg));}
         CityDel(prob,next);
         InsertPath(prob->path,next,pA,pB);
         SetMaskAt(prob->vmask,city_in,citysize,next);
 
-        if (graphics) {DrawNorm(prob);WaitTill(now+(3*time_seg));}
+        if (graphics) {DrawNorm(prob,1);WaitTill(now+(3*time_seg));}
 
     } while (prob->endo);
     return PathLength(prob->path,prob->dist);
@@ -401,22 +425,30 @@ void main(int argc, char *argv[])
                 printf("%12s",filename);
                 for (method=InsRand;method<=InsFurthest;method++)
                 {
-                    switch (init) {
-                        case InitClosest : FStartPath(Lesser,prob);  break;
-                        case InitFurthest: FStartPath(Greater,prob); break;
-                        default : RndStartPath(prob);             break;
+                    if (method==InsNearN)
+                    {
+                        NNeighbourStartPath(prob);
+                        length=ControlNearN(prob,NoGraphics);break;
                     }
+                    else
+                    {
+                        switch (inittype) {
+                            case InitClosest : FStartPath(Lesser,prob);  break;
+                            case InitFurthest: FStartPath(Greater,prob); break;
+                            default : RndStartPath(prob);             break;
+                        }
+                    
 
-                    switch (method) {
-                        case InsCheap   : length=ControlCheap(prob,NoGraphics);break; 
-                        case InsNearN   : length=ControlNearN(prob,NoGraphics);break;
-                        case InsNearest : length=ControlNearest(prob,NoGraphics);break;
-                        case InsFurthest: length=ControlFurthest(prob,NoGraphics);break;
-                        case InsMinEdge : break;
-                        default/*Rand*/ : length=ControlRand(prob,NoGraphics); break;
+                        switch (method) {
+                            case InsCheap   : length=ControlCheap(prob,NoGraphics);break;
+                            case InsDear    : length=ControlDear(prob,NoGraphics);break;
+                            case InsNearest : length=ControlNearest(prob,NoGraphics);break;
+                            case InsFurthest: length=ControlFurthest(prob,NoGraphics);break;
+                            case InsMinEdge : break;
+                            default/*Rand*/ : length=ControlRand(prob,NoGraphics); break;
         
+                        }
                     }
-
                     printf("%10.5f",length/optimal);
                     ProblemReset(prob,1);
                 }
@@ -431,7 +463,11 @@ void main(int argc, char *argv[])
         }
         else
         {
-            if (method==InsNearN) NNeighbourStartPath(prob);
+            
+            if (instype==InsNearN)
+            {
+                NNeighbourStartPath(prob);
+            }
             else
             {
                 switch (inittype) {
@@ -444,6 +480,7 @@ void main(int argc, char *argv[])
             
                 switch (instype) {
                     case InsCheap   : length=ControlCheap(prob,NoGraphics);break; 
+                    case InsDear    : length=ControlDear(prob,NoGraphics);break; 
                     case InsNearN   : length=ControlNearN(prob,NoGraphics);break;
                     case InsNearest : length=ControlNearest(prob,NoGraphics);break;
                     case InsFurthest: length=ControlFurthest(prob,NoGraphics);break;
@@ -461,11 +498,12 @@ void main(int argc, char *argv[])
     
                 SetWin(main);
         
-                DrawNorm(prob);
+                DrawNorm(prob,1);
                 delay(500);
     
                 switch (instype) {
-                    case InsCheap   : ControlCheap(prob,((tdelay!=0) && Graphics)); break; 
+                    case InsCheap   : ControlCheap(prob,((tdelay!=0) && Graphics)); break;
+                    case InsDear    : ControlDear(prob,((tdelay!=0) && Graphics)); break;
                     case InsNearN   : ControlNearN(prob,((tdelay!=0) && Graphics)); break;
                     case InsNearest : ControlNearest(prob,((tdelay!=0) && Graphics));break;
                     case InsFurthest: ControlFurthest(prob,((tdelay!=0) && Graphics));break;
@@ -473,7 +511,7 @@ void main(int argc, char *argv[])
                     default/*Rand*/ : ControlRand(prob,((tdelay!=0) && Graphics)); break;
         
                 }
-                DrawNorm(prob);
+                DrawNorm(prob,1);
                 getch();
 
                 ShutDown();
@@ -489,6 +527,7 @@ void main(int argc, char *argv[])
      
 /*        FreeMap(d);     */  
 
+        WriteLocates(prob->dist->l,"default.dat");
     }
 
 }

@@ -10,8 +10,8 @@
 
 struct node 
 {
-        struct node *next;
         int citynum;
+        struct node *next;
 };
 
 typedef struct node NODE;
@@ -19,17 +19,20 @@ typedef struct node NODE;
 struct header
 {
     NODE *head;
+    NODE *tail;
     NODE *current; /* the current */
     int size;
 };
 
 typedef struct header PATH;
 
-PATH _FAR *NewPath(int city1,int city2,int city3);
+PATH _FAR *NewPath(int points, ...);
 void _FAR FreePath(PATH *p);
+void _FAR InsertPathEnd(PATH *path ,int city);
 int _FAR InsertPath(PATH *p,int city,int city1,int city2);
 void _FAR ShowPath(PATH *p);
 void _FAR PathStart(PATH *p);
+void _FAR PathEnd(PATH *p);
 void _FAR PathCurrent(PATH *p,int *a);
 void _FAR PathPair(PATH *p,int *a,int *b);
 void _FAR PathNext(PATH *p);
