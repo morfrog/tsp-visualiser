@@ -75,6 +75,7 @@ void main(int argc,char *argv[])
 
     if (ProcessCmdLine(argc,argv,&filein,&fileout,&method,&tdelay,&optimal)) {
         TotalDelay(tdelay);
+
         prob=NewProblem(NewMap(NewLocates(filein)));
         prob->path=LocatesAsPath(prob->dist->l);
 
@@ -82,11 +83,15 @@ void main(int argc,char *argv[])
         {
             printf("             1opt     2opt     3opt\n"
                    "%12s ",filein);
-            printf("%8.6f %8.6f\n",
-                    ControlOneOpt(prob,0)/optimal,
-                    ControlTwoOpt(prob,0)/optimal);
+            printf("%8.6f\n",ControlOneOpt(prob,0)/optimal);
+            ProblemReset(prob,1);
+            prob->path=LocatesAsPath(prob->dist->l);
 
-            
+            printf("%8.6f\n",ControlTwoOpt(prob,0)/optimal);
+            ProblemReset(prob,1);
+            prob->path=LocatesAsPath(prob->dist->l);
+
+            printf("%8.6f\n",ControlKOpt(prob,3,0)/optimal);
         }
         else
         {
@@ -103,7 +108,7 @@ void main(int argc,char *argv[])
             switch (method) {
                 case opt1 : length=ControlOneOpt(prob,((tdelay==-1) || (tdelay>0)));break;
                 case opt2 : length=ControlTwoOpt(prob,((tdelay==-1) || (tdelay>0)));break;
-                case opt3 : break;
+                case opt3 : length=ControlKOpt(prob,3,((tdelay==-1) || (tdelay>0)));break;
                 default : break;
             }
             if (tdelay>=-1) {

@@ -289,3 +289,210 @@ double ControlTwoOpt(PROBLEM *prob,int graphics)
     }
     return newpl;
 }
+
+#define Reverse   1
+#define NoReverse 0
+
+double SingleChange(PROBLEM *p,INTARRAY *points)
+// * adds up the cost of the point breaks * //
+{
+    int max=((points->size*2)/3)-1,x;
+    double total=0.0;
+
+
+    total+=p->dist->array[points->array[1]][points->array[2]];
+    total+=p->dist->array[points->array[3]][points->array[4]];
+    total+=p->dist->array[points->array[0]][points->array[5]];
+
+    return total;
+}
+
+void SingleRevs(PROBLEM *p,INTARRAY *points,int revA,int revB,int revC)
+{
+    if (revA==Reverse) Swap(&(points->array[0]),&(points->array[1]));
+    if (revB==Reverse) Swap(&(points->array[2]),&(points->array[3]));
+    if (revC==Reverse) Swap(&(points->array[4]),&(points->array[5]));
+}
+
+double FindChange(PROBLEM *p,INTARRAY *points,int revA,int revB,int revC)
+{
+    double change=0.0;
+
+    if ((revA+revB+revC)==0) return 0.0; // * no revs = no change * //
+    else
+    {
+        change-=SingleChange(p,points);
+        SingleRevs(p,points,revA,revB,revC); // apply //
+        change+=SingleChange(p,points);
+        SingleRevs(p,points,revA,revB,revC); // return to normal //
+        return change;
+    }
+}
+
+double FindBestRevs(PROBLEM *p,INTARRAY *points)
+{
+    int x,y,z;
+    double bestchange=0.0,thischange;
+    int at=(points->size*2)/3;
+
+    points->array[6]=0;
+    points->array[7]=0;
+    points->array[8]=0;
+
+    for (x=NoReverse;x<=Reverse;x++)
+        for (y=NoReverse;y<=Reverse;y++)
+            for (z=NoReverse;z<=Reverse;z++)
+            {
+                thischange=FindChange(p,points,x,y,z);
+                if (thischange<bestchange)
+                {
+                    points->array[6]=x;
+                    points->array[7]=y;
+                    points->array[8]=z;
+                    bestchange=thischange;
+                }
+            }
+    return bestchange;
+}
+
+INTARRAY *NextKOpt(PROBLEM *p,int k)
+{
+    int elems=k*3;
+    INTARRAY *result=NewIntArray(elems,0);     // * 3=p1,p2,rev * //
+    INTARRAY *this=NewIntArray(elems,0);     // * 3=p1,p2,rev * //
+    int *parray=PathToArray(p->path,1);
+    int max=(p->path->size),x,y,z,pos,count;
+    double bestval=0.0,thisval;
+
+    char tmp[12];
+
+    if (DEBUG) {
+        for (x=0;x<=p->path->size;x++)
+            printf("%d ",parray[x]);
+        printf("\n");
+    }
+    
+    
+    for (x=0;x<max-2;x++)
+    {
+        pos=1;
+        this->array[pos]=parray[x];
+        this->array[pos+1]=parray[x+1];
+        for (y=x+1;y<max-1;y++)
+        {
+            pos=3;
+            this->array[pos]=parray[y];
+            this->array[pos+1]=parray[y+1];
+
+            for (z=y+1;z<max;z++) // * run through all possible split combos * //
+            {
+                pos=5;
+                this->array[pos]=parray[z];
+                this->array[0]=parray[z+1];
+
+                thisval=FindBestRevs(p,this);
+                if (thisval<bestval)
+                {
+                    CopyIntArray(result,this);
+                    bestval=thisval;
+                }
+                
+
+
+                // printf("%d,%d  %d,%d  %d,%d\n",this[0],this[1],
+                //                                this[2],this[3],
+                //                                this[4],this[5]);
+                // SingleRevs(p,this,k,1,1,0);
+                // 
+                // printf("%d,%d  %d,%d  %d,%d\n",this[0],this[1],
+                //                                this[2],this[3],
+                //                                this[4],this[5]);
+
+
+
+            }
+        }
+    }
+    FreeIntArray(&this);
+    sfree(parray);
+    if (bestval==0.0) {FreeIntArray(&result); return NULL;}
+    else return result;
+}
+
+void HiliteKOpt(PROBLEM *prob,INTARRAY *points,int lines)
+{
+    LOCATES *l=prob->dist->l;
+    int x;
+
+    _clearscreen(_GVIEWPORT);
+    DrawPath(prob->path,l,1);
+
+    for (x=0;x<(points->size*2)/3;x++)
+        SetMaskAt(prob->vmask,city_hi,citysize,points->array[x]);
+
+    DrawCities(l,prob->vmask);
+    
+    for (x=0;x<(points->size*2)/3;x++)
+        SetMaskAt(prob->vmask,city_in,citysize,points->array[x]);
+
+    BorderWin();
+    SwapPage();
+}
+
+
+void MakeKOptTransition(PROBLEM *p,INTARRAY *points)
+{
+    if (points->array[6]==Reverse) {
+        ReverseSubPath(p->path,points->array[5],points->array[0],
+                               points->array[1],points->array[2]);
+        Swap(&(points->array[0]),&(points->array[1]));
+    }
+    if (points->array[7]==Reverse) {
+        ReverseSubPath(p->path,points->array[1],points->array[2],
+                               points->array[3],points->array[4]);
+        Swap(&(points->array[2]),&(points->array[3]));
+    }
+    if (points->array[8]==Reverse) {
+        ReverseSubPath(p->path,points->array[3],points->array[4],
+                               points->array[5],points->array[0]);
+        Swap(&(points->array[4]),&(points->array[5]));
+    }
+}
+
+double ControlKOpt(PROBLEM *p,int k,int graphics)
+{
+    INTARRAY *iarray=NextKOpt(p,k);
+    clock_t now;
+    clock_t time_seg=TotalDelay(-1)/2;
+    char buffer[50];
+
+    if (graphics) ShowText("K-Opt Method",1,1,GREEN);
+
+    while ((iarray->array[6]+iarray->array[7]+iarray->array[8])>0)
+    {
+        now=clock();
+        if (graphics) {
+            sprintf(buffer,"%2d-%2d %2d-%2d %2d-%2d\n%s   %s   %s\n",
+                iarray->array[0],iarray->array[1],iarray->array[2],
+                iarray->array[3],iarray->array[4],iarray->array[5],
+                iarray->array[6]?"Rev":"No ",iarray->array[7]?"Rev":"No ",
+                iarray->array[8]?"Rev":"No ");
+
+            ShowText(buffer,1,12,YELLOW);
+            HiliteKOpt(p,iarray,0);
+            WaitTill(now+(time_seg));
+        }
+        if (DEBUG) {printf("%s",buffer);mygetch();}
+
+        Working();
+        MakeKOptTransition(p,iarray);
+        if (graphics) {
+            DrawNorm(p,1);
+            WaitTill(now+(time_seg*2));
+        }
+
+        sfree(iarray);
+        iarray=NextKOpt(p,k);
+    }
+    return PathLength(p->path,p->dist);
+}

@@ -68,54 +68,43 @@ void NNeighbourStartPath(INSPROB *insprob)
 
 void RndStartPath(INSPROB *insprob)
 {
-    int A,B,C,max=insprob->prob->dist->size;
+    int A,B,max=insprob->prob->dist->size;
 
     StartRandom();
     A=Random(max);
     do B=Random(max); while (B==A);
-    do C=Random(max); while ((C==B) || (C==A));
     CityDel(insprob,A);
     CityDel(insprob,B);
-    CityDel(insprob,C);
-    insprob->prob->path=NewPath(3,A,B,C);
+    insprob->prob->path=NewPath(2,A,B);
     SetMaskAt(insprob->prob->vmask,city_in,citysize,A);
     SetMaskAt(insprob->prob->vmask,city_in,citysize,B);
-    SetMaskAt(insprob->prob->vmask,city_in,citysize,C);
 }
 
 void FStartPath(int (* func)(double,double),INSPROB *insprob)
 {
-    int A=0,B=1,C=2,x,y,z;
+    int A=0,B=1,x,y;
     int max=(insprob->prob->dist->size);
-    double best=insprob->prob->dist->array[A][B]
-                +insprob->prob->dist->array[B][C]
-                +insprob->prob->dist->array[C][A];
+    double best=insprob->prob->dist->array[A][B];
     double thisdist;
     
     
     for (x=0;x<max;x++)
         for (y=0;y<max;y++)
             if (x!=y)
-                for (z=0;z<max;z++)
-                    if ((z!=y) && (z!=x))
-                    {
-                        thisdist=insprob->prob->dist->array[x][y]
-                                +insprob->prob->dist->array[y][z]
-                                +insprob->prob->dist->array[z][x];
-                        if (func(thisdist,best))
-                        {
-                            A=x;B=y;C=z;
-                            best=thisdist;
-                        }
-                    }
+            {
+                thisdist=insprob->prob->dist->array[x][y];
+                if (func(thisdist,best))
+                {
+                    A=x;B=y;
+                    best=thisdist;
+                }
+            }
     CityDel(insprob,A);
     CityDel(insprob,B);
-    CityDel(insprob,C);
-    insprob->prob->path=NewPath(3,A,B,C);
+
+    insprob->prob->path=NewPath(2,A,B);
     SetMaskAt(insprob->prob->vmask,city_in,citysize,A);
     SetMaskAt(insprob->prob->vmask,city_in,citysize,B);
-    SetMaskAt(insprob->prob->vmask,city_in,citysize,C);
-
 }
 
 void CityDel(INSPROB *insprob,int citynum)
@@ -265,9 +254,6 @@ double ControlRand(INSPROB *insprob,int graphics)
 
     } while (insprob->endo);
 
-    if (graphics) {sprintf(buffer,"F I N I S H E D");
-                   ShowText(buffer,1,16,LTRED);}
-
     return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 
@@ -302,9 +288,6 @@ double ControlNearN(INSPROB *insprob,int graphics)
         this=next;
 
     } while (insprob->endo);
-
-    if (graphics) {sprintf(buffer,"F I N I S H E D");
-                   ShowText(buffer,1,16,LTRED);}
 
     return PathLength(insprob->prob->path,insprob->prob->dist);
 }
@@ -342,9 +325,6 @@ double ControlFurthest(INSPROB *insprob,int graphics)
 
     } while (insprob->endo);
 
-    if (graphics) {sprintf(buffer,"F I N I S H E D");
-                   ShowText(buffer,1,16,LTRED);}
-
     return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 
@@ -377,9 +357,6 @@ double ControlNearest(INSPROB *insprob,int graphics)
 
     } while (insprob->endo);
 
-    if (graphics) {sprintf(buffer,"F I N I S H E D");
-                   ShowText(buffer,1,16,LTRED);}
-
     return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 
@@ -409,9 +386,6 @@ double ControlDear(INSPROB *insprob,int graphics)
 
     } while (insprob->endo);
 
-    if (graphics) {sprintf(buffer,"F I N I S H E D");
-                   ShowText(buffer,1,16,LTRED);}
-
     return PathLength(insprob->prob->path,insprob->prob->dist);
 }
 
@@ -440,9 +414,6 @@ double ControlCheap(INSPROB *insprob,int graphics)
         if (graphics) {DrawNorm(insprob->prob,1);WaitTill(now+(3*time_seg));}
 
     } while (insprob->endo);
-
-    if (graphics) {sprintf(buffer,"F I N I S H E D");
-                   ShowText(buffer,1,16,LTRED);}
 
     return PathLength(insprob->prob->path,insprob->prob->dist);
 }

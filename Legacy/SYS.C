@@ -4,6 +4,9 @@
 #include <conio.h>
 #include <time.h>
 #include <dos.h>
+#include <conio.h>
+#include <graph.h>
+#include "sys.h"
 
 void *salloc(int n_items,size_t something) {
 /**********************************************************************
@@ -122,4 +125,46 @@ int Greater(double this,double best)
     return 0;
 }
 
+
+INTARRAY *NewIntArray(int size,int val)
+{
+    INTARRAY *ret=salloc(1,sizeof(INTARRAY));
+    int x;
+    ret->size=size;
+    ret->array=salloc(size,sizeof(int));
+    for (x=0;x<size;x++) ret->array[x]=val;
+    return ret;
+}
+
+void CopyIntArray(INTARRAY *to,INTARRAY *from)
+{
+    int x;
+    for (x=0;x<to->size;x++)
+        to->array[x]=from->array[x];
+}
+
+void FreeIntArray(INTARRAY **a)
+{
+    sfree((*a)->array);
+    sfree(*a);
+}
+
+void Beep(int pitch,int time)
+{
+    sound(pitch);
+    delay(time);
+    nosound();
+}
+
+void Working()
+{
+    static char array[4]={'|','/','-',92};
+    static int pos=0;
+    static char out[2]="  ";
+
+    out[0]=array[pos];
+    pos=(pos+1)%4;
+    _settextposition(1,1);
+    _outtext(out);
+}
 

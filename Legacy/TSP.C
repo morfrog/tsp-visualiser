@@ -101,6 +101,8 @@ void main(int argc, char *argv[])
 
     int init,method;
 
+    char buffer[50];
+
     if (ProcessCmdLine(argc,argv,&filename,&inittype,&instype,&tdelay,&optimal))
     {
         TotalDelay(tdelay);
@@ -205,15 +207,24 @@ void main(int argc, char *argv[])
                 delay(tdelay>0?tdelay:0);
     
                 switch (instype) {
-                    case InsCheap   : ControlCheap(insprob,((tdelay!=0) && Graphics)); break;
-                    case InsDear    : ControlDear(insprob,((tdelay!=0) && Graphics)); break;
-                    case InsNearN   : ControlNearN(insprob,((tdelay!=0) && Graphics)); break;
-                    case InsNearest : ControlNearest(insprob,((tdelay!=0) && Graphics));break;
-                    case InsFurthest: ControlFurthest(insprob,((tdelay!=0) && Graphics));break;
-                    default/*Rand*/ : ControlRand(insprob,((tdelay!=0) && Graphics)); break;
+                    case InsCheap   : length=ControlCheap(insprob,((tdelay!=0) && Graphics)); break;
+                    case InsDear    : length=ControlDear(insprob,((tdelay!=0) && Graphics)); break;
+                    case InsNearN   : length=ControlNearN(insprob,((tdelay!=0) && Graphics)); break;
+                    case InsNearest : length=ControlNearest(insprob,((tdelay!=0) && Graphics));break;
+                    case InsFurthest: length=ControlFurthest(insprob,((tdelay!=0) && Graphics));break;
+                    default/*Rand*/ : length=ControlRand(insprob,((tdelay!=0) && Graphics)); break;
         
                 }
                 DrawNorm(insprob->prob,1);
+                if (Graphics)
+                {
+                    sprintf(buffer,"F I N I S H E D");
+                    ShowText(buffer,1,16,LTRED);
+                    sprintf(buffer,"Length Is %8.6f",length);
+                    ShowText(buffer,1,18,YELLOW);
+                }
+                
+
                 getch();
 
                 ShutDown();
