@@ -29,6 +29,7 @@
 
 #define INITIALISE -1
 #define REQUEST -2
+#define REQUESTFULL -3
 
 #define CURRENT 0
 #define SET     1
@@ -447,7 +448,7 @@ char *SetInit(int num,int override,int showhelp,int *inum)
     static int insinitnum=0;
     static int anninitnum=0;
     int changed=0;
-    int buffer[10];
+    char buffer[40];
 
     if (!(initialised))
     {
@@ -475,14 +476,22 @@ char *SetInit(int num,int override,int showhelp,int *inum)
         strcpy(anninit[1].name,buffer);
         sprintf(buffer,"AtTmp=%6d",changesattemp);
         strcpy(anninit[2].name,buffer);
+        changed=1;
     }
-
-    if (num==REQUEST) // * request for current * //
+    else if (num==REQUEST) // * request for current * //
     {
         switch (current_solver) {
             case 0 : *inum=insinitnum; return insinit[insinitnum].name;        break;
             case 1 : *inum=-1; return NULL; break;
             case 2 : *inum=anninitnum; return anninit[anninitnum].name;  break;
+        }
+    }
+    else if (num==REQUESTFULL)
+    {
+        switch (current_solver) {
+            case 0 : *inum=insinitnum; return insinit[insinitnum].helptitle;        break;
+            case 1 : *inum=-1; return NULL; break;
+            case 2 : *inum=anninitnum; return anninit[anninitnum].helptitle;  break;
         }
     }
     if (!(override))
@@ -748,12 +757,66 @@ void DrawScreen(PROBLEM **currentprob)
 
 }
 
+void AnnealInitChange()
+{
+    int x,checki,ok=1;
+    double checkd;
+    char buffer[60];
+    char ch;
+
+    HideMouse();
+    IntWinManager(CLEAR,help,0,0);
+    IntWinManager(SET,help,0,0);
+    sprintf(buffer,"Please Enter The\n:%s\n:",SetInit(REQUESTFULL,FALSE,FALSE,&x));                    
+    DrawText(buffer,1,1,YELLOW);
+    while (!kbhit()) {}
+    ch=getch();
+    if (ch!=27)
+    {
+        ungetch(ch);
+        scanf("%s",buffer);
+        switch (x) {
+                case 0 : checkd=atof(buffer);
+                     if (checkd>=0.0)
+                     {
+                        temperature=checkd;
+                        DrawText("Temperature Accepted",1,4,GREEN);
+                     }
+                     else
+                        DrawText("Temperature Must Be > 0.0",1,4,LTRED);
+                     break;
+                case 1 : checkd=atof(buffer);
+                     if ((checkd>0.0) && (checkd<1.0))
+                     {
+                        coolingrate=checkd;
+                        DrawText("Cooling Rate Accepted",1,4,GREEN);
+                     }
+                     else
+                        DrawText("0.0 < cooling rate < 1.0",1,4,LTRED);
+                     break;
+                case 2 : checki=atoi(buffer);
+                     if (checki>0)
+                     {
+                        changesattemp=checki;
+                        DrawText("Changes At Temperature OK",1,4,GREEN);
+                         }
+                     else
+                        DrawText("Must be at least one change...",1,4,LTRED);
+                     break;
+        }
+        SetInit(INITIALISE,TRUE,FALSE,NULL);
+    }
+    else
+        DrawText("Operation Aborted",1,4,GREEN);
+    ShowMouse();
+}
+
 void main()
 {
     int pos=320,line;
     MouseStatus m;
     char buffer[60];
-    int x,select,at=title,last=title,mx=0,my=0,tinit,tmethod,currentwin=title;
+    int x,select,at,last,mx=0,my=0,tinit,tmethod,currentwin=title;
     INSPROB *insprob;
     PROBLEM *currentprob=NULL;
     FILE *out;
@@ -784,14 +847,17 @@ void main()
     _setvisualpage(0);
     SetMousePage(0);
     ResetMouse();
-    SetMousePos(300,200);
+    SetMousePos(300,100);
+    MouseStat(&m);
+    at=IntWinManager(WHERE,NULL,m.xpos,m.ypos);
+    last=at;
     ShowMouse();
 
     UseMouseCur(GLOVE);
     do
     {
         MouseStat(&m);
-        if (MouseMoved()) 
+        if ((my!=m.ypos) || (mx!=m.xpos))
         {
             at=IntWinManager(WHERE,NULL,m.xpos,m.ypos);
             mx=m.xpos;my=m.ypos;
@@ -822,7 +888,7 @@ void main()
 
         }
 
-        if (ButtonDown(&m))
+        if ((m.left) || (m.right))
         {
             currentwin=IntWinManager(CURRENT,NULL,0,0);
             switch (currentwin) {
@@ -938,43 +1004,15 @@ void main()
                 else if (line>=number_of_inits) select=-1;
                 else select=line;
                 if (select>=0) SetInit(select,FALSE,TRUE,NULL);
+                if (m.right)
+                {
+                    AnnealInitChange();
+                }
                 break;
             }
         }
     }
     while (1);
     ShutDown();
-    getch();
 }
 
-/*
-            _clearscreen(_GCLEARSCREEN);
-            SwapPage();
-
-            WinManager(Main);
-            WinManager(Text);
-
-            ShowText("Hit Esc to Quit,\n\n"
-                 "Any other key \n"
-                 "To continue..",1,21,BLUE);
-
-
-            length=ControlAllIns(insprob,inittype,instype,tdelay!=0);
-        
-            DrawNorm(insprob->prob,1);
-            SwapPage();
-
-            sprintf(buffer,"F I N I S H E D");
-            ShowText(buffer,1,16,LTRED);
-            sprintf(buffer,"Length Is %8.6f",length);
-            ShowText(buffer,1,18,YELLOW);
-
-            ShowText("                \n"
-                     "Hit Esc         \n"
-                     "to Quit...   \n"
-                     "               ",1,19,LTRED);
-            
-            while (getch()!=27) {}
-            ShutDown();
-
-*/

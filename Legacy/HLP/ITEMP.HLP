@@ -1,9 +1,10 @@
 Starting Temperature
 This is the temperature from
 which the annealing process
-begins. It is a real number.
-When the temperature reaches
-zero the annealing is complete.
+begins. It is a positive real
+number. When the temperature
+reaches zero the annealing is
+complete.
 
 
 
