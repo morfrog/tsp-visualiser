@@ -108,7 +108,6 @@ double _FAR ReadDouble(FILE *f)
 
 double _FAR Dist(POINT a,POINT b)
 {
-    double num;
     double y=(b.y-a.y);
     double x=(b.x-a.x);
     /* printf("%.4f,%.4f to %.4f,%.4f is %.4f %.4f.\n",a.x,a.y,b.x,b.y,x,y);*/
@@ -116,40 +115,69 @@ double _FAR Dist(POINT a,POINT b)
 
 }
 
-DISTANCES *NewMap(char *filename)
+LOCATES *InitLocates(int size,LOCATES *iloc)
+// if loc==NULL inits to empty of size size, else inits as copy of loc
+{
+    LOCATES *loc=NULL;
+    int x;
+
+    loc=salloc(1,sizeof(LOCATES));
+    loc->num=(iloc==NULL)?size:(iloc->num);      /* the number of points */
+    loc->at=salloc(loc->num,sizeof(POINT));
+    
+    if (loc!=NULL)
+    {
+        for (x=0;x<loc->num;x++)
+        {
+            loc->at[x].x=iloc->at[x].x;
+            loc->at[x].y=iloc->at[x].y;
+            loc->at[x].citynum=iloc->at[x].citynum;
+        }
+    }
+    // else dont init to anything
+
+    return loc;
+}
+
+int WriteLocates(LOCATES *loc,char *filename)
+{
+    FILE *output=fopen(filename,"wt");
+    int x;
+    
+    if (output==NULL) return 0;
+    fprintf(output,"%d\n",loc->num);
+    for (x=0;x<loc->num;x++)
+        fprintf(output,"%8.6f %8.6f\n",loc->at[x].x,loc->at[x].y);
+    fclose(output);
+    return 1;
+}
+
+LOCATES *NewLocates(char *filename)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *      Desc    :       reads a new map in from a file
- *      Pre             :       none
- *      Post    :       exits program if file not found else returns the map
+ *      Desc    :       reads map locations in from a file
+ *      Pre     :       none
+ *      Post    :       exits program if file not found else returns the
+ *                      locations
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  */
 {
-    DISTANCES *dist=NULL;
     LOCATES *loc=NULL;
+    int count,size;
 
     FILE *input=fopen(filename,"rt");
-    int count,count2,n;
-/*    char name[STR_LEN];*/
-    double ndist;
-
     if (input==NULL)
     {
-        printf("Can't find file \"%.12s\", Exiting System.",filename);
+        printf("Can't find file \"%.12s\", Exiting System.\n",filename);
         mygetch();
         exit(EXIT_FAILURE);
         return NULL;
     }
     else
     {
-        dist=salloc(1,sizeof(DISTANCES));
-        dist->size=ReadDouble(input);      /* the number of points */
-        dist->array=
-        allocate_N_by_N_array(dist->size,dist->size,sizeof(double),"Distance");        
-        if (PRINTON) printf(" %.4f\n",dist->size);
+        size=(int)ReadDouble(input);
+        loc=InitLocates(size,NULL);
         SkipLine(input);
-        loc=salloc(1,sizeof(LOCATES));
-        loc->num=(dist->size);
-        loc->at=salloc(loc->num,sizeof(POINT));
+        
         for (count=0;count<loc->num;count++) 
         {
             (loc->at[count]).x=ReadDouble(input);
@@ -160,33 +188,59 @@ DISTANCES *NewMap(char *filename)
         }
         if (PRINTON) ShowLocates(loc);
         if (PRINTON) printf("loc->num=%d\n",loc->num);
-        n=(loc->num);
         if (PRINTON) mygetch();
-        for (count=0;count<n;count++) 
-        {
-            for (count2=count;count2<n;count2++) 
-            {
-                /* printf("%.2f %.2f<%.2f ",count,count2,n); */
-                ndist=Dist(loc->at[count],loc->at[count2]);
-                /* printf("Dist= %.2f.\n",ndist); */
-                dist->array[count][count2]=ndist;
-                dist->array[count2][count]=ndist;
-            }
-        }
-        dist->l=loc;
-                      
+        fclose(input);
+        return loc;
     }
-    fclose(input);
-    return dist; 
 
 }
 
-void _FAR FreeMap(DISTANCES *d)
+DISTANCES *NewMap(LOCATES *loc)
+// * Converts a location array to a distances matrix, assigns distance
+// * matrix' locates as loc.
+
 {
-    if (!(sfree(d->l->at))) printf("Failed To Free Locates 'At' Array.\n");
-    if (!(sfree(d->l))) printf("Failed To Free Locates Structure.\n");
-    if (!(sfree(d->array))) printf("Failed To Free Distances Array.\n");
-    if (!(sfree(d))) printf("Failed To Distances Structure.\n");
+    DISTANCES *dist=NULL;
+
+    int count,count2,n;
+    double ndist;
+
+    dist=salloc(1,sizeof(DISTANCES));
+    dist->size=loc->num;      /* the number of points */
+    dist->array=
+    allocate_N_by_N_array(dist->size,dist->size,sizeof(double),"Distance");        
+    if (PRINTON) printf(" %.4f\n",dist->size);
+
+    n=(loc->num);
+    for (count=0;count<n;count++) 
+    {
+        for (count2=count;count2<n;count2++) 
+        {
+            // printf("%.2f %.2f<%.2f ",count,count2,n);
+            
+            ndist=Dist(loc->at[count],loc->at[count2]);
+
+            // printf("Dist= %.2f.\n",ndist);
+            
+            dist->array[count][count2]=ndist;
+            dist->array[count2][count]=ndist;
+        }
+    }
+    dist->l=loc;
+    return dist; 
+}
+
+void _FAR FreeLocates(LOCATES **loc)
+{
+   if (!(sfree((*loc)->at))) printf("Failed To Free Locates 'At' Array.\n");
+   if (!(sfree(*loc))) printf("Failed To Free Locates Structure.\n");
+}
+
+void _FAR FreeMap(DISTANCES **d)
+{
+    FreeLocates( &((*d)->l));
+    if (!(sfree((*d)->array))) printf("Failed To Free Distances Array.\n");
+    if (!(sfree(*d))) printf("Failed To Distances Structure.\n");
 }
 
 void _FAR PrintMap(DISTANCES *d)

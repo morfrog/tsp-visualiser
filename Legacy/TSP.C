@@ -32,8 +32,9 @@
 int tot_delay;
 
 void WaitTill(clock_t it)
+// Waits until the clock() returns >= it
 {
-    if (tot_delay<0) getch();
+    if (tot_delay<0) getch(); // if Wait_For_Keypress option
     else
     {
         while (clock()<it)
@@ -43,14 +44,14 @@ void WaitTill(clock_t it)
     }
 }
 
-void DrawCities(LOCATES *loc)
+void DrawCities(LOCATES *loc,MASK *m)
 {
     char num[3]="00\0";
     int count;
-    for (count=0;count<=(loc->num)-1;count++)
+    for (count=0;count<(loc->num);count++)
     {
         sprintf(num,"%d",loc->at[count].citynum);
-        DrawCity(num,loc->at[count].x,loc->at[count].y,citysize,GREY);
+        DrawCity(num,loc->at[count].x,loc->at[count].y,m->array[count].size,m->array[count].color);
     }
 }
 
@@ -61,7 +62,7 @@ void DrawPath(PATH *p,LOCATES *loc)
     PathStart(p);
     for (count=0;count<(p->size);count++)
     {
-        PathPair(p,&a,&b);
+        PathPair(p,&a,&b);  // get the current path pair
         DrawLine(loc->at[a].x,loc->at[a].y,
                  loc->at[b].x,loc->at[b].y,
                  line_col);
@@ -135,7 +136,7 @@ void PrintInit(int init)
         case InitRand    : printf("Random   ");  break;
         case InitClosest : printf("Closest  "); break;
         case InitFurthest: printf("Furthest ");break;
-        default :          printf("Illegal Value.");break;
+        default :          printf("Illegal Value.");break; 
     }
 }
 
@@ -173,17 +174,20 @@ void PrintCmdLine(char *filename,int InitType,int InsType,int delay,int optimal)
 void HiliteCityGroup(PROBLEM *prob,int main,int maincol,int city1, int city2,int col)
 {
     LOCATES *l=prob->dist->l;
-    char num[3]="00\0";
+    int A,B,C;
+
     _clearscreen(_GVIEWPORT);
     DrawPath(prob->path,l);
-    DrawCities(l);
+    A=SetMaskAt(prob->vmask,maincol,citysize*2,main);
+    B=SetMaskAt(prob->vmask,col,citysize*2,city1);
+    C=SetMaskAt(prob->vmask,col,citysize*2,city2);
 
-    sprintf(num,"%d",l->at[main].citynum);
-    DrawCity(num,l->at[main].x,l->at[main].y,citysize*2,maincol);
-    sprintf(num,"%d",l->at[city1].citynum);
-    DrawCity(num,l->at[city1].x,l->at[city1].y,citysize*2,col);
-    sprintf(num,"%d",l->at[city2].citynum);
-    DrawCity(num,l->at[city2].x,l->at[city2].y,citysize*2,col);
+    DrawCities(l,prob->vmask);
+
+    SetMaskAt(prob->vmask,A,citysize,main);
+    SetMaskAt(prob->vmask,B,citysize,city1);
+    SetMaskAt(prob->vmask,C,citysize,city2);
+
     DrawLine(l->at[city1].x,l->at[city1].y,l->at[city2].x,l->at[city2].y,col);
     BorderWin();
     SwapPage();
@@ -193,15 +197,16 @@ void HiliteCityGroup(PROBLEM *prob,int main,int maincol,int city1, int city2,int
 void HiliteCityPair(PROBLEM *prob,int city1,int city2,int col)
 {
     LOCATES *l=prob->dist->l;
-    char num[3]="00\0";
+    int A,B;
+
     _clearscreen(_GVIEWPORT);
     DrawPath(prob->path,l);
-    DrawCities(l);
 
-    sprintf(num,"%d",l->at[city1].citynum);
-    DrawCity(num,l->at[city1].x,l->at[city1].y,citysize*2,col);
-    sprintf(num,"%d",l->at[city2].citynum);
-    DrawCity(num,l->at[city2].x,l->at[city2].y,citysize*2,col);
+    A=SetMaskAt(prob->vmask,city_hi,citysize,city1);
+    B=SetMaskAt(prob->vmask,city_hi,citysize,city2);
+    DrawCities(l,prob->vmask);
+    SetMaskAt(prob->vmask,A,citysize,city1);
+    SetMaskAt(prob->vmask,B,citysize,city2);
 
     BorderWin();
     SwapPage();
@@ -210,12 +215,13 @@ void HiliteCityPair(PROBLEM *prob,int city1,int city2,int col)
 void HiliteCity(PROBLEM *prob,int citynum)
 {
     LOCATES *l=prob->dist->l;
-    char num[3]="00\0";
+    int A;
+
     _clearscreen(_GVIEWPORT);
     DrawPath(prob->path,l);
-    DrawCities(l);
-    sprintf(num,"%d",l->at[citynum].citynum);
-    DrawCity(num,l->at[citynum].x,l->at[citynum].y,citysize*2,YELLOW);
+    A=SetMaskAt(prob->vmask,city_hi,citysize,citynum);
+    DrawCities(l,prob->vmask);
+    SetMaskAt(prob->vmask,A,citysize,citynum);
     BorderWin();
     SwapPage();
 }
@@ -223,9 +229,10 @@ void HiliteCity(PROBLEM *prob,int citynum)
 void DrawNorm(PROBLEM *prob)
 {
     LOCATES *l=prob->dist->l;
+
     _clearscreen(_GVIEWPORT);
     DrawPath(prob->path,l);
-    DrawCities(l);
+    DrawCities(l,prob->vmask);
     BorderWin();
     SwapPage();
 }
@@ -247,6 +254,7 @@ double ControlRand(PROBLEM *prob,int graphics)
         if (graphics) {HiliteCityGroup(prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
 
         InsertPath(prob->path,next,Ia,Ib);
+        SetMaskAt(prob->vmask,city_in,citysize,next);
 
         if (graphics) {DrawNorm(prob);WaitTill(now+(3*time_seg));}
 
@@ -273,6 +281,7 @@ double ControlNearN(PROBLEM *prob,int graphics)
 
         CityDel(prob,next);
         InsertPath(prob->path,next,this,first);
+        SetMaskAt(prob->vmask,city_in,citysize,next);
         this=next;
 
         if (graphics) {DrawNorm(prob);WaitTill(now+(2*time_seg));}
@@ -299,6 +308,7 @@ double ControlFurthest(PROBLEM *prob,int graphics)
         if (graphics) {HiliteCityGroup(prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
 
         InsertPath(prob->path,next,Ia,Ib);
+        SetMaskAt(prob->vmask,city_in,citysize,next);
 
         if (graphics) {DrawNorm(prob);WaitTill(now+(3*time_seg));}
 
@@ -324,6 +334,7 @@ double ControlNearest(PROBLEM *prob,int graphics)
         if (graphics) {HiliteCityGroup(prob,next,YELLOW,Ia,Ib,BLUE);WaitTill(now+(2*time_seg));}
 
         InsertPath(prob->path,next,Ia,Ib);
+        SetMaskAt(prob->vmask,city_in,citysize,next);
 
         if (graphics) {DrawNorm(prob);WaitTill(now+(3*time_seg));}
 
@@ -345,6 +356,7 @@ double ControlCheap(PROBLEM *prob,int graphics)
         if (graphics) {HiliteCityGroup(prob,next,YELLOW,pA,pB,BLUE);WaitTill(now+(2*time_seg));}
         CityDel(prob,next);
         InsertPath(prob->path,next,pA,pB);
+        SetMaskAt(prob->vmask,city_in,citysize,next);
 
         if (graphics) {DrawNorm(prob);WaitTill(now+(3*time_seg));}
 
@@ -369,7 +381,7 @@ void main(int argc, char *argv[])
         if (PRINTON) PrintCmdLine(filename,inittype,instype,tdelay,optimal);
 
         if (PRINTON) printf("Reading Map From File '%s'...\n",filename);
-        prob=NewProblem(NewMap(filename));
+        prob=NewProblem(NewMap(NewLocates(filename)));
         if (PRINTON) printf("Map Read...\n");
         if (PRINTON) PrintMap(prob->dist);
         if (PRINTON) mygetch();

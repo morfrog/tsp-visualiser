@@ -5,6 +5,7 @@
 #include "sys.h"
 #include "file.h"
 #include "path.h"
+#include "screen.h"
 #include "problem.h"
 
 PROBLEM *NewProblem(DISTANCES *dist)
@@ -15,6 +16,7 @@ PROBLEM *NewProblem(DISTANCES *dist)
 
     ret->outpath=salloc(dist->size,sizeof(int));
     ret->path=NULL;
+    ret->vmask=NewViewMask(dist->size,city_out,citysize);
 
     ProblemReset(ret,0);
     return ret;
@@ -106,6 +108,9 @@ void NNeighbourStartPath(PROBLEM *prob)
     C=FNeighbour(Lesser,prob,B);
     CityDel(prob,C);
     prob->path=NewPath(A,B,C);
+    SetMaskAt(prob->vmask,city_in,citysize,A);
+    SetMaskAt(prob->vmask,city_in,citysize,B);
+    SetMaskAt(prob->vmask,city_in,citysize,C);
 }
 
 void RndStartPath(PROBLEM *prob)
@@ -120,6 +125,9 @@ void RndStartPath(PROBLEM *prob)
     CityDel(prob,B);
     CityDel(prob,C);
     prob->path=NewPath(A,B,C);
+    SetMaskAt(prob->vmask,city_in,citysize,A);
+    SetMaskAt(prob->vmask,city_in,citysize,B);
+    SetMaskAt(prob->vmask,city_in,citysize,C);
 }
 
 void FStartPath(int (* func)(double,double),PROBLEM *prob)
@@ -151,6 +159,10 @@ void FStartPath(int (* func)(double,double),PROBLEM *prob)
     CityDel(prob,B);
     CityDel(prob,C);
     prob->path=NewPath(A,B,C);
+    SetMaskAt(prob->vmask,city_in,citysize,A);
+    SetMaskAt(prob->vmask,city_in,citysize,B);
+    SetMaskAt(prob->vmask,city_in,citysize,C);
+
 }
 
 int FNeighbour(int (* func)(double,double),PROBLEM *prob,int citynum)
@@ -269,6 +281,46 @@ void BestInsert(PROBLEM *prob,int citynum,int *a,int *b)
         }
         PathNext(prob->path);
     }
+}
+
+MASK _FAR *NewViewMask(int size,int color,double csize)
+{
+    MASK *mask=NULL;
+
+    mask=salloc(1,sizeof(MASK));
+    mask->size=size;
+    mask->array=salloc(mask->size,sizeof(VNODE));
+    SetMask(mask,color,csize);
+    return mask;
+}
+
+void _FAR SetMask(MASK *m,int color,double size)
+{
+    int x;
+    for (x=0;x<m->size;x++) {
+        m->array[x].color=color;
+        m->array[x].size=size;
+    }
+}
+
+void _FAR SetMaskCol(MASK *m,int color)
+{
+    int x;
+    for (x=0;x<m->size;x++) m->array[x].color=color;
+}
+
+void _FAR SetMaskSize(MASK *m,double size)
+{
+    int x;
+    for (x=0;x<m->size;x++) m->array[x].size=size;
+}
+
+int _FAR SetMaskAt(MASK *m,int color,double size,int pos)
+{
+    int ret=m->array[pos].color;
+    if (color>-1)  m->array[pos].color=color;
+    if (size>-1.0) m->array[pos].size=size;
+    return ret;
 }
 
 /*

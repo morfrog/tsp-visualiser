@@ -240,3 +240,4 @@ void _FAR SwapPage()
     viewpage=_setvisualpage(viewpage);
     _setactivepage(viewpage);
 }
+
