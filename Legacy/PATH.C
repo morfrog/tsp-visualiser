@@ -4,6 +4,21 @@
 #include "sys.h"
 #include "path.h"
 
+NODE *FindPathCity(PATH *p,int citynum)
+// * returns NULL if city not in path else returns the pointer to the node * //
+{
+    NODE *ret=p->head;
+    int x,found=0;
+
+    ret=p->head;
+    for (x=0;x<p->size;x++) {
+        if (ret->citynum==citynum) {found=1;break;}
+        ret=ret->next;
+    }
+    if (!found) return NULL; // * city not in path * //
+    return ret;
+}
+
 PATH _FAR *NewPath(int points, ...)
 {
     int x,a;
@@ -12,8 +27,9 @@ PATH _FAR *NewPath(int points, ...)
     va_list ap;
 
     path->head=NULL;
-    path->tail=NULL;
     path->current=NULL;
+    path->save=NULL;
+    path->washead=0;
     path->size=0;
     va_start(ap,points);
 
@@ -24,15 +40,15 @@ PATH _FAR *NewPath(int points, ...)
         ins->citynum=a;
         if (path->size==0) {
             path->head=ins;
-            path->tail=ins;
-            path->current=ins;
         }
         else
         {
-            path->tail->next=ins;
-            path->tail=ins;
+            path->head->prev->next=ins;
+            ins->prev=path->head->prev;
         }
         ins->next=path->head;
+        path->head->prev=ins;
+
         path->size+=1;
     }
     va_end(ap);
@@ -52,8 +68,6 @@ void _FAR FreePath(PATH *p)
         c=c->next;
     }
     if (!(sfree(p))) printf("Failed To Free Path Structure.\n");
-
-
 }
 
 void _FAR InsertPathEnd(PATH *path,int city)
@@ -61,10 +75,10 @@ void _FAR InsertPathEnd(PATH *path,int city)
     NODE *new=salloc(1,sizeof(NODE));
 
     new->citynum=city;
+    path->head->prev->next=new;
+    new->prev=path->head->prev;
     new->next=path->head;
-
-    path->tail->next=new;
-    path->tail=new;
+    path->head->prev=new;
     path->size+=1;
 }
 
@@ -82,14 +96,74 @@ int _FAR InsertPath(PATH *p,int city,int city1,int city2)
         {
                 new=salloc(1,sizeof(NODE));
                 new->citynum=city;
+
+                new->prev=c;
                 new->next=c->next;
+                c->next->prev=new;
                 c->next=new;
-                p->size=(p->size)+1;
+                p->size+=1;
                 return 1;
         }
         c=c->next;
     }
         return 0;
+}
+int _FAR DeletePath(PATH *p,int city)
+{
+    NODE *tmp=FindPathCity(p,city);
+    if (tmp==NULL) return 0;
+    tmp->prev->next=tmp->next;
+    tmp->next->prev=tmp->prev;
+    if (p->head==tmp) p->head=tmp->next;
+    sfree(tmp);
+    return 1;
+}
+
+int TmpPathDel(PATH *p,int citynum,int *A,int *B)
+{
+
+    if (p->save!=NULL) return 0; // * already has a node saved * //
+    
+    p->save=FindPathCity(p,citynum);
+    if (p->save==NULL) return 0; // * city not in path * //
+
+    *A=p->save->prev->citynum;
+    *B=p->save->next->citynum;
+    
+    p->save->prev->next=p->save->next;
+    p->save->next->prev=p->save->prev;
+
+    if (p->save==p->head) {
+        p->washead=1;
+        p->head=p->save->next;
+    }
+    else p->washead=0;
+
+    if (p->save==p->current) p->current=p->save->next;
+   
+    p->size-=1;
+    return 1;
+}
+
+int TmpPathIns(PATH *p)
+// * Reinserts Temporarily Removed city back in its old place if * //
+// * possible * //
+{
+    if (p->save->prev->next!=p->save->next) return 0;
+    if (p->washead) p->head=p->save;
+    p->save->prev->next=p->save;
+    p->save->next->prev=p->save;
+    p->save=NULL;  // * now available for tmp deletion * //
+    p->size+=1;
+
+
+    return 1;
+}
+
+int TmpCity(PATH *p)
+{
+    if (p->save==NULL) return -1;
+    return p->save->citynum;
 }
 
 void _FAR ShowPath(PATH *p)
@@ -113,7 +187,7 @@ void _FAR PathStart(PATH *p)
 
 void _FAR PathEnd(PATH *p)
 {
-    p->current=p->tail;
+    p->current=p->head->prev;
 }
 
 void _FAR PathCurrent(PATH *p,int *a)

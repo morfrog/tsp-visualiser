@@ -11,7 +11,9 @@
 #include "path.h"
 #include "problem.h"
 #include "insert.h"
- 
+
+#define VERSION 1.01
+
 #define DEBUG 1
 #define PRINTON 0
 
@@ -21,16 +23,17 @@ int ProcessCmdLine(int argc, char *argv[],char **filename,int *InitType,
     int wait_time;
     if (argc<4)
     {
-        printf("Visualisation Tool For The Travelling Salesman Problem Insertion Methods. V1.01\n");
-        printf("Usage: %s filename init method [time].\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+        printf("Visualisation Tool For The Travelling Salesman Problem\n"
+               "Insertion Methods. V%3.2f\n",VERSION);
+        printf("Usage: %s filename init method [time].\n%s",
                 argv[0],
-               "Where   init    in {Random,Furthest,Closest}",
-               "        method  in {Random,Cheap,Dear,NearN,Nearest,Furthest}",
-               "        time    = 0 is calculate to end",
-               "        time    = n is take n 10ths of seconds for each insert",
-               "        time    =-2 is Benchmark Mode - Simply returns length",
-               "        time    =-3 double is Benchmark for all methods, double=optimal",
-               "        No time = wait for keypress between each insert");
+               "Where   init    in {Random,Furthest,Closest}\n"
+               "        method  in {Random,Cheap,Dear,NearN,Nearest,Furthest}\n"
+               "        time    = 0 is calculate to end\n"
+               "        time    = n is take n 10ths of seconds for each insert\n"
+               "        time    =-2 is Benchmark Mode - Simply returns length\n"
+               "        time    =-3 double is Benchmark for all methods, double=optimal\n"
+               "        No time = wait for keypress between each insert\n");
 
         return 0;
     }

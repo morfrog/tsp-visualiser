@@ -268,6 +268,15 @@ LOCATES *PathAsLocates(PATH *path,LOCATES *loc)
     return ret;
 }
 
+PATH *LocatesAsPath(LOCATES *loc)
+{
+    PATH *ret=NewPath(1,loc->at[0].citynum);
+    int x;
+    for (x=1;x<(loc->num);x++)
+        InsertPathEnd(ret,loc->at[x].citynum);
+    return ret;
+}
+
 /*
 void main()
 {
