@@ -1,4 +1,14 @@
 cd e:\watcom\tsp
-wcc386 screen.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -hw -fp5 -fpi87 -ms -5r -bt=dos
-cd e:\watcom\tsp
-wlink SYS dos4g op m d all op st=8192 op maxe=25 op d op q op symf @main.lk1
+wcc386 problem.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -hw -fp5 -fpi87 -ms -5r -bt=dos
+file.h(15): Error! E1019: Tag 'point' already defined
+file.h(19): Warning! W108: Duplicate typedef already defined
+file.h(23): Error! E1019: Tag 'locates' already defined
+file.h(27): Warning! W108: Duplicate typedef already defined
+file.h(31): Error! E1019: Tag 'matrix' already defined
+file.h(36): Warning! W108: Duplicate typedef already defined
+path.h(13): Error! E1019: Tag 'path_node' already defined
+path.h(17): Warning! W108: Duplicate typedef already defined
+path.h(21): Error! E1019: Tag 'path_header' already defined
+path.h(26): Warning! W108: Duplicate typedef already defined
+problem.c(46): Warning! W202: Symbol 'prob' has been defined, but not referenced
+Error(2008): cannot open tsp.obj : file not found

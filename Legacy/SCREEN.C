@@ -3,14 +3,11 @@
 #include <conio.h> /* getch */
 #include <malloc.h> /* malloc,free */
 #include <i86.h> /* sound */
+#include "consts.h"
 #include "sys.h"
 #include "screen.h" 
 
 struct videoconfig  VC;
-int TextColour;
-int TextColour2;
-int BorderColour;
-int TitleColour;
 
 /*
 void main()
@@ -34,10 +31,10 @@ void main()
     DrawLine(0.5,0.2,0.8,0.2);
     DrawLine(0.8,0.2,0.5,0.7);
     _setcolor(city_col);
-    DrawCity("A",0.5,0.2,citysize);
-    DrawCity("B",0.8,0.2,citysize);
-    DrawCity("C",0.5,0.7,citysize);
-    DrawCity("D",0.2,0.2,citysize);
+    DrawCity("A",0.5,0.2,city_size);
+    DrawCity("B",0.8,0.2,city_size);
+    DrawCity("C",0.5,0.7,city_size);
+    DrawCity("D",0.2,0.2,city_size);
 
     SetTextWin(text,1);
 
@@ -103,32 +100,11 @@ int _FAR InitScreen(int videomode)
     if( _setvideomode( mode ) == 0 ) {
         return( 0 );
     }
-    _getvideoconfig( &VC );
-    if( VC.numcolors < 4 ) {
-        TextColour = 1;
-        TextColour2 = 1;
-        BorderColour = 1;
-    } else {
-        TextColour = 1;
-        TextColour2 = 3;
-        BorderColour = 2;
-    }
-#if defined( __PC98__ )
-    /* set up new colours */
-    _remappalette( TextColour, _98BLUE );       /* light blue */
-    _remappalette( TextColour2, _98BLUE );      /* light blue */
-    _remappalette( BorderColour, _98BLACK );    /* black      */
-#else
-    if( VC.adapter >= _MCGA ) {
-        /* set up new colours */
-        _remappalette( TextColour, 0x3f0000 );  /* light blue */
-        _remappalette( TextColour2, 0x3f0000 ); /* light blue */
-        _remappalette( BorderColour, _BLACK );  /* black      */
-    }
-#endif
-    _setwindow(0,-0.05,-0.05,1.05,1.05);
-    _setcharsize_w(citysize*4/3,citysize*4/3);
+    _setwindow(0,win_b_min,win_b_min,win_b_max,win_b_max);
+    _setcharsize_w(city_size*4/3,city_size*4/3);
     _registerfonts( "*.fon" );
+    _setactivepage(0);
+    _setvisualpage(1);
     return( 1 );
 }
 
@@ -154,7 +130,7 @@ SWIN _FAR *NewWin(int l,int t,int r,int b)
 void _FAR SetWin(SWIN *w)
 {
     _setviewport(w->t,w->l,w->b,w->r);
-    _setcharsize_w(citysize*4/3,citysize*4/3);
+    _setcharsize_w(city_size*4/3,city_size*4/3);
     _setcharspacing_w(-0.02);
 }
 
@@ -179,7 +155,7 @@ void _FAR ResetWin(SWIN *w,int t,int l,int b,int r)
 void _FAR BorderWin()
 {
     _setcolor(border_col);
-    _rectangle_w(_GBORDER,-0.05,-0.05,1.05,1.05);
+    _rectangle_w(_GBORDER,win_b_min,win_b_min,win_b_max,win_b_max);
 }
 
 void _FAR FreeWin(SWIN *w)
@@ -233,9 +209,7 @@ void _FAR DrawText(char string[],int start,int line,int color)
 
 void _FAR SwapPage()
 {
-    static int viewpage=0;
+    static int viewpage;
+    viewpage=_setvisualpage(viewpage);
     _setactivepage(viewpage);
-    if (viewpage) viewpage=0;
-    else          viewpage=1;
-    _setvisualpage(viewpage);
 }

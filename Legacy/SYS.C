@@ -67,8 +67,8 @@ int sfree(void *ptr)
 {
     if (ptr==NULL)
         return 0;
-/*    else
-        free(ptr);*/
+    else
+        free(ptr);
     return 1;
 
 }
@@ -77,5 +77,10 @@ char mygetch()
 {
     printf("Hit any key...\n");
     return getch();
+}
+
+int random(int num)
+{
+    return rand() % num;
 }
 

@@ -36,7 +36,9 @@ void _FAR FreePath(PATH *p)
         del=c;  
         c=c->next;
     }
-    if (!(sfree(p))) printf("Failed To Free Path Structure.\n");
+    if (sfree(p)) p=NULL;
+    else printf("Failed To Free Path Structure.\n");
+
 
 
 }

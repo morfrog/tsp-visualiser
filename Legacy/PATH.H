@@ -8,22 +8,22 @@
     #define _HUGE   __huge
 #endif
 
-struct node 
+struct path_node 
 {
-        struct node *next;
+        struct path_node *next;
         int citynum;
 };
 
-typedef struct node NODE;
+typedef struct path_node NODE;
 
-struct header
+struct path_header
 {
     NODE *head;
     NODE *current; /* the current */
     int size;
 };
 
-typedef struct header PATH;
+typedef struct path_header PATH;
 
 PATH _FAR *NewPath(int city1,int city2,int city3);
 void _FAR FreePath(PATH *p);

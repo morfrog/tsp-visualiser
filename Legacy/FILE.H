@@ -10,11 +10,6 @@
     #define _HUGE   __huge
 #endif
 
-struct city
-{
-        char name[20];
-};      
-
 struct point
 {
     double x,y;

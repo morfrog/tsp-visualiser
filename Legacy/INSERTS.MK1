@@ -1,0 +1,43 @@
+!define BLANK ""
+e:\watcom\tsp\file.obj : e:\watcom\tsp\file.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ *wcc386 file.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tsp\path.obj : e:\watcom\tsp\path.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ *wcc386 path.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tsp\problem.obj : e:\watcom\tsp\problem.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ *wcc386 problem.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tsp\screen.obj : e:\watcom\tsp\screen.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ *wcc386 screen.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tsp\sys.obj : e:\watcom\tsp\sys.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ *wcc386 sys.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tsp\tsp.obj : e:\watcom\tsp\tsp.c .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ *wcc386 tsp.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -mf -5r -bt=dos
+
+e:\watcom\tsp\inserts.exe : e:\watcom\tsp\file.obj e:\watcom\tsp\path.obj e:&
+\watcom\tsp\problem.obj e:\watcom\tsp\screen.obj e:\watcom\tsp\sys.obj e:\wa&
+tcom\tsp\tsp.obj e:\watcom\tsp\file.h e:\watcom\tsp\path.h e:\watcom\tsp\pro&
+blem.h e:\watcom\tsp\screen.h e:\watcom\tsp\sys.h .AUTODEPEND
+ @e:
+ cd e:\watcom\tsp
+ @%write inserts.lk1 NAME inserts
+ @%append inserts.lk1 FIL file.obj,path.obj,problem.obj,screen.obj,sys.obj,t&
+sp.obj
+ @%append inserts.lk1 
+ *wlink SYS dos4g op m d all op st=8192 op maxe=25 op q op symf @inserts.lk1
+
