@@ -103,7 +103,7 @@ double _FAR Dist(POINT a,POINT b)
     double num;
     double y=(b.y-a.y);
     double x=(b.x-a.x);
-    printf("%.4f,%.4f to %.4f,%.4f is %.4f %.4f.\n",a.x,a.y,b.x,b.y,x,y);
+    /* printf("%.4f,%.4f to %.4f,%.4f is %.4f %.4f.\n",a.x,a.y,b.x,b.y,x,y);*/
     return sqrt((x*x) + (y*y));
 
 }
@@ -165,9 +165,9 @@ DISTANCES *NewMap(char *filename)
             {
                 for (count2=count;count2<n;count2++) 
                 {
-                    printf("%.2f %.2f<%.2f ",count,count2,n);
+                    /* printf("%.2f %.2f<%.2f ",count,count2,n); */
                     ndist=Dist(loc->at[count],loc->at[count2]);
-                    printf("Dist= %.2f.\n",ndist);
+                    /* printf("Dist= %.2f.\n",ndist); */
                     dist->array[count][count2]=ndist;
                     dist->array[count2][count]=ndist;
                 }

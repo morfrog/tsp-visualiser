@@ -126,7 +126,7 @@ int _FAR InitScreen(int videomode)
         _remappalette( BorderColour, _BLACK );  /* black      */
     }
 #endif
-    _setwindow(0,0.0,0.0,1.0,1.0);
+    _setwindow(0,-0.05,-0.05,1.05,1.05);
     _setcharsize_w(citysize*4/3,citysize*4/3);
     _registerfonts( "*.fon" );
     return( 1 );
@@ -179,7 +179,7 @@ void _FAR ResetWin(SWIN *w,int t,int l,int b,int r)
 void _FAR BorderWin()
 {
     _setcolor(border_col);
-    _rectangle_w(_GBORDER,0.0,0.0,1.0,1.0);
+    _rectangle_w(_GBORDER,-0.05,-0.05,1.05,1.05);
 }
 
 void _FAR FreeWin(SWIN *w)
@@ -192,23 +192,23 @@ double _FAR Scale(int thing,int max)
     return (double)thing/(double)max;
 }
 
-void _FAR DrawLine(double x1,double y1,double x2,double y2)
+void _FAR DrawLine(double x1,double y1,double x2,double y2,int color)
 /* Draw A line in the current window 
  *  pre  : 0.0 < x1,x2 < 1.0
  *         0.0 < y1,y2 < 1.0 
  *  post : scales points and draws line in <out> box
  */
 {
-        _setcolor(line_col);
+        _setcolor(color);
         _moveto_w(x1,y1);
         _lineto_w(x2,y2);
 }
 
-void _FAR DrawCity(char name[],double x,double y,double size)
+void _FAR DrawCity(char name[],double x,double y,double size,int color)
 /* x,y,size are in unit square 0.0,0.0 - 1.0,1.0 */
 {
     double t=y-size,l=x-size,b=y+size,r=x+size;
-    _setcolor(city_col);
+    _setcolor(color);
     _ellipse_w(_GFILLINTERIOR,l,t,r,b);
     _setcolor(text_col);
     _settextalign(_CENTER,_HALF);

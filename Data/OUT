@@ -1,12 +1,4 @@
 cd e:\watcom\tsp
 wcc386 screen.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -hw -fp5 -fpi87 -ms -5r -bt=dos
 cd e:\watcom\tsp
-wcc386 tsp.c -i=e:\WATCOM\h -w4 -e25 -zq -otexan -d2 -hw -fp5 -fpi87 -ms -5r -bt=dos
-tsp.c(181): Warning! W202: Symbol 'tmp' has been defined, but not referenced
-tsp.c(180): Warning! W202: Symbol 'avg_tot' has been defined, but not referenced
-tsp.c(178): Warning! W202: Symbol 'best' has been defined, but not referenced
-tsp.c(179): Warning! W202: Symbol 'count' has been defined, but not referenced
-tsp.c(180): Warning! W202: Symbol 'avg_num' has been defined, but not referenced
-tsp.c(178): Warning! W202: Symbol 'worst' has been defined, but not referenced
-cd e:\watcom\tsp
 wlink SYS dos4g op m d all op st=8192 op maxe=25 op d op q op symf @main.lk1

@@ -1,17 +1,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <graph.h>
-/* #include <values.h> */
 #include <time.h>
 #include <conio.h>
 #include <i86.h>
+#include <dos.h>
 #include "sys.h"
 #include "screen.h"
 #include "file.h"
 #include "path.h"
  
 #define DEBUG 1
-#define PRINTON 1
+#define PRINTON 0
 #define TEST_RUNS 500
 
 int random(int num)
@@ -37,15 +37,22 @@ int *CreateRandomOrder(int rsize)
 {
     int count,tmp,source,target; /* for swapping values */
     int *ret=NULL;
+    struct dostime_t time;
 
     ret=salloc(rsize,sizeof(int));
    
-    printf("Starting Randomize\n");
+    if (PRINTON) printf("Starting Randomize\n");
+    _dos_gettime(&time);
+    srand(((time.hsecond)*(time.second))%RAND_MAX);
+
     for (count=0;count<rsize;count++)
         ret[count]=count;
-    for (count=0;count<rsize;count++)
-        printf("%2d ",ret[count]);
-    printf("\n");
+    if (PRINTON)
+    {
+        for (count=0;count<rsize;count++)
+            printf("%2d ",ret[count]);
+        printf("\n");
+    }
     for (count=0;count<(rsize*3);count++) /* perform size*3 swaps is good */
     {
         target=random(rsize);
@@ -58,15 +65,19 @@ int *CreateRandomOrder(int rsize)
         }
         else ++count;
     }
-    for (count=0;count<rsize;count++)
-        printf("%2d ",ret[count]);
-    printf("\n");
-    printf("First Three are %d %d %d",ret[0],ret[1],ret[2]);
+    if (PRINTON)
+    {
+        for (count=0;count<rsize;count++)
+            printf("%2d ",ret[count]);
+        printf("\n");
+        printf("First Three are %d %d %d",ret[0],ret[1],ret[2]);
+    }
     return ret;        
 }
 
 PATH *InsertMethod(DISTANCES *d)
-/* Generates a path from the distances matrix using the basic insert method -
+/* PRE: InitScreen has benn called 
+ * Generates a path from the distances matrix using the basic insert method -
  * RULES :- 1. pick two points as initial path
  *          2. add points to path such that resulting path size increase is 
  *             minimised
@@ -74,19 +85,19 @@ PATH *InsertMethod(DISTANCES *d)
 {
     PATH *p=NULL;
     NODE *Nc,*Nd;
+    POINT bA,bB,bI;
     int *order=NULL;
     int order_pos,count;
     double this_dist,
            best_dist, /* > biggest possible */
            total;
     int bestA,bestB,insert_city; /* cities */
+    char num[3]="00\0";
 
- 
-
-    printf("Creating Random Order \n");
+    if (PRINTON) printf("Creating Random Order \n");
     order=CreateRandomOrder((d->size));
 
-    printf("Creating New Path %d -> %d -> %d\n",order[0],order[1],order[2]);
+    if (PRINTON) printf("Creating New Path %d -> %d -> %d\n",order[0],order[1],order[2]);
 
     p=NewPath(order[0],order[1],order[2]);
 
@@ -94,13 +105,33 @@ PATH *InsertMethod(DISTANCES *d)
           d->array[order[1]][order[2]]+
           d->array[order[2]][order[0]];
     PathStart(p);
+    _clearscreen(_GWINDOW);
+    DrawPath(p,d->l);
+    DrawCities(d->l);
+    BorderWin();
+    SwapPage();
+    delay(3000);
+
     if (PRINTON) printf("Start Path IS ");
-    ShowPath(p);
+    /* ShowPath(p); */
 
 
     for (order_pos=3;order_pos<(d->size);order_pos++) /* 0,1 and 2 are start path */
     {
+        
         insert_city=order[order_pos];
+
+        _clearscreen(_GWINDOW);
+        DrawPath(p,d->l);
+        DrawCities(d->l);
+        sprintf(num,"%d",d->l->at[insert_city].citynum);
+        DrawCity(num,d->l->at[insert_city].x,d->l->at[insert_city].y,
+                 0.03,change_col);
+        BorderWin();
+        SwapPage();
+        delay(1000);
+
+
         if (PRINTON) printf("Inserting City %d.\n",insert_city);
         best_dist=1000.0;
         PathStart(p);
@@ -132,13 +163,46 @@ PATH *InsertMethod(DISTANCES *d)
         if (PRINTON)
             printf("Best was %d -> %d, Distance %.4f, Proceeding with next Insert.\n",
                             bestA,bestB,       best_dist);
+        _clearscreen(_GWINDOW);
+        DrawPath(p,d->l);
+        bA=d->l->at[bestA];
+        bB=d->l->at[bestB];
+        bI=d->l->at[insert_city];
+        DrawLine(bA.x,bA.y,bB.x,bB.y,line_change);
+        DrawCities(d->l);
+        sprintf(num,"%d",bI.citynum);
+        DrawCity(num,bI.x,bI.y,0.03,change_col);
+        BorderWin();
+        SwapPage();
+
+        delay(500);
+
         total+=best_dist;
         if (!(InsertPath(p,insert_city,bestA,bestB)))
         {
             printf("Improper Insert...Exiting.\n");
             exit(EXIT_FAILURE);
         }
-        ShowPath(p);
+        _clearscreen(_GWINDOW);
+        DrawPath(p,d->l);
+        DrawLine(bA.x,bA.y,bI.x,bI.y,line_change);
+        DrawLine(bB.x,bB.y,bI.x,bI.y,line_change);
+        DrawCities(d->l);
+        sprintf(num,"%d",d->l->at[insert_city].citynum);
+        DrawCity(num,d->l->at[insert_city].x,d->l->at[insert_city].y,
+                 0.03,change_col);
+        BorderWin();
+        SwapPage();
+        delay(500);                    
+
+        /* ShowPath(p);*/
+        _clearscreen(_GWINDOW);
+        DrawPath(p,d->l);
+        DrawCities(d->l);
+        BorderWin();
+        SwapPage();
+        delay(1500);
+
     }
     if (PRINTON) printf("Total Distance Is %.4f\n",total);                        
     return p;
@@ -151,7 +215,7 @@ void DrawCities(LOCATES *loc)
     for (count=0;count<=(loc->num)-1;count++)
     {
         sprintf(num,"%d",loc->at[count].citynum);
-                DrawCity(num,loc->at[count].x,loc->at[count].y,0.03);
+                DrawCity(num,loc->at[count].x,loc->at[count].y,0.03,GREY);
     }
 }
 
@@ -163,7 +227,8 @@ void DrawPath(PATH *p,LOCATES *loc)
     for (count=0;count<(p->size);count++)
     {
         DrawLine(loc->at[c->citynum].x,      loc->at[c->citynum].y,
-                 loc->at[c->next->citynum].x,loc->at[c->next->citynum].y);
+                 loc->at[c->next->citynum].x,loc->at[c->next->citynum].y,
+                 line_col);
         c=c->next;      
     }
 }
@@ -224,16 +289,8 @@ void main(int argc, char *argv[])
         mygetch();
         */
        
-        printf("Insert Method Starting...\n");
-        p=InsertMethod(d);
-        printf("Insert Method Complete - Calculating Path Length.\n");
-
-        length=PathLength(p,d);
-        printf("Length was %.3f\n",length);
-        mygetch();
-
-
         InitScreen(16);
+        SwapPage();
         /*
         _setcolor(normal_col);
         _rectangle(_GBORDER,0,0,639,349);
@@ -241,11 +298,14 @@ void main(int argc, char *argv[])
         SetWin(main);
         BorderWin();
 
-        DrawPath(p,d->l);
+        if (PRINTON) printf("Insert Method Starting...\n");
+        p=InsertMethod(d);
+        if (PRINTON) printf("Insert Method Complete - Calculating Path Length.\n");
 
-        DrawCities(d->l);
-
-        delay(2000);
+        length=PathLength(p,d);
+        if (PRINTON) printf("Length was %.3f\n",length);
+                
+        getch();
         
         ShutDown();
 /*      FreeWin(main);*/
