@@ -262,6 +262,7 @@ double ControlRand(INSPROB *insprob,int graphics)
             ShowText(buffer,1,4,col);
             HiliteCity(insprob->prob,next,1);
             if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 
         CityDel(insprob,next);
@@ -271,6 +272,7 @@ double ControlRand(INSPROB *insprob,int graphics)
             ShowChanges(insprob,next,Ia,Ib,col,5);
             HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);
             if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 
         InsertPath(insprob->prob->path,next,Ia,Ib);
@@ -282,6 +284,7 @@ double ControlRand(INSPROB *insprob,int graphics)
             DrawNorm(insprob->prob,1);
             SwapPage();
             if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 
     } while (insprob->endo);
@@ -310,6 +313,7 @@ double ControlNearN(INSPROB *insprob,int graphics)
             ShowText(buffer,1,4,WHITE);
             HiliteCity(insprob->prob,next,0);
             if (WaitTill(now+seg1)) Init2TimeSegs(&seg1,&seg2);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 
         CityDel(insprob,next);
@@ -320,6 +324,7 @@ double ControlNearN(INSPROB *insprob,int graphics)
             DrawNorm(insprob->prob,0);
             SwapPage();
             if (WaitTill(now+seg2)) Init2TimeSegs(&seg1,&seg2);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
         this=next;
 
@@ -349,6 +354,7 @@ double ControlDist(INSPROB *insprob,int (* func)(double,double),int (* func2)(do
             ShowText(buffer,1,4,col);
             HiliteCity(insprob->prob,next,1);
             if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 
         CityDel(insprob,next);
@@ -358,6 +364,7 @@ double ControlDist(INSPROB *insprob,int (* func)(double,double),int (* func2)(do
             ShowChanges(insprob,next,Ia,Ib,col,5);
             HiliteCityGroup(insprob->prob,next,YELLOW,Ia,Ib,BLUE);
             if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 
         InsertPath(insprob->prob->path,next,Ia,Ib);
@@ -367,6 +374,7 @@ double ControlDist(INSPROB *insprob,int (* func)(double,double),int (* func2)(do
             DrawNorm(insprob->prob,1);
             SwapPage();
             if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 
     } while (insprob->endo);
@@ -418,10 +426,12 @@ double ControlCost(INSPROB *insprob,int (* func)(double,double),int graphics)
             sprintf(buffer,"Insert is %3d.  \n\n",next);
             ShowText(buffer,1,4,col);
             if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
 
             HiliteCityGroup(insprob->prob,next,YELLOW,pA,pB,BLUE);
             ShowChanges(insprob,next,pA,pB,col,5);
             if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 
         CityDel(insprob,next);
@@ -432,6 +442,7 @@ double ControlCost(INSPROB *insprob,int (* func)(double,double),int graphics)
             DrawNorm(insprob->prob,1);
             SwapPage();
             if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 
     } while (insprob->endo);

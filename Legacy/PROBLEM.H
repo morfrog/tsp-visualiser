@@ -4,6 +4,10 @@
 
 #define REQUEST -2
 #define WAITKEY -1
+#define WAIT_EXIT 0
+#define WAIT_OK 1
+
+int waitresult=WAIT_OK;
 
 struct vnode
 {

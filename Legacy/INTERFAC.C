@@ -160,11 +160,12 @@ void ReadChoiceHelp(char *filename,CHOICE *c)
     if ((in=fopen(filename,"rt"))==NULL)
     {
         strcpy(c->helptitle,filename);
-        strcpy(c->helptext,"Is An Invalid File");
+        strcpy(c->helptext,"Is An Invalid File\n"
+                           "Ensure it is in the HLP\n"
+                           "subdirectory");
     }
     else
     {
-//        printf("%s\n",filename);
         c->helptitle[ReadLines(in,1,c->helptitle)]='\0';
         c->helptext[ReadLines(in,9,c->helptext)]='\0';
         fclose(in);
@@ -744,7 +745,7 @@ void main()
     _setvisualpage(0);
     SetMousePage(0);
     ResetMouse();
-    SetMousePos(0,0);
+    SetMousePos(300,200);
     ShowMouse();
 
     UseMouseCur(GLOVE);
@@ -777,6 +778,7 @@ void main()
                      "Any other key \n"
                      "To continue..",1,19,BLUE);
 
+                TotalDelay(WAITKEY);
                 if (current_solver==0)
                 {
                     SetInit(REQUEST,FALSE,FALSE,&tinit);
@@ -798,7 +800,6 @@ void main()
                      "               ",1,19,LTRED);
             
                 while (getch()!=27) {}
-//                ShutDown();
                 InitScreen(16);
                 
                 _setvisualpage(0);
@@ -806,9 +807,10 @@ void main()
                 _clearscreen(_GCLEARSCREEN);
                 currentprob=insprob->prob;
                 DrawScreen(&currentprob);
+                ResetMouse();
+                SetMousePos(mx,my);
                 UseMouseCur(GLOVE);
                 ShowMouse();
-                TotalDelay(WAITKEY);
                 break;
             case files :
                 line=MapPixToText(m.ypos,0)-2;
@@ -872,7 +874,7 @@ void main()
             }
         }
     }
-    while (!(kbhit()));
+    while (1);
     ShutDown();
     getch();
 }

@@ -42,11 +42,12 @@ void Init3TimeSegs(clock_t *a,clock_t *b,clock_t *c)
 int DoInput(char ch)
 // * returns if a change has been made * //
 {
+    waitresult=WAIT_OK;
     switch (ch) {
         case 27 : {
                     while (kbhit()) getch(); // * clear buffer * //
-                    ShutDown();
-                    exit(1);
+                    waitresult=WAIT_EXIT;
+                    return 0;
                   }
                   break;
         case '0': TotalDelay(1); return 1;
