@@ -1,7 +1,7 @@
 #ifndef SCREEN_H
 #define maxx 100
 #define maxy 100
-#define citysize 0.02
+#define citysize 0.023
 
 #if defined ( __386__ )
     #define _FAR

@@ -43,7 +43,7 @@ typedef struct matrix DISTANCES;
 void ReadToken(FILE *f,char string[],int max);
 void SkipTill(FILE *f,char this);
 void SkipLine(FILE *f);
-double ReadDouble(FILE *f);
+double _FAR ReadDouble(FILE *f);
 double Dist(POINT a,POINT b);
 int WriteLocates(LOCATES *loc,char *filename);
 LOCATES *InitLocates(int size,LOCATES *iloc);

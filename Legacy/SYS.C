@@ -130,6 +130,17 @@ int Greater(double this,double best)
     return 0;
 }
 
+int IntLesser(int first,int second)
+{
+    if (first<second) return 1;
+    return 0;
+}
+
+int IntGreater(int first,int second)
+{
+    if (first>second) return 1;
+    return 0;
+}
 
 INTARRAY *NewIntArray(int size,int val)
 {
@@ -177,3 +188,12 @@ void ClearBuffer()
 {
     while (kbhit()) getch();
 }
+
+int PlusFactorial(int num)
+{
+    int x,count=0;
+    for (x=1;x<=num;x++)
+        count+=x;
+    return count;        
+}
+

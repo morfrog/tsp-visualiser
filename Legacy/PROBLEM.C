@@ -379,19 +379,40 @@ void DrawOverlay(PROBLEM *prob,int color,int cities)
     if (cities)  DrawCities(l,prob->vmask);
 }
 
-int ControlShrinkOverlay(PROBLEM *prob,int startx,int starty,int endx,int endy,int col)
+int ControlVarOverlay(PROBLEM *prob,int startx,int starty,int endx,int endy,int col,
+                      int l,int t,int r,int b,int (* func)(int,int),int stopwidth,
+                      int stopheight,int stoptimes)
+// * map overlay to window startx,starty - endx,endy, using l,t,r,b      * // 
+// * as increments at each stage of the Overlay transformation, stopping * //
+// * when either the func(width,stopwidth) or func(height,stopheight) a  * //
+// * -ve value specifying ignore this stopping condition                 * //
 {
     SWIN *win=NewWin(startx,starty,endx,endy);
+    int times=0;
 
-    while ((win->l+4<win->r) && (win->t+4<win->b))
+    while (1)
     {
         SetWin(win);
         _clearscreen(_GVIEWPORT);
         DrawOverlay(prob,col,1);
         SwapPage();
-        delay(30);
-        MoveWin(win,1,0,1,0);
+        delay(10);
+        ++times;
+
+        if ((stoptimes>=0) && (times>=stoptimes))
+            break;
+        if ((stopwidth>=0) && ( func((win->r)-(win->l),stopwidth+1) ))
+            break;
+        if ((stopheight>=0) && ( func((win->b)-(win->t),stopheight+1) ))
+            break;
+
+        _clearscreen(_GVIEWPORT);
+        MoveWin(win,l,t,r,b);
     }
+
+    _clearscreen(_GVIEWPORT);
+    DrawOverlay(prob,col,1);
+    SwapPage();
     return 1;
 }
 
@@ -403,6 +424,7 @@ int ControlLCLOverlay(PROBLEM *one,PROBLEM *two,int width,int height,int starty,
     int factor=1,ld=factor,rd=-factor,edge=0,delayfor=(270)/(one->dist->size);
     int done=0,cx1=1,cy1=starty,cx2=width,cy2=starty+height-1;
     char ch;
+    clock_t now;
 
     ClearBuffer();
     MoveWin(left,ld,0,ld,0);
@@ -451,7 +473,7 @@ int ControlLCLOverlay(PROBLEM *one,PROBLEM *two,int width,int height,int starty,
             DrawOverlay(one,col1,0);
             DrawOverlay(two,col2,1);
             SwapPage();
-            delay(1000); // * delay for 1 second at middle * //
+            delay(1000); // * delay for 1 second at middle * // fix to handle 0 keypress for pause
         }
         edge=0; // * not at edge or middle * //
         ld=rd;

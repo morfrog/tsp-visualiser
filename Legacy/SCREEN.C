@@ -160,8 +160,6 @@ SWIN _FAR *NewWin(int l,int t,int r,int b)
 void _FAR SetWin(SWIN *w)
 {
     _setviewport(w->l+1,w->t+1,w->r-1,w->b-1);
-    _setcharsize_w(citysize*4/3,citysize*4/3);
-    _setcharspacing_w(-(citysize/2));
 }
 
 void _FAR SetTextWin(SWIN *w)
@@ -243,7 +241,7 @@ void _FAR DrawCity(char name[],double x,double y,double size,int color)
     _setcolor(color);
     _ellipse_w(_GFILLINTERIOR,l,t,r,b);
     _setcolor(text_col);
-    _setcharsize_w(size*4/3,size*4/3);
+    _setcharsize_w(size,size);
     _setcharspacing_w(-(size/2));
     _settextalign(_CENTER,_HALF);
     _grtext_w(x, y, name);

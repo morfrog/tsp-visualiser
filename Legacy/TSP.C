@@ -23,8 +23,8 @@ int ProcessCmdLine(int argc, char *argv[],char **filename,int *InitType,
     int wait_time;
     if (argc<4)
     {
-        printf("Visualisation Tool For The Travelling Salesman Problem\n"
-               "Insertion Methods. V%3.2f\n",VERSION);
+        printf("Visualisation Tool For The Travelling Salesman Problem - Insertion Methods.\n"
+               "By Drew   9/97           V%3.2f\n\n",VERSION);
         printf("Usage: %s filename init method [time].\n%s",
                 argv[0],
                "Where   init    in {Random,Furthest,Closest}\n"
@@ -35,7 +35,7 @@ int ProcessCmdLine(int argc, char *argv[],char **filename,int *InitType,
                "        time    =-3 optimal is Benchmark for all methods,\n"
                "                               with optimal calculation\n"
                "        No time = wait for keypress between each insert\n");
-        printf("E.G. %s myfile.in Random Dear",argv[0]);
+        printf("E.G. %s myfile.in Random Dear\n",argv[0]);
 
         return 0;
     }

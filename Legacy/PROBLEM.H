@@ -60,5 +60,7 @@ void    DrawMaskPath(PATH *p,LOCATES *loc,MASK *m);
 LOCATES *PathAsLocates(PATH *path,LOCATES *loc);
 PATH    *LocatesAsPath(LOCATES *loc);
 int ControlLCLOverlay(PROBLEM *one,PROBLEM *two,int width,int height,int starty,int col1,int col2);
-int ControlShrinkOverlay(PROBLEM *prob,int startx,int starty,int endx,int endy,int col);
+int ControlVarOverlay(PROBLEM *prob,int startx,int starty,int endx,int endy,int col,
+                      int l,int t,int r,int b,int (* func)(int,int),int stopwidth,
+                      int stopheight,int stoptimes);
 #endif

@@ -44,8 +44,8 @@ void _FAR ShowText(char string[],int start,int line,int color)
 int ProcessCmdLine(int argc,char *argv[],char **fileone,char **filetwo)
 {
     if (argc<3) {
-        printf("Visualisation Tool For The Travelling Salesman Problem\n"
-               "Solution Comparison. V%3.2f\n",VERSION);
+        printf("Visualisation Tool For The Travelling Salesman Problem - Solution Comparison\n"
+               "By Drew   9/97           V%3.2f\n",VERSION);
         printf("Usage: %s file1 file2\n",argv[0]);
         printf("E.G. %s optimal.res mymethod.res",argv[0]);
         return 0;

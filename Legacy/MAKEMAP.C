@@ -9,19 +9,22 @@ double DRand(double num)
 void main(int argc,char *argv[])
 {
     int num,x;
+    FILE *out=stdout;
     
     if (argc<2)
-        printf("Usage: %s num_of_points\n"
-               "Outputs to screen, can use redirection '>' to send to file",
-               argv[0]);
+        printf("Usage: %s num_of_points [file]\n"
+               "Outputs to screen,or to optional file\n"
+               "E.G. %s 12 myfile.in\n",argv[0],argv[0]);
     else
     {
+        if (argc==3) out=fopen(argv[2],"wt");
         num=atoi(argv[1]);
-        fprintf(stdout,"%d\n",num);
+        fprintf(out,"%d\n",num);
 
         for (x=0;x<num;x++)
         {
-            fprintf(stdout,"%8.6f %8.6f\n",DRand(1.0),DRand(1.0));
+            fprintf(out,"%8.6f %8.6f\n",DRand(1.0),DRand(1.0));
         }
+        fclose(out);
     }
 }

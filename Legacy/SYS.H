@@ -20,10 +20,13 @@ int Same(int A,int B,int C, int D);
 int PosOf(int num,int *list,int listsize);
 int Lesser(double this,double best);
 int Greater(double this,double best);
+int IntLesser(int first,int second);
+int IntGreater(int first,int second);
 INTARRAY *NewIntArray(int size,int val);
 void CopyIntArray(INTARRAY *to,INTARRAY *from);
 void FreeIntArray(INTARRAY **a);
 void Beep(int pitch,int time);
 void Working();
 void ClearBuffer();
+int PlusFactorial(int num);
 #endif

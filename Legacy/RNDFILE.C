@@ -7,11 +7,12 @@ void main (int argc,char *argv[])
 {
     char *infile=NULL,*outfile=NULL;
     LOCATES *inloc=NULL,*outloc=NULL;
-    int *array,x,pos,max,tmp;
+    int *array,x,pos,max,tmp,times;
 
     if (argc<3)
     {   
-        printf("Usage: %s infile outfile",argv[0]);
+        printf("Usage: %s infile outfile\n"
+               "E.G. %s myfile.in myfile.out\n",argv[0],argv[0]);
     }
     else
     {
@@ -29,23 +30,17 @@ void main (int argc,char *argv[])
         for (x=0;x<max;x++)
             array[x]=x;
         StartRandom();
-        for (x=0;x<max;x++)
+        for (times=0;times<2;times++)
         {
-            pos=Random(max-x);
-            // swap max and pos
-            tmp=array[max-1];
-            array[max-1]=array[pos];
-            array[pos]=tmp;
+            for (x=0;x<max;x++)
+            {
+                pos=Random(max-x);
+                // swap max and pos
+                tmp=array[max-1];
+                array[max-1]=array[pos];
+                array[pos]=tmp;
+            }
         }
-        for (x=0;x<max;x++)
-        {
-            pos=Random(max-x);
-            // swap max and pos
-            tmp=array[max-1];
-            array[max-1]=array[pos];
-            array[pos]=tmp;
-        }
-
         printf("Writing File...\n");
 
         for (x=0;x<max;x++)

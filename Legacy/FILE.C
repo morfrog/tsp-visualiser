@@ -73,14 +73,14 @@ void _FAR SkipLine(FILE *f)
 
 int IsDoubleChar(char c)
 {
-    return ((isdigit(c)) || (c=='.'));
+    return ((isdigit(c)) || (c=='.') || c=='-' || c=='+' || c=='E' || c=='e');
 }
 
 
 double _FAR ReadDouble(FILE *f)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *      Desc    :       Reads an int from a file, removing leading non
- *                              {0123456789.} chars and stopping at an
+ *                              {-+Ee0123456789.} chars and stopping at an
  *                              EOF or space or new line character       
  *      Pre             :       the file exists
  *      Post    :       the integer is returned, the file pointer is past the 
@@ -90,9 +90,8 @@ double _FAR ReadDouble(FILE *f)
 
 {       
     char ch;
-    static char buffer[10]="          ";
+    char buffer[20]="                   \0";
     int x=0;
-    strcpy(buffer,"          ");
     ch=fgetc(f);
     if (!IsDoubleChar(ch)) /* find first char of double */
         do ch=fgetc(f); while (!IsDoubleChar(ch));
@@ -102,6 +101,10 @@ double _FAR ReadDouble(FILE *f)
         buffer[x]=ch;
         ch=fgetc(f);
         ++x;
+        if (x==20) {
+            printf("ReadDouble: number exceeds 20 char limit");
+            exit(0);
+        }
     }
     if (ch=='\n') ungetc(ch,f);
     return atof(buffer);
@@ -185,7 +188,6 @@ LOCATES *NewLocates(char *filename)
             (loc->at[count]).y=ReadDouble(input);
             (loc->at[count]).citynum=count;
             SkipLine(input);
-
         }
 #ifdef PRINTON
     ShowLocates(loc);

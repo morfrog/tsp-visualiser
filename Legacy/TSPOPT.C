@@ -17,8 +17,8 @@ int ProcessCmdLine(int argc,char *argv[],char **filein,char **fileout,int *metho
 {
     int wait_time;
     if (argc<4) {
-        printf("Visualisation Tool For The Travelling Salesman Problem\n"
-               "Optimization Methods. V%3.2f\n",VERSION);
+        printf("Visualisation Tool For The Travelling Salesman Problem - Optimization Methods.\n"
+               "By Drew   9/97           V%3.2f\n\n",VERSION);
         printf("Usage: %s input output method [time]\n%s",
                 argv[0],
                "Where  input   = input filename\n"
@@ -30,7 +30,7 @@ int ProcessCmdLine(int argc,char *argv[],char **filein,char **fileout,int *metho
                "       time    =-3 optimal is Benchmark for all methods,\n"
                "                              with optimal calculation\n"
                "       No time = wait for keypress between each optimize step\n");
-        printf("E.G. %s myfile.in myfile.out 2opt",argv[0]);
+        printf("E.G. %s myfile.in myfile.out 2opt\n",argv[0]);
 
         return 0;
     }

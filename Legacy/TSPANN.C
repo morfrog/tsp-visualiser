@@ -16,10 +16,11 @@
 
 int ProcessCmdLine(int argc,char *argv[],char **filename,double *temp,double *cool,int *runsattemp,int *tdelay,int *optimal)
 {
-    int wait_time;
+    int wait_time,x,y,z,c;
     if (argc<4) {
-        printf("Visualisation Tool For The Travelling Salesman Problem\n"
-               "Annealing Methods - 1opt vs 2opt. V%3.2f\n",VERSION);
+        printf("Visualisation Tool For The Travelling Salesman Problem - Annealing Methods\n"
+               "By Drew   9/97           V%3.2f\n\n",VERSION);
+        
         printf("Usage: %s viewfile temp cool changes [time]\n%s",
                 argv[0],
                "Where  viewfile= the file to run annealing on\n"
@@ -32,9 +33,21 @@ int ProcessCmdLine(int argc,char *argv[],char **filename,double *temp,double *co
                "       time    =-3 optimal is Benchmark for all methods,\n"
                "                              with optimal calculation\n"
                "       No time = wait for keypress between each optimize step\n");
-        printf("E.G.\n"
-               "%s myfile.in 1000.0 0.8 10 1\n",argv[0]);
-
+        printf("E.G. %s myfile.in 1000.0 0.8 10 1\n",argv[0]);
+/*
+    for (z=3;z<12;z++)
+    {
+        c=0;
+        for (x=0;x<z-2;x++)
+            for (y=x+2;y<z;y++)
+                if (!((x==0) && (y==z-1)))
+                {
+                    printf("%d %d %d %d\n",x,x+1,y,y==z-1?0:y+1);
+                    ++c;
+                }
+        printf("%d maps to %d is %d\n___________\n",z,c,PlusFactorial(z-2)-1);
+    }
+*/
         return 0;
     }
     else
@@ -95,9 +108,9 @@ void main(int argc,char *argv[])
         AnnShowText(buffer,1,3,RED);
 
         AnnWinManager(text_one);
-        AnnShowText("Length=           Accepted=        %",1,1,RED);
+        AnnShowText("Length=            Accepted=       %",1,1,RED);
         AnnWinManager(text_two);
-        AnnShowText("Length=           Accepted=        %",1,1,RED);
+        AnnShowText("Length=            Accepted=       %",1,1,RED);
 
         AnnWinManager(win_one);
         DrawNorm(leftp->prob,1);
@@ -128,9 +141,24 @@ void main(int argc,char *argv[])
             AnnShowText(buffer,1,1,LTRED);
 
             ControlLCLOverlay(leftp->prob,rightp->prob,639,240,59,YELLOW,LTRED);
-/*          ControlShrinkOverlay(leftp->prob,1,59,639/2,298,LTRED); */
+/*
+            ControlVarOverlay(leftp->prob,1,59,639/2,298,LTRED,0,3,-4,-3,IntLesser,40,40,-1);
+            ControlVarOverlay(rightp->prob,321,59,639,298,ORANGE,4,3,0,-3,IntLesser,40,40,-1);
+            ControlVarOverlay(rightp->prob,310,170,329,190,YELLOW,-4,-3,4,3,IntGreater,640,349,-1);
+            ControlVarOverlay(rightp->prob,2,1,20,2,GREEN,0,0,4,4,IntGreater,640,349,-1);
+            ControlVarOverlay(rightp->prob,560,2,639,81,BLUE,-4,1,-4,2,IntLesser,78,78,130);
+            ControlVarOverlay(rightp->prob,0,0,640,350,LTRED,4,3,-4,-3,IntLesser,40,40,-1);
+
+            while (1) {
+                ControlVarOverlay(rightp->prob,0,0,640,350,GREEN,4,0,-4,0,IntLesser,-1,-1,160);
+                ControlVarOverlay(rightp->prob,0,0,640,350,GREEN,0,4,0,-4,IntLesser,-1,-1,87);
+            }
+            getch();
+*/
             if (kbhit()) getch();
+
         }
+
         ShutDown();
     }
 }

@@ -32,7 +32,8 @@ int MethodMaxSize(int method,int max)
 {
     switch (method) {
         case opt1 : return max*(max-2); break;
-        case opt2 : return 1+(((max-2)/2)*max)-(max%2==0?max/2:0); break;
+        case opt2 : /*return 1+(((max-2)/2)*max)-(max%2==0?max/2:0); */
+                    return PlusFactorial(max-2)-1; break;
         case opt3 : return 9; break;
         default   : printf("Invalid Method");exit(0); break;
     }
@@ -142,7 +143,7 @@ void AnnealTwoOpt(ANNPROB *annprob)
             mA=array[x];mB=array[x+1];
             mC=array[y];mD=array[y+1];
 
-            if (mA!=mD) {
+            if (mA!=mD) { 
                 change=prob->dist->array[mA][mC]+prob->dist->array[mB][mD]
                       -prob->dist->array[mA][mB]-prob->dist->array[mC][mD];
 
@@ -339,13 +340,14 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             AnnWinManager(text_top);
             sprintf(buffer,"%11.6f",temp);
             ShowText(buffer,13,2,LTRED);
-            AnnWinManager(text_one);
-            sprintf(buffer,"%8.3f",done1?0:100*(double)(changes-nulls1)/changes);
-            AnnShowText(buffer,28,2,LTRED);
-            AnnWinManager(text_two);
-            sprintf(buffer,"%8.3f",done2?0:100*(double)(changes-nulls2)/changes);
-            AnnShowText(buffer,28,2,LTRED);
         }
+        AnnWinManager(text_one);
+        sprintf(buffer,"%8.3f",done1?0:100*(double)(changes-nulls1)/changes);
+        AnnShowText(buffer,28,2,LTRED);
+        AnnWinManager(text_two);
+        sprintf(buffer,"%8.3f",done2?0:100*(double)(changes-nulls2)/changes);
+        AnnShowText(buffer,28,2,LTRED);
+
     }
 }
 
