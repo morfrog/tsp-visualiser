@@ -30,7 +30,6 @@ struct iprob
 typedef struct iprob INSPROB;
 
 void _FAR InsWinManager(int which);
-void _FAR ShowText(char string[],int start,int line,int color);
 
 void   InsProbReset(INSPROB *insprob,int free);
 INSPROB *NewInsProb(DISTANCES *dist);
@@ -51,5 +50,4 @@ double ControlNearest(INSPROB *insprob,int graphics);
 double ControlDear(INSPROB *insprob,int graphics);
 double ControlCheap(INSPROB *insprob,int graphics);
 double ControlAllIns(INSPROB *insprob,int init,int method,int graphics);
-void _FAR InsWinManager(int which);
 #endif

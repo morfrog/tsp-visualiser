@@ -517,13 +517,3 @@ void _FAR InsWinManager(int which)
     }
 }
 
-void _FAR ShowText(char string[],int start,int line,int color)
-{
-    int startpage=_getactivepage();
-    _setactivepage(1);
-    DrawText(string,start,line,color);
-    _setactivepage(0);
-    DrawText(string,start,line,color);
-    _setactivepage(startpage);
-}
-

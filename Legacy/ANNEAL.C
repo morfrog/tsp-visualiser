@@ -275,8 +275,8 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
         {
             now=clock();
             AnnWinManager(text_top);
-            sprintf(buffer,"%3d",x+1);
-            AnnShowText(buffer,58,3,LTRED);
+            sprintf(buffer,"%3d",x+1);    // Changes made at temp
+            ShowText(buffer,58,3,LTRED);
 
             if (!done1)
             {
@@ -320,7 +320,7 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
                     len1+=MakeAnnealChange(one,change1);
                     AnnWinManager(text_one);
                     sprintf(buffer,"%f",len1);
-                    AnnShowText(buffer,8,1,LTRED);
+                    ShowText(buffer,8,1,LTRED);
                 }
             }
             if (!done2)
@@ -331,7 +331,7 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
                     len2+=MakeAnnealChange(two,change2);
                     AnnWinManager(text_two);
                     sprintf(buffer,"%f",len2);
-                    AnnShowText(buffer,8,1,LTRED);
+                    ShowText(buffer,8,1,LTRED);
                 }
             }
             SwapPage();
@@ -351,14 +351,14 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             temp*=cooling;
             AnnWinManager(text_top);
             sprintf(buffer,"%11.6f",temp);
-            AnnShowText(buffer,13,2,LTRED);
+            ShowText(buffer,13,3,LTRED);
         }
         AnnWinManager(text_one);
         sprintf(buffer,"%8.3f",done1?0:100*(double)(changes-nulls1)/changes);
-        AnnShowText(buffer,28,2,LTRED);
+        ShowText(buffer,28,1,LTRED);
         AnnWinManager(text_two);
         sprintf(buffer,"%8.3f",done2?0:100*(double)(changes-nulls2)/changes);
-        AnnShowText(buffer,28,2,LTRED);
+        ShowText(buffer,28,1,LTRED);
 
     }
 }
@@ -395,14 +395,5 @@ void _FAR AnnWinManager(int which)
     }
 }
 
-void _FAR AnnShowText(char string[],int start,int line,int color)
-{
-    int startpage=_getactivepage();
-    _setactivepage(1);
-    DrawText(string,start,line,color);
-    _setactivepage(0);
-    DrawText(string,start,line,color);
-    _setactivepage(startpage);
-}
 
  

@@ -27,7 +27,7 @@ char *OptStr(int method)
 
 double ControlAllOpt(PROBLEM *prob,int method,int graphics,int tdelay)
 {
-    if ((graphics) || (tdelay==0)) OptShowText(OptStr(method),1,1,GREEN);
+    if ((graphics) || (tdelay==0)) ShowText(OptStr(method),1,1,GREEN);
 
     switch (method) {
         case opt1 : return ControlOneOpt(prob,graphics);break;
@@ -144,12 +144,14 @@ double ControlOneOpt(PROBLEM *prob,int graphics)
             HiliteOneOpt(prob,oldA,next,oldB,hilite_1,1);
             SwapPage();
             if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
-    
+            else if (waitresult==WAIT_EXIT) return 0;
+
             sprintf(buffer,"%2d to %2d,%2d  ",next,newA,newB);
             ShowText(buffer,1,5,hilite_2);
             HiliteOneOpt(prob,newA,next,newB,hilite_2,0);
             SwapPage();
             if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 
         DeletePath(prob->path,next);
@@ -162,6 +164,7 @@ double ControlOneOpt(PROBLEM *prob,int graphics)
                            "Decrease = %8.6f",-improve);
             ShowText(buffer,1,6,YELLOW);
             if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
     }
     return PathLength(prob->path,prob->dist);
@@ -330,17 +333,19 @@ double ControlTwoOpt(PROBLEM *prob,int graphics)
                            "Decrease = %8.6f\n",0.0-(dac-dab+dbd-dcd));
             ShowText(buffer,1,11,YELLOW);
             if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
-            
+            else if (waitresult==WAIT_EXIT) return 0;            
+
             HiliteTwoOpt(prob,A,B,C,D,1);
             SwapPage();
             if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
-
+            else if (waitresult==WAIT_EXIT) return 0;
         }
         MakeTwoOptTransition(prob,A,B,C,D);
         if (graphics) {
             DrawNorm(prob,1);
             SwapPage();
             if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 #ifdef DEBUG
     ShowPath(prob->path);
@@ -550,6 +555,7 @@ double Control3Opt(PROBLEM *p,int graphics)
 
             Hilite3Opt(p,iarray,0);
             if (WaitTill(now+seg1)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 #ifdef DEBUG
     printf("%s",buffer);
@@ -560,10 +566,12 @@ double Control3Opt(PROBLEM *p,int graphics)
         if (graphics) {
             Hilite3Opt(p,iarray,0);
             if (WaitTill(now+seg2)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
 
             DrawNorm(p,1);
             SwapPage();
             if (WaitTill(now+seg3)) Init3TimeSegs(&seg1,&seg2,&seg3);
+            else if (waitresult==WAIT_EXIT) return 0;
         }
 
         sfree(iarray);
@@ -591,12 +599,3 @@ void _FAR OptWinManager(int which)
     }
 }
 
-void _FAR OptShowText(char string[],int start,int line,int color)
-{
-    int startpage=_getactivepage();
-    _setactivepage(1);
-    DrawText(string,start,line,color);
-    _setactivepage(0);
-    DrawText(string,start,line,color);
-    _setactivepage(startpage);
-}

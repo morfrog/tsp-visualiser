@@ -321,43 +321,6 @@ void Msg(char *string,int color)
     ShowMouse();
 }
 
-char *InputBox(char *msg)
-{
-    static int initialised=0;
-    static int isize;
-    static char *image;
-    static char *tmp;
-    static SWIN *inputbox;
-    
-    if (!(initialised))
-    {
-        inputbox=NewWin(201,101,200+INPUTWIDTH,100+INPUTHEIGHT);
-        isize=_imagesize(0,0,INPUTWIDTH,INPUTHEIGHT);
-        image=salloc(isize,sizeof(char));
-        tmp=salloc(isize,sizeof(char));        
-        SetWin(inputbox);
-        _clearscreen(_GVIEWPORT);
-        BorderWin(inputbox,border_col);
-        _rectangle(250,100+INPUTHEIGHT-50,300,100+INPUTHEIGHT-10,_GBORDER);
-        SetTextWin(inputbox);
-        DrawText("OK",10,5,GREEN);    
-        _getimage(201,101,200+INPUTWIDTH,100+INPUTHEIGHT,image);
-        
-        initialised=1;
-    }
-    else
-    {
-        _getimage(201,101,200+INPUTWIDTH,100+INPUTHEIGHT,tmp);
-        // * save what was there * //
-        _putimage(201,101,image,_GPSET);
-        SetTextWin(inputbox);
-        DrawText(msg,2,2,GREEN);
-        getch();
-        _putimage(201,101,tmp,_GPSET);
-    }
-    return "hi";
-}
-
 void UpdateFileView(PROBLEM *currentprob)
 {
     IntWinManager(CLEAR,fview,0,0);
@@ -811,6 +774,37 @@ void AnnealInitChange()
     ShowMouse();
 }
 
+void NewBtnPress(PROBLEM **currentprob)
+{
+    char buffer[20];
+    FILE *out;
+    int x;
+
+    IntWinManager(CLEAR,help,0,0);
+    IntWinManager(SET,help,0,0);
+    HideMouse();
+    DrawText("New...",1,1,GREEN);
+    DrawText(":Please Enter",1,2,YELLOW);
+    DrawText(":The Number Of Points (Integer) \n:",1,3,YELLOW);
+    scanf("%d",&x);
+    DrawText(":The File Name (xxxxxxxx.xxx)\n:",1,5,YELLOW);
+    scanf("%s",buffer);
+    ShowMouse();
+    if ((out=fopen(buffer,"wt"))==NULL)
+        DrawText("Invalid File Name...",1,7,LTRED);
+    else
+    {
+        StartRandom();
+        MakeMap(out,x);
+        fclose(out);
+        DrawText("Map Created..",1,7,GREEN);
+    }
+    SetFile(currentprob,INITIALISE,TRUE);
+//  WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
+//  SetFile(&currentprob,number_of_files-1,FALSE);
+
+}
+
 void main()
 {
     int pos=320,line;
@@ -819,7 +813,7 @@ void main()
     int x,select,at,last,mx=0,my=0,tinit,tmethod,currentwin=title;
     INSPROB *insprob;
     PROBLEM *currentprob=NULL;
-    FILE *out;
+    PROBLEM *tempprob=NULL;
     double length;
 
 //    char **messages=allocate_N_by_N_array(14,50,sizeof(char),"Messages");
@@ -897,28 +891,7 @@ void main()
                 exit(1);
                 break;
             case newbtn :
-                IntWinManager(CLEAR,help,0,0);
-                IntWinManager(SET,help,0,0);
-                HideMouse();
-                DrawText("New...",1,1,GREEN);
-                DrawText(":Please Enter",1,2,YELLOW);
-                DrawText(":The Number Of Points\n:",1,3,YELLOW);
-                scanf("%d",&x);
-                DrawText(":The File Name\n:",1,5,YELLOW);
-                scanf("%s",buffer);
-                ShowMouse();
-                if ((out=fopen(buffer,"wt"))==NULL)
-                    DrawText("Invalid File Name...",1,7,LTRED);
-                else
-                {
-                    StartRandom();
-                    MakeMap(out,x);
-                    fclose(out);
-                    DrawText("Map Created..",1,7,GREEN);
-                }
-                SetFile(&currentprob,INITIALISE,TRUE);
-//                WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
-//               SetFile(&currentprob,number_of_files-1,FALSE);
+                NewBtnPress(&currentprob);
                 break;
             case savebtn :
                 break;
@@ -929,41 +902,57 @@ void main()
                 _setvisualpage(1);
                 SwapPage();
 
-                InsWinManager(Main);
-                InsWinManager(Text);
-                InsWinManager(BORDER);
-//                getch();
+                switch (current_solver)
+                {
+                    case 0 : InsWinManager(BORDER);
+                             InsWinManager(Main);
+                             InsWinManager(Text);
+                             break;
+                    case 1 : OptWinManager(Main);
+                             OptWinManager(Text);
+                             OptWinManager(BORDER);
+                             break;
+                    case 2 : break;
+                }
                 ShowText("Hit Esc to Quit,\n\n"
                      "Any other key \n"
                      "To continue..",1,19,BLUE);
 
                 TotalDelay(WAITKEY);
-                if (current_solver==0)
-                {
-                    SetInit(REQUEST,FALSE,FALSE,&tinit);
-                    SetMethod(REQUEST,FALSE,FALSE,&tmethod);
-                    insprob=NewInsProb(currentprob->dist);
-                    length=ControlAllIns(insprob,tinit,tmethod-1,1);
+                switch (current_solver) {
+                    case 0 : SetInit(REQUEST,FALSE,FALSE,&tinit);
+                             SetMethod(REQUEST,FALSE,FALSE,&tmethod);
+                             insprob=NewInsProb(currentprob->dist);
+                             length=ControlAllIns(insprob,tinit,tmethod-1,TRUE);
+                             if (length>0.0) currentprob=insprob->prob;
+                             break;
+                    case 1 : SetMethod(REQUEST,FALSE,FALSE,&tmethod);
+                             tempprob=NewProblem(currentprob->dist);
+                             tempprob->path=LocatesAsPath(tempprob->dist->l);
+                             length=ControlAllOpt(tempprob,tmethod+1,TRUE,WAITKEY);
+                             if (length>0.0) currentprob=tempprob;   
+                             break;
+                    case 2 : break;
                 }
-                DrawNorm(insprob->prob,1);
-                SwapPage();
+                if (length>0.0)
+                {
+                    sprintf(buffer,"F I N I S H E D");
+                    ShowText(buffer,1,16,LTRED);
+                    sprintf(buffer,"Length Is %8.6f",length);
+                    ShowText(buffer,1,18,YELLOW);
 
-                sprintf(buffer,"F I N I S H E D");
-                ShowText(buffer,1,16,LTRED);
-                sprintf(buffer,"Length Is %8.6f",length);
-                ShowText(buffer,1,18,YELLOW);
+                    DrawNorm(currentprob,1);
+                    SwapPage();
 
-                ShowText("                \n"
-                     "Hit Esc         \n"
-                     "to Quit...   \n"
-                     "               ",1,19,LTRED);
-            
-                while (getch()!=27) {}
-
-                currentprob=insprob->prob;
-                WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
-                SetFile(&currentprob,number_of_files-1,FALSE);
-                
+                    ShowText("                \n"
+                             "Hit Esc         \n"
+                             "to Quit...   \n"
+                             "               ",1,19,LTRED);
+                    
+                    while (getch()!=27) {}
+                    WriteLocates(PathAsLocates(currentprob->path,currentprob->dist->l),"CURRENT");
+                    SetFile(&currentprob,number_of_files-1,FALSE);
+                }        
                 InitScreen(16);
                 
                 _setvisualpage(0);

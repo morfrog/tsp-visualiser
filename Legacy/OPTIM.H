@@ -8,7 +8,6 @@
 #define Main 1    // WinManager
 
 void _FAR OptWinManager(int which);
-void _FAR OptShowText(char string[],int start,int line,int color);
 
 int NextOneOpt(PROBLEM *prob,int *next,int *oA,int *oB,int *nA,int *nB,double *improve);
 void HiliteOneOpt(PROBLEM *prob,int A,int B,int C,int color,int lines);

@@ -104,13 +104,13 @@ void main(int argc,char *argv[])
 
         sprintf(buffer,"Temperature=%11.6f  Cooling_Rate=%8.6f  "
                 "#Changes=%3d OF %3d.",temperature,cooling,1,changes);
-        AnnShowText("1opt vs 2opt Annealing Run...",1,1,GREEN);
-        AnnShowText(buffer,1,3,RED);
+        ShowText("1opt vs 2opt Annealing Run...",1,1,GREEN);
+        ShowText(buffer,1,3,RED);
 
         AnnWinManager(text_one);
-        AnnShowText("Length=            Accepted=       %",1,1,RED);
+        ShowText("Length=            Accepted=       %",1,1,RED);
         AnnWinManager(text_two);
-        AnnShowText("Length=            Accepted=       %",1,1,RED);
+        ShowText("Length=            Accepted=       %",1,1,RED);
 
         AnnWinManager(win_one);
         DrawNorm(leftp->prob,1);
@@ -126,19 +126,19 @@ void main(int argc,char *argv[])
         DrawNorm(rightp->prob,1);
         SwapPage();
         AnnWinManager(text_top);
-        AnnShowText("Hit Esc To Quit, Any Key For Overlay.",35,1,YELLOW);
+        ShowText("Hit Esc To Quit, Any Key For Overlay.",35,1,YELLOW);
         ch=getch();
         if (ch!=27)
         {
             AnnWinManager(text_one);
             sprintf(buffer,"Length=%f  ",
                 PathLength(leftp->prob->path,leftp->prob->dist));
-            AnnShowText(buffer,1,1,YELLOW);
+            ShowText(buffer,1,1,YELLOW);
 
             AnnWinManager(text_two);
             sprintf(buffer,"Length=%f  ",
                 PathLength(rightp->prob->path,rightp->prob->dist));
-            AnnShowText(buffer,1,1,LTRED);
+            ShowText(buffer,1,1,LTRED);
 
             ControlLCLOverlay(leftp->prob,rightp->prob,639,240,59,YELLOW,LTRED);
 /*

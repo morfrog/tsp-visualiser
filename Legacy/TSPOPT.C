@@ -105,10 +105,10 @@ void main(int argc,char *argv[])
             OptWinManager(Text);
 
             if (tdelay==0)
-                OptShowText("Working...\n\n"
+                ShowText("Working...\n\n"
                          "Working...\n",1,20,BLUE);
             else
-                OptShowText("Hit Esc to Quit,\n\n"
+                ShowText("Hit Esc to Quit,\n\n"
                  "Any other key \n"
                  "To continue..",1,20,BLUE);
                 
@@ -121,11 +121,11 @@ void main(int argc,char *argv[])
             DrawNorm(prob1,1);
             SwapPage();
 
-            OptShowText("F I N I S H E D",1,13,RED);
+            ShowText("F I N I S H E D",1,13,RED);
             sprintf(buffer,"Lengths\n"
                    "Old = %.6f\n"
                    "New = %.6f\n",oldpl,length);
-            OptShowText(buffer,1,14,YELLOW);
+            ShowText(buffer,1,14,YELLOW);
 
 
             
@@ -133,9 +133,9 @@ void main(int argc,char *argv[])
     ShowPath(prob1->path);
 #endif
     
-            OptShowText("Hit Esc         \n"
+            ShowText("Hit Esc         \n"
                      "to Quit...      \n",1,19,LTRED);
-            OptShowText("                \n"
+            ShowText("                \n"
                      "                ",1,21,BLACK);
             
             while (getch()!=27) {}

@@ -155,12 +155,12 @@ void main(int argc, char *argv[])
             InitScreen(16);
             SwapPage();
 
-            WinManager(Main);
-            WinManager(Text);
+            InsWinManager(Main);
+            InsWinManager(Text);
 
             ShowText("Hit Esc to Quit,\n\n"
                  "Any other key \n"
-                 "To continue..",1,21,BLUE);
+                 "To continue..",1,19,BLUE);
 
 
             length=ControlAllIns(insprob,inittype,instype,tdelay!=0);

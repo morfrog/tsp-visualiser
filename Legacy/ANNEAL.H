@@ -46,7 +46,6 @@ double MakeAnnealChange(ANNPROB *annprob,int change);
 void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,int changes);
 int ControlAnnOverlay(ANNPROB *one,ANNPROB *two,int width,int height,int starty);
 void _FAR AnnWinManager(int which);
-void _FAR AnnShowText(char string[],int start,int line,int color);
 
 #endif
 
