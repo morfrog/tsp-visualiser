@@ -17,6 +17,17 @@
 // #define DEBUG 1
 #define topsize 58
 
+char *AnnealStr(int opt)
+{
+    char *ret=salloc(6,sizeof(char));
+    switch (opt) {
+        case opt1 : strcpy(ret,"1 Opt"); break;
+        case opt2 : strcpy(ret,"2 Opt"); break;
+        case opt3 : strcpy(ret,"3 Opt"); break;
+    }
+    return ret;
+}
+
 int MethodArraySize(int method)
 {
     switch (method) {
