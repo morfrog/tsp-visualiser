@@ -142,7 +142,7 @@ int _FAR ShutDown( void )
 {
     _unregisterfonts();
     _setvideomode( _DEFAULTMODE );      /* reset the screen */
-
+    _displaycursor(_GCURSORON);
     return 1;
 }
 
