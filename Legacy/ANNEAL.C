@@ -6,6 +6,7 @@
 #include <graph.h>
 #include <math.h>
 #include <conio.h>
+#include <string.h>
 #include "sys.h"
 #include "file.h"
 #include "screen.h"
@@ -275,7 +276,7 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             now=clock();
             AnnWinManager(text_top);
             sprintf(buffer,"%3d",x+1);
-            ShowText(buffer,58,3,LTRED);
+            AnnShowText(buffer,58,3,LTRED);
 
             if (!done1)
             {
@@ -350,7 +351,7 @@ void ControlAnneal(ANNPROB *one,ANNPROB *two,double temperature,double cooling,i
             temp*=cooling;
             AnnWinManager(text_top);
             sprintf(buffer,"%11.6f",temp);
-            ShowText(buffer,13,2,LTRED);
+            AnnShowText(buffer,13,2,LTRED);
         }
         AnnWinManager(text_one);
         sprintf(buffer,"%8.3f",done1?0:100*(double)(changes-nulls1)/changes);

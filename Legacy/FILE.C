@@ -76,6 +76,21 @@ int IsDoubleChar(char c)
     return ((isdigit(c)) || (c=='.') || c=='-' || c=='+' || c=='E' || c=='e');
 }
 
+int ReadLines(FILE *f,int lines,char *buffer)
+{
+    int linesread=0;
+    int pos=0;
+    char ch;
+    while (linesread<lines)
+    {
+        ch=fgetc(f);
+//        printf("%c",ch);
+        if (ch=='\n') ++linesread;
+        buffer[pos]=ch;
+        ++pos;
+    }
+    return pos-1;
+}
 
 double _FAR ReadDouble(FILE *f)
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

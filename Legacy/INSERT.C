@@ -9,6 +9,8 @@
 #include "problem.h"
 #include "insert.h"
 
+#define BORDER 3
+
 INSPROB *NewInsProb(DISTANCES *dist)
 {
     INSPROB *ret=salloc(1,sizeof(INSPROB));
@@ -482,7 +484,7 @@ double ControlAllIns(INSPROB *insprob,int init,int method,int graphics)
     }
 }
 
-void _FAR WinManager(int which)
+void _FAR InsWinManager(int which)
 {
     static int init=0;
     static SWIN *main;
@@ -491,10 +493,13 @@ void _FAR WinManager(int which)
     if (!init) {
         main=NewWin(1,1,460,349);
         text=NewWin(465,1,639,349);
-        BorderWin(main,-1);
-        BorderWin(text,-1);
         init=1;
     }
+    if (which==BORDER) {
+        BorderWin(main,border_col);
+        BorderWin(text,border_col);
+    }
+
     switch (which) {
         case Main : SetWin(main);  break;
         case Text : SetTextWin(text);  break;

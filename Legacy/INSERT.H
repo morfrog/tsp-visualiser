@@ -17,8 +17,8 @@
 #define NoGraphics 0
 #define Graphics   1
 
-#define Text 0    // WinManager
-#define Main 1    // WinManager
+#define Text 0    // InsWinManager
+#define Main 1    // InsWinManager
 
 struct iprob
 {
@@ -29,7 +29,7 @@ struct iprob
 
 typedef struct iprob INSPROB;
 
-void _FAR WinManager(int which);
+void _FAR InsWinManager(int which);
 void _FAR ShowText(char string[],int start,int line,int color);
 
 void   InsProbReset(INSPROB *insprob,int free);
@@ -51,4 +51,5 @@ double ControlNearest(INSPROB *insprob,int graphics);
 double ControlDear(INSPROB *insprob,int graphics);
 double ControlCheap(INSPROB *insprob,int graphics);
 double ControlAllIns(INSPROB *insprob,int init,int method,int graphics);
+void _FAR InsWinManager(int which);
 #endif

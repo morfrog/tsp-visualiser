@@ -101,14 +101,14 @@ void main(int argc,char *argv[])
             InitScreen(16);
     
             SwapPage();
-            WinManager(Main);
-            WinManager(Text);
+            OptWinManager(Main);
+            OptWinManager(Text);
 
             if (tdelay==0)
-                ShowText("Working...\n\n"
+                OptShowText("Working...\n\n"
                          "Working...\n",1,20,BLUE);
             else
-                ShowText("Hit Esc to Quit,\n\n"
+                OptShowText("Hit Esc to Quit,\n\n"
                  "Any other key \n"
                  "To continue..",1,20,BLUE);
                 
@@ -121,11 +121,11 @@ void main(int argc,char *argv[])
             DrawNorm(prob1,1);
             SwapPage();
 
-            ShowText("F I N I S H E D",1,13,RED);
+            OptShowText("F I N I S H E D",1,13,RED);
             sprintf(buffer,"Lengths\n"
                    "Old = %.6f\n"
                    "New = %.6f\n",oldpl,length);
-            ShowText(buffer,1,14,YELLOW);
+            OptShowText(buffer,1,14,YELLOW);
 
 
             
@@ -133,9 +133,9 @@ void main(int argc,char *argv[])
     ShowPath(prob1->path);
 #endif
     
-            ShowText("Hit Esc         \n"
+            OptShowText("Hit Esc         \n"
                      "to Quit...      \n",1,19,LTRED);
-            ShowText("                \n"
+            OptShowText("                \n"
                      "                ",1,21,BLACK);
             
             while (getch()!=27) {}

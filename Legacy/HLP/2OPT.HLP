@@ -1,0 +1,16 @@
+2 Opt - Single Segment Reversal
+This method reverses those single
+segments of the path which result
+in a decrease to path length. It
+stops when no more changes can be
+made which would result in a
+decrease to path length. This
+method is known to remove all
+path crossovers.
+
+
+
+
+
+
+

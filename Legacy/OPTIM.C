@@ -27,7 +27,7 @@ char *OptStr(int method)
 
 double ControlAllOpt(PROBLEM *prob,int method,int graphics,int tdelay)
 {
-    if ((graphics) || (tdelay==0)) ShowText(OptStr(method),1,1,GREEN);
+    if ((graphics) || (tdelay==0)) OptShowText(OptStr(method),1,1,GREEN);
 
     switch (method) {
         case opt1 : return ControlOneOpt(prob,graphics);break;
@@ -572,7 +572,7 @@ double Control3Opt(PROBLEM *p,int graphics)
     return PathLength(p->path,p->dist);
 }
 
-void _FAR WinManager(int which)
+void _FAR OptWinManager(int which)
 {
     static int init=0;
     static SWIN *main;
@@ -591,7 +591,7 @@ void _FAR WinManager(int which)
     }
 }
 
-void _FAR ShowText(char string[],int start,int line,int color)
+void _FAR OptShowText(char string[],int start,int line,int color)
 {
     int startpage=_getactivepage();
     _setactivepage(1);

@@ -1,0 +1,12 @@
+Nearest Method
+For each city in the path this
+method finds the nearest
+neighbour out of the path and
+inserts the nearest of these
+into the place which minimises
+the increase to path length.
+
+
+
+
+

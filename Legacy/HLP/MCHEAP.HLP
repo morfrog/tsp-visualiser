@@ -1,0 +1,12 @@
+Cheapest Method
+This method chooses as its next
+insert the point which if
+inserted will make the increase
+to path length minimal. The point
+is inserted in the place which
+minimises the increase to path
+length. It stops when all points
+have been inserted.
+
+
+

@@ -1,0 +1,16 @@
+Annealing
+This method simulates metal
+annealing. Starting off at a
+chosen temperature, with a
+cooling rate and a number of
+changes to be made at each
+temperature, possible changes
+are determined and made by
+use of probability. The method
+ends when temp=0 or no changes.
+
+
+
+
+
+

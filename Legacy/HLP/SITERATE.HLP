@@ -1,0 +1,18 @@
+Iteration
+This method takes a full path
+and iteratively improves it by
+making changes which decrease
+the path length. Usually this
+means finding all possible
+changes and making the best
+one until no more changes are
+possible.
+
+
+
+
+
+
+
+
+

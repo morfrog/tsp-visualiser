@@ -1,0 +1,13 @@
+Cooling Rate
+This is the cooling rate which
+is applied at each stage. This
+number is multiplied by the
+current temperature to give the
+new temperature at the next
+stage. This number is in the
+range (0.0..1.0) exclusive, the
+higher it is the slower the
+annealing takes.
+
+
+

@@ -26,6 +26,8 @@
 #define INPUTWIDTH 200
 #define INPUTHEIGHT 150
 
+#define INITIALISE -1
+#define REQUEST -2
 
 #define CURRENT 0
 #define SET     1
@@ -48,6 +50,18 @@
 #define quitbtn 12
 #define current 13
 
+struct choice
+{
+    char *name;
+    char *helptitle;
+    char *helptext;
+};
+#define fldname  0
+#define fldtitle 1
+#define fldhelp  2
+
+typedef struct choice CHOICE;
+
 static int number_of_files;
 static int number_of_solvers=3;
 static int number_of_methods=8;
@@ -59,31 +73,34 @@ int ScrAsMouseX(int m)
     return 37683200+m;
 }
 
-int SameExtension(char a[],char b[])
+int SameExtension(char *a,char *b)
 {
-    return ((a[0]==b[0]) &&
-             (a[1]==b[1]) &&
-             (a[2]==b[2]));
+    if ((a==NULL) && (b==NULL)) return 0;
+    else return ((a[0]==b[0]) &&
+                 (a[1]==b[1]) &&
+                 (a[2]==b[2]));
 }
 
 char *Extension(char *filename)
-// * returns 3 char extension if exists, else returns NULL * // 
+// * returns 3 char extension
 {
     char *buffer=salloc(4,sizeof(char));
     int x,y,len=strlen(filename);
-    buffer="   \0";
+
+    strcpy(buffer,"   \0");
     
     for (x=0;x<len;x++) {
         if (filename[x]=='.') break;
     }
-    if (x==len) return NULL;
     ++x;
+//    if (x==len) return "   ";
+
     for (y=x;y<len;y++)
         buffer[y-x]=filename[y];
     return buffer;
 }
 
-char **GetDirectory(char *dir,char *extension,int *numfiles)
+char **GetDirectory(char *dir,char *extension,int *numfiles,int extras)
 {
     DIR *dirp;
     char **ret;
@@ -101,7 +118,7 @@ char **GetDirectory(char *dir,char *extension,int *numfiles)
       closedir( dirp );
     }
 
-    ret=allocate_N_by_N_array(count,13,sizeof(char),"Directory");
+    ret=allocate_N_by_N_array(count+extras,13,sizeof(char),"Directory");
 
     dirp = opendir( dir );
     if( dirp != NULL ) {
@@ -135,6 +152,42 @@ void DrawList(char *list[],int size,int chosen)
             DrawText(list[x],1,x+1,YELLOW);
 }
 
+void ReadChoiceHelp(char *filename,CHOICE *c)
+{
+    FILE *in;
+
+    chdir("hlp");
+    if ((in=fopen(filename,"rt"))==NULL)
+    {
+        strcpy(c->helptitle,filename);
+        strcpy(c->helptext,"Is An Invalid File");
+    }
+    else
+    {
+//        printf("%s\n",filename);
+        c->helptitle[ReadLines(in,1,c->helptitle)]='\0';
+        c->helptext[ReadLines(in,9,c->helptext)]='\0';
+        fclose(in);
+    }
+    chdir("..");
+}
+
+void DrawChoiceNames(CHOICE *list,int size,int chosen)
+{
+    int x;
+    for (x=0;x<size;x++)
+        if (x!=chosen)
+            DrawText(list[x].name,1,x+1,LTRED);
+        else
+            DrawText(list[x].name,1,x+1,YELLOW);
+}
+
+void DrawChoiceHelp(CHOICE c)
+{
+    DrawText(c.helptitle,1,1,YELLOW);
+    DrawText(c.helptext,1,2,LTRED);
+}
+
 int IntWinManager(int mode,int win,int x,int y)
 // * mode in {CURRENT,SET,WHERE,BORDER,CLEAR}
 // * SET sets the current window, CURRENT returns the current window,
@@ -164,7 +217,6 @@ int IntWinManager(int mode,int win,int x,int y)
 
     if (!(initialised))
     {
-        
         wtitle=NewWin(1,1,639,TITLEHEIGHT);
         wfiles=NewWin(1,TITLEHEIGHT+2,FILESWIDTH,MSGBOXTOP-2);
         wfview=NewWin(FILESWIDTH+2,TITLEHEIGHT+2,VIEWXPOS,VIEWBOTTOM);
@@ -179,49 +231,31 @@ int IntWinManager(int mode,int win,int x,int y)
         wgobtn=NewWin(BTNSTART,VIEWBOTTOM+2+(BTNHEIGHT*3),639,VIEWBOTTOM+(BTNHEIGHT*5));
         wquitbtn=NewWin(BTNSTART,MSGBOXTOP,639,349);
         wcurrent=title;
-        
-        initialised=1;
         SetMousePos(wcurrent->t+1,wcurrent->l+1);
-        BorderWin(wfiles,border_col);
-        BorderWin(wfview,border_col);
-        BorderWin(wmsgbox,border_col);
-        BorderWin(wsolver,border_col);
-        BorderWin(whelp,border_col);
-        BorderWin(wmethod,border_col);
-        BorderWin(winit,border_col);
-        BorderWin(wnewbtn,border_col);
-        BorderWin(wsavebtn,border_col);
-        BorderWin(wrndbtn,border_col);
-        BorderWin(wgobtn,border_col);
-        BorderWin(wquitbtn,border_col);
+        initialised=1;
     }
-    else
-    {
-        switch (mode) {
-            case BORDER : case CLEAR :
-                switch (win) {
-                    case title   : tmp=wtitle;  break;
-                    case files   : tmp=wfiles;  break; 
-                    case fview   : tmp=wfview;  break;
-                    case solver  : tmp=wsolver; break; 
-                    case msgbox  : tmp=wmsgbox; break; 
-                    case help    : tmp=whelp;   break;
-                    case method  : tmp=wmethod; break; 
-                    case init    : tmp=winit;   break;
-                    case newbtn  : tmp=wnewbtn; break; 
-                    case savebtn : tmp=wsavebtn;break;  
-                    case rndbtn  : tmp=wrndbtn; break; 
-                    case gobtn   : tmp=wgobtn;  break;
-                    case quitbtn : tmp=wquitbtn;break;  
-                    default      : tmp=wtitle;break;  
-                }
-                if (mode==BORDER) BorderWin(tmp,x);
-                else
-                {
-                    ClearSection(tmp->l+1,tmp->t+1,tmp->r-1,tmp->b-1);
-                }
+    switch (mode) {
+        case BORDER : case CLEAR :
+            switch (win) {
+                case title   : tmp=wtitle;  break;
+                case files   : tmp=wfiles;  break; 
+                case fview   : tmp=wfview;  break;
+                case solver  : tmp=wsolver; break; 
+                case msgbox  : tmp=wmsgbox; break; 
+                case help    : tmp=whelp;   break;
+                case method  : tmp=wmethod; break; 
+                case init    : tmp=winit;   break;
+                case newbtn  : tmp=wnewbtn; break; 
+                case savebtn : tmp=wsavebtn;break;  
+                case rndbtn  : tmp=wrndbtn; break; 
+                case gobtn   : tmp=wgobtn;  break;
+                case quitbtn : tmp=wquitbtn;break;  
+                default      : tmp=wtitle;break;  
+            } 
+            if (mode==BORDER) BorderWin(tmp,x);
+            else ClearSection(tmp->l+1,tmp->t+1,tmp->r-1,tmp->b-1);
 
-                break;
+            break;
             
             case SET :
                 currenti = win;
@@ -240,7 +274,8 @@ int IntWinManager(int mode,int win,int x,int y)
                     case gobtn : SetTextWin(wgobtn); wcurrent=wgobtn; break;
                     case quitbtn : SetTextWin(wquitbtn); wcurrent=wquitbtn; break;
                     default     : SetWin(wcurrent); break;                    
-                } break;
+                }
+                break;
             case CURRENT :
                 return currenti; break;
             case WHERE :
@@ -267,8 +302,7 @@ int IntWinManager(int mode,int win,int x,int y)
                 }
                 return currenti; 
                 break;
-        }
-    }
+            }
     return -1; // * should never be made use of * //
 }
 
@@ -336,7 +370,7 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
     int update=0;
     
     if (!(initialised)) {
-        directory=GetDirectory( getcwd( NULL, 0 ),"TSP",&numfiles );
+        directory=GetDirectory( getcwd( NULL, 0 ),"TSP",&numfiles,1 );
         printf("%d files found\n",numfiles);
         
         initialised=1;
@@ -344,7 +378,7 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
         (*currentprob)->path=LocatesAsPath((*currentprob)->dist->l);
         number_of_files=numfiles;
     }
-    if (num<0) return directory[filenum];
+    if (num==REQUEST) return directory[filenum];
     if (num!=filenum)
     {
         filenum=num;
@@ -363,38 +397,60 @@ char *SetFile(PROBLEM **currentprob,int num,int override)
     return directory[filenum];
 }
 
-char *SetInit(int num,int override)
+CHOICE *NewChoiceArray(int size)
+{
+    int x;
+    CHOICE *ret=salloc(size,sizeof(CHOICE));
+
+    for (x=0;x<size;x++)
+    {
+        ret[x].name=salloc(13,sizeof(char));
+        ret[x].helptitle=salloc(40,sizeof(char));
+        ret[x].helptext=salloc(360,sizeof(char));
+    }
+    return ret;
+}
+
+char *SetInit(int num,int override,int showhelp,int *inum)
 // * sets the current init num to num, and refreshes if changed.
 // * refreshes automatically if override true.
 // * -ve num returns string for current method
 {
     static int initialised=0;
-    static char **insinit;
-    static char **anninit;
+    static CHOICE *insinit;
+    static CHOICE *anninit;
     static int insinitnum=0;
     static int anninitnum=0;
     int changed=0;
 
     if (!(initialised))
     {
-        insinit=allocate_N_by_N_array(3,13,sizeof(char),"InsInit");
-        strcpy(insinit[0],"Random     ");
-        strcpy(insinit[1],"Closest    ");
-        strcpy(insinit[2],"Furthest   ");
+        insinit=NewChoiceArray(3);
+        strcpy(insinit[0].name,"Random");
+        ReadChoiceHelp("irandom.hlp",&insinit[0]);
+        strcpy(insinit[1].name,"Closest");
+        ReadChoiceHelp("iclose.hlp",&insinit[1]);
+        strcpy(insinit[2].name,"Furthest");
+        ReadChoiceHelp("ifurth.hlp",&insinit[2]);
 
-        anninit=allocate_N_by_N_array(3,13,sizeof(char),"AnnInit");
-        strcpy(anninit[0],"Temp =     ");
-        strcpy(anninit[1],"Cool =     ");
-        strcpy(anninit[2],"AtTmp=     ");
+
+        anninit=NewChoiceArray(3);
+        strcpy(anninit[0].name,"Temp =");
+        ReadChoiceHelp("itemp.hlp",&anninit[0]);
+        strcpy(anninit[1].name,"Cool =");
+        ReadChoiceHelp("icool.hlp",&anninit[1]);
+        strcpy(anninit[2].name,"AtTmp=");
+        ReadChoiceHelp("iattmp.hlp",&anninit[2]);
+
 
         initialised=1;
     }
-    if (num<0) // * request for current * //
+    if (num==REQUEST) // * request for current * //
     {
         switch (current_solver) {
-            case 0 : return insinit[insinitnum];        break;
-            case 1 : return NULL; break;
-            case 2 : return anninit[anninitnum];  break;
+            case 0 : *inum=insinitnum; return insinit[insinitnum].name;        break;
+            case 1 : *inum=-1; return NULL; break;
+            case 2 : *inum=anninitnum; return anninit[anninitnum].name;  break;
         }
     }
     if (!(override))
@@ -416,60 +472,83 @@ char *SetInit(int num,int override)
         HideMouse();
         IntWinManager(SET,init,0,0);
         switch (current_solver) {
-            case 0 : DrawList(insinit,3,insinitnum); break;
+            case 0 : DrawChoiceNames(insinit,3,insinitnum); break;
             case 1 : break;
-            case 2 : DrawList(anninit,3,anninitnum); break;
+            case 2 : DrawChoiceNames(anninit,3,anninitnum); break;
         }
         ShowMouse();
     }
+    if ((showhelp) && (!changed))
+    {
+        IntWinManager(CLEAR,help,0,0);
+        IntWinManager(SET,help,0,0);
+        switch (current_solver) {
+            case 0 : DrawChoiceHelp(insinit[insinitnum]); break;
+            case 1 : break;
+            case 2 : DrawChoiceHelp(anninit[anninitnum]); break;
+        }
+    }
+
 }
 
-char *SetMethod(int num,int override)
+char *SetMethod(int num,int override,int showhelp,int *mnum)
 // * sets the current method num to num, and refreshes if changed.
 // * refreshes automatically if override true.
 // * -ve num returns string for current method
 {
     static int initialised=0;
-    static char **insmethod;
-    static char **optimmethod;
-    static char **annealmethod;
+    static CHOICE *insmethod;
+    static CHOICE *iteratemethod;
+    static CHOICE *annealmethod;
     static int insmethodnum=0;
-    static int optimmethodnum=0;
+    static int iteratemethodnum=0;
     static int annealmethodnum=0;
     int changed=0;
 
     if (!(initialised))
     {
-        insmethod=allocate_N_by_N_array(8,13,sizeof(char),"InsMethod");
-        strcpy(insmethod[0],"N Neighbour");
-        strcpy(insmethod[1],"Random     ");
-        strcpy(insmethod[2],"Cheapest   ");
-        strcpy(insmethod[3],"Dearest    ");
-        strcpy(insmethod[4],"Nearest    ");
-        strcpy(insmethod[5],"Furthest   ");
-        strcpy(insmethod[6],"Nearest II ");
-        strcpy(insmethod[7],"Furthest II");
+        insmethod=NewChoiceArray(8);
+        strcpy(insmethod[0].name,"N Neighbour");
+        ReadChoiceHelp("mnearn.hlp",&insmethod[0]);
+        strcpy(insmethod[1].name,"Random     ");
+        ReadChoiceHelp("mrandom.hlp",&insmethod[1]);
+        strcpy(insmethod[2].name,"Cheapest   ");
+        ReadChoiceHelp("mcheap.hlp",&insmethod[2]);
+        strcpy(insmethod[3].name,"Dearest    ");
+        ReadChoiceHelp("mdear.hlp",&insmethod[3]);
+        strcpy(insmethod[4].name,"Nearest    ");
+        ReadChoiceHelp("mnear.hlp",&insmethod[4]);
+        strcpy(insmethod[5].name,"Furthest   ");
+        ReadChoiceHelp("mfurth.hlp",&insmethod[5]);
+        strcpy(insmethod[6].name,"Nearest II ");
+        ReadChoiceHelp("mnear2.hlp",&insmethod[6]);
+        strcpy(insmethod[7].name,"Furthest II");
+        ReadChoiceHelp("mfurth2.hlp",&insmethod[7]);
 
-        optimmethod=allocate_N_by_N_array(3,13,sizeof(char),"OptimMethod");
-        strcpy(optimmethod[0],"1 opt      ");
-        strcpy(optimmethod[1],"2 opt      ");
-        strcpy(optimmethod[2],"3 opt      ");
+        iteratemethod=NewChoiceArray(3);
+        strcpy(iteratemethod[0].name,"1 opt      ");
+        ReadChoiceHelp("1opt.hlp",&iteratemethod[0]);
+        strcpy(iteratemethod[1].name,"2 opt      ");
+        ReadChoiceHelp("2opt.hlp",&iteratemethod[1]);
+        strcpy(iteratemethod[2].name,"3 opt      ");
+        ReadChoiceHelp("3opt.hlp",&iteratemethod[2]);
 
-        annealmethod=allocate_N_by_N_array(1,13,sizeof(char),"AnnealMethod");
-        strcpy(annealmethod[0],"1 vs 2 opt ");
+        annealmethod=NewChoiceArray(1);
+        strcpy(annealmethod[0].name,"1 vs 2 opt");
+        ReadChoiceHelp("1vs2opt.hlp",&annealmethod[0]);
 
         insmethodnum=0;
-        optimmethodnum=0;
+        iteratemethodnum=0;
         annealmethodnum=0;
         
         initialised=1;
     }
-    if (num<0) // * request for current * //
+    if (num==REQUEST) // * request for current * //
     {
         switch (current_solver) {
-            case 0 : return insmethod[insmethodnum];        break;
-            case 1 : return optimmethod[optimmethodnum];    break;
-            case 2 : return annealmethod[annealmethodnum];  break;
+            case 0 : *mnum=insmethodnum; return insmethod[insmethodnum].name;         break;
+            case 1 : *mnum=iteratemethodnum; return iteratemethod[iteratemethodnum].name;   break;
+            case 2 : *mnum=annealmethodnum; return annealmethod[annealmethodnum].name;break;
         }
     }
 
@@ -479,8 +558,8 @@ char *SetMethod(int num,int override)
             case 0 : if (insmethodnum!=num) {
                         changed=1; insmethodnum=num;
                      } break;
-            case 1 : if (optimmethodnum!=num) {
-                        changed=1; optimmethodnum=num;
+            case 1 : if (iteratemethodnum!=num) {
+                        changed=1; iteratemethodnum=num;
                      } break;
             case 2 : if (annealmethodnum!=num) {
                         changed=1; annealmethodnum=num;
@@ -494,23 +573,32 @@ char *SetMethod(int num,int override)
         HideMouse();
         IntWinManager(SET,method,0,0);
         switch (current_solver) {
-            case 0 : DrawList(insmethod,8,insmethodnum);
+            case 0 : DrawChoiceNames(insmethod,8,insmethodnum);
                      if (insmethodnum==0)
                      {
                         IntWinManager(CLEAR,init,0,0);
                         number_of_inits=0;
                      }
-                     else SetInit(0,1);
+                     else SetInit(0,TRUE,FALSE,NULL);
                      break;
-            case 1 : DrawList(optimmethod,3,optimmethodnum);
-                     SetInit(0,1);
+            case 1 : DrawChoiceNames(iteratemethod,3,iteratemethodnum);
+                     SetInit(0,TRUE,FALSE,NULL);
                      break;
-            case 2 : DrawList(annealmethod,1,annealmethodnum);
-                     SetInit(0,1);
+            case 2 : DrawChoiceNames(annealmethod,1,annealmethodnum);
+                     SetInit(0,TRUE,FALSE,NULL);
                      break;
         }
         ShowMouse();
-        
+    }
+    if (showhelp)
+    {
+        IntWinManager(CLEAR,help,0,0);
+        IntWinManager(SET,help,0,0);
+        switch (current_solver) {
+            case 0 : DrawChoiceHelp(insmethod[insmethodnum]); break;
+            case 1 : DrawChoiceHelp(iteratemethod[iteratemethodnum]); break;
+            case 2 : DrawChoiceHelp(annealmethod[annealmethodnum]); break;
+        }
     }
 }
 
@@ -528,27 +616,31 @@ void SetGlobals()
     }
 }
 
-char *SetSolver(int num,int override)
+char *SetSolver(int num,int override,int showhelp)
 // * if num <> current sets current=num and refreshes screen, override auto
 // * refreshes, func returns the name of the current solver
 {
     static int initialised=0;
-    static char **solvermethod;
+    static CHOICE *solvermethod;
     int update;
 
     if (!(initialised))
     {
-        solvermethod=allocate_N_by_N_array(3,13,sizeof(char),"SolverMethod");
-        strcpy(solvermethod[0],"Insertion");
-        strcpy(solvermethod[1],"Optimisation");
-        strcpy(solvermethod[2],"Annealing");
+        solvermethod=NewChoiceArray(3);
+        strcpy(solvermethod[0].name,"Insertion");
+        ReadChoiceHelp("sinsert.hlp",&solvermethod[0]);
+        strcpy(solvermethod[1].name,"Iteration");
+        ReadChoiceHelp("siterate.hlp",&solvermethod[1]);
+        strcpy(solvermethod[2].name,"Annealing");
+        ReadChoiceHelp("sanneal.hlp",&solvermethod[2]);
+
         number_of_solvers=3;
         current_solver=0;
         SetGlobals();
         
         initialised=1;
     }
-    if (num<0) return solvermethod[current_solver];
+    if (num==REQUEST) return solvermethod[current_solver].name;
     if ((num!=current_solver) && (!(override))) 
     {
         current_solver=num;
@@ -559,11 +651,62 @@ char *SetSolver(int num,int override)
     {
         HideMouse();
         IntWinManager(SET,solver,0,0);
-        DrawList(solvermethod,number_of_solvers,current_solver);
+        DrawChoiceNames(solvermethod,number_of_solvers,current_solver);
         ShowMouse();
-        SetMethod(0,1);
+        SetMethod(0,TRUE,FALSE,NULL);
     }
-    return solvermethod[current_solver];
+    if (showhelp)
+    {
+        IntWinManager(CLEAR,help,0,0);
+        IntWinManager(SET,help,0,0);
+        DrawChoiceHelp(solvermethod[current_solver]);
+    }
+    return solvermethod[current_solver].name;
+}
+
+void DrawScreen(PROBLEM **currentprob)
+{
+    IntWinManager(BORDER,files,border_col,0);
+    IntWinManager(BORDER,fview,border_col,0);
+    IntWinManager(BORDER,msgbox,border_col,0);
+    IntWinManager(BORDER,solver,border_col,0);
+    IntWinManager(BORDER,help,border_col,0);
+    IntWinManager(BORDER,method,border_col,0);
+    IntWinManager(BORDER,init,border_col,0);
+    IntWinManager(BORDER,newbtn,border_col,0);
+    IntWinManager(BORDER,savebtn,border_col,0);
+    IntWinManager(BORDER,rndbtn,border_col,0);
+    IntWinManager(BORDER,gobtn,border_col,0);
+    IntWinManager(BORDER,quitbtn,border_col,0);
+
+    IntWinManager(SET,title,0,0);
+    DrawText("Visualisation Tool For The Travelling Salesman Problem - "
+             "Drew 1997",
+            1,1,GREEN);
+
+    IntWinManager(SET,help,0,0);
+    DrawText("VTTSP V1.01 1997",1,1,GREEN);
+
+    SetFile(currentprob,0,TRUE);
+    SetSolver(0,TRUE,FALSE);
+
+    Msg("This is the message box!",GREEN);
+
+    IntWinManager(SET,newbtn,0,0);
+    DrawText("New",7,2,GREEN);
+
+    IntWinManager(SET,savebtn,0,0);
+    DrawText("Save",7,2,GREEN);
+    
+    IntWinManager(SET,rndbtn,0,0);
+    DrawText("Randomize",4,3,GREEN);
+
+    IntWinManager(SET,quitbtn,0,0);
+    DrawText("Quit",7,2,GREEN);
+
+    IntWinManager(SET,gobtn,0,0);
+    DrawText("GO!",7,2,GREEN);
+
 }
 
 void main()
@@ -571,13 +714,14 @@ void main()
     int pos=320,RequestUpdate=0,line;
     MouseStatus m;
     char buffer[60];
-    int x,select,at=title,last=title,mx=0,my=0;
-
+    int x,select,at=title,last=title,mx=0,my=0,tinit,tmethod;
+    INSPROB *insprob;
     PROBLEM *currentprob;
+    double length;
 
 //    char **messages=allocate_N_by_N_array(14,50,sizeof(char),"Messages");
 
-    char messages[13][45]={"Title Bar                                   ",
+    char messages[13][45]={"Drew         ",
                            "Choose A File                               ",
                            "View of File                                ",
                            "Choose a TSP method                         ",
@@ -595,30 +739,7 @@ void main()
     _setactivepage(0);
     _setvisualpage(1);
 
-    IntWinManager(SET,title,0,0);
-    DrawText("Visualisation Tool For The Travelling Salesman Problem - "
-             "Drew 1997",
-            1,1,GREEN);
-
-    SetFile(&currentprob,0,1);
-    SetSolver(0,1);
-
-    Msg("This is the message box!",GREEN);
-    
-    IntWinManager(SET,newbtn,0,0);
-    DrawText("New",7,2,GREEN);
-
-    IntWinManager(SET,savebtn,0,0);
-    DrawText("Save",7,2,GREEN);
-    
-    IntWinManager(SET,rndbtn,0,0);
-    DrawText("Randomize",4,3,GREEN);
-
-    IntWinManager(SET,quitbtn,0,0);
-    DrawText("Quit",7,2,GREEN);
-
-    IntWinManager(SET,gobtn,0,0);
-    DrawText("GO!",7,2,GREEN);
+    DrawScreen(&currentprob);
 
     _setvisualpage(0);
     SetMousePage(0);
@@ -636,13 +757,66 @@ void main()
             case quitbtn :
                 ShutDown();
                 exit(1);
+                break;
+            case newbtn :
+                break;
+            case savebtn :
+                break;
+            case gobtn :
+                HideMouse();
+                InitScreen(16);
+                _setactivepage(0);
+                _setvisualpage(1);
+                SwapPage();
+
+                InsWinManager(Main);
+                InsWinManager(Text);
+                InsWinManager(BORDER);
+//                getch();
+                ShowText("Hit Esc to Quit,\n\n"
+                     "Any other key \n"
+                     "To continue..",1,19,BLUE);
+
+                if (current_solver==0)
+                {
+                    SetInit(REQUEST,FALSE,FALSE,&tinit);
+                    SetMethod(REQUEST,FALSE,FALSE,&tmethod);
+                    insprob=NewInsProb(currentprob->dist);
+                    length=ControlAllIns(insprob,tinit,tmethod-1,1);
+                }
+                DrawNorm(insprob->prob,1);
+                SwapPage();
+
+                sprintf(buffer,"F I N I S H E D");
+                ShowText(buffer,1,16,LTRED);
+                sprintf(buffer,"Length Is %8.6f",length);
+                ShowText(buffer,1,18,YELLOW);
+
+                ShowText("                \n"
+                     "Hit Esc         \n"
+                     "to Quit...   \n"
+                     "               ",1,19,LTRED);
+            
+                while (getch()!=27) {}
+//                ShutDown();
+                InitScreen(16);
+                
+                _setvisualpage(0);
+                _setactivepage(0);
+                _clearscreen(_GCLEARSCREEN);
+                currentprob=insprob->prob;
+                DrawScreen(&currentprob);
+                UseMouseCur(GLOVE);
+                ShowMouse();
+                TotalDelay(WAITKEY);
+                break;
             case files :
                 line=MapPixToText(m.ypos,0)-2;
                 if (line<0) select=-1;
                 else if (line>=number_of_files) select=-1;
                 else select=line;
 
-                if (select>=0) SetFile(&currentprob,select,0);
+                if (select>=0) SetFile(&currentprob,select,FALSE);
            
                 break;
             case solver :
@@ -650,21 +824,21 @@ void main()
                 if (line<0) select=-1;
                 else if (line>=3) select=-1;
                 else select=line;
-                if (select>=0) SetSolver(select,0);
+                if (select>=0) SetSolver(select,FALSE,TRUE);
                 break;
              case method :
                 line = MapPixToText(m.ypos-VIEWBOTTOM,0);
                 if (line<0) select=-1;
                 else if (line>=number_of_methods) select=-1;
                 else select=line;
-                if (select>=0) SetMethod(select,0);
+                if (select>=0) SetMethod(select,FALSE,TRUE,NULL);
                 break;
             case init :
                 line = MapPixToText(m.ypos-VIEWBOTTOM,0);
                 if (line<0) select=-1;
                 else if (line>=number_of_inits) select=-1;
                 else select=line;
-                if (select>=0) SetInit(select,0);
+                if (select>=0) SetInit(select,FALSE,TRUE,NULL);
                 break;
             }
         }
@@ -678,19 +852,19 @@ void main()
                 if (at==fview) 
                 {
                     sprintf(buffer,"View of %s                         ",
-                        SetFile(&currentprob,-1,0));
+                        SetFile(&currentprob,REQUEST,FALSE));
                     Msg(buffer,GREEN);
                 }
                 else if (at==init)
                 {
                     sprintf(buffer,"Choose an %s Initialisation Method           ",
-                        SetSolver(-1,0));
+                        SetSolver(REQUEST,FALSE,FALSE));
                     Msg(buffer,GREEN);
                 }
                 else if (at==method)
                 {
                    sprintf(buffer,"Choose an %s Operation Method           ",
-                        SetSolver(-1,0));
+                        SetSolver(REQUEST,FALSE,FALSE));
                     Msg(buffer,GREEN);
                 }
                 else
@@ -703,3 +877,34 @@ void main()
     getch();
 }
 
+/*
+            _clearscreen(_GCLEARSCREEN);
+            SwapPage();
+
+            WinManager(Main);
+            WinManager(Text);
+
+            ShowText("Hit Esc to Quit,\n\n"
+                 "Any other key \n"
+                 "To continue..",1,21,BLUE);
+
+
+            length=ControlAllIns(insprob,inittype,instype,tdelay!=0);
+        
+            DrawNorm(insprob->prob,1);
+            SwapPage();
+
+            sprintf(buffer,"F I N I S H E D");
+            ShowText(buffer,1,16,LTRED);
+            sprintf(buffer,"Length Is %8.6f",length);
+            ShowText(buffer,1,18,YELLOW);
+
+            ShowText("                \n"
+                     "Hit Esc         \n"
+                     "to Quit...   \n"
+                     "               ",1,19,LTRED);
+            
+            while (getch()!=27) {}
+            ShutDown();
+
+*/
