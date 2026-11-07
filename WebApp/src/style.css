@@ -8,6 +8,10 @@
   --button-hover: #5555ff;
   --focus: #55ffff;
   --error: #ff5555;
+  --ega-green: #55ff55;
+  --ega-ltred: #ff5555;
+  --ega-yellow: #ffff55;
+  --ega-ltblue: #5555ff;
   /* EGA 640x350 was shown on a 4:3 screen: pixels 1.37x taller than wide. */
   --ega-pixel-aspect: 1.3714;
   color-scheme: dark;
@@ -25,24 +29,35 @@ body {
   font-family: 'Courier New', Courier, monospace;
 }
 
-.site-header {
-  text-align: center;
-}
-
-h1 {
-  margin: 0 0 4px;
-  font-size: clamp(1rem, 3vw, 1.5rem);
-  color: var(--accent);
-}
-
-.sub {
-  margin: 0 0 16px;
-  color: var(--muted);
-}
-
 main {
   max-width: 1100px;
   margin: 0 auto;
+  /* The main screen's text is sized from this width. */
+  container-type: inline-size;
+}
+
+a {
+  color: var(--focus);
+}
+
+.site-footer {
+  max-width: 1100px;
+  margin: 16px auto 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+[hidden] {
+  display: none !important;
 }
 
 /* ---- Buttons and form controls ---- */
@@ -68,22 +83,12 @@ select:hover {
   background: var(--button-hover);
 }
 
-.btn:focus-visible,
+button:focus-visible,
 select:focus-visible,
 input:focus-visible,
 canvas:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
-}
-
-.btn--go {
-  color: var(--accent);
-  font-weight: bold;
-}
-
-input {
-  background: #000;
-  width: 100%;
 }
 
 /* ---- Map canvases ---- */
@@ -96,15 +101,10 @@ input {
   touch-action: manipulation;
 }
 
-/* Legacy main window 458x347 EGA pixels, corrected to a 4:3 screen. */
-.map--single,
-.map--preview {
+/* Legacy run window 458x347 EGA pixels, corrected to a 4:3 screen. */
+.map--single {
   aspect-ratio: 458 / calc(347 * var(--ega-pixel-aspect));
   cursor: pointer;
-}
-
-.map--preview {
-  cursor: default;
 }
 
 /* Legacy annealing windows 318x238. */
@@ -136,6 +136,233 @@ input {
 .textbox {
   container-type: inline-size;
   min-width: 0;
+}
+
+/* ---- Main screen (Legacy IntWinManager windows) ---- */
+
+.main-screen {
+  /* The original's columns: files | solver | method | init | buttons. */
+  display: grid;
+  grid-template-columns: 120fr 120fr 120fr 120fr 152fr;
+  grid-template-rows: auto minmax(0, 162fr) minmax(0, 140fr) minmax(0, 30fr);
+  grid-template-areas:
+    'title title title title title'
+    'files view view help help'
+    'files solver method init btns'
+    'msg msg msg msg helpbtn';
+  gap: 2px;
+  aspect-ratio: 640 / calc(350 * var(--ega-pixel-aspect));
+  /* 80 columns of 8-pixel characters across the screen (0.6em each). */
+  font-size: max(9px, calc(100cqi / 48));
+}
+
+.win {
+  border: 2px solid var(--border);
+  background: #000;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.win--title {
+  grid-area: title;
+  border: 0;
+  padding: 2px 4px;
+}
+
+.win__title {
+  margin: 0;
+  font-size: 1em;
+  font-weight: normal;
+  color: var(--ega-green);
+}
+
+.win--files {
+  grid-area: files;
+  overflow-y: auto;
+}
+
+.win--view {
+  grid-area: view;
+}
+
+.win--view .map {
+  border: 0;
+  height: 100%;
+}
+
+.win--help {
+  grid-area: help;
+}
+
+.win--solver {
+  grid-area: solver;
+}
+
+.win--method {
+  grid-area: method;
+}
+
+.win--init {
+  grid-area: init;
+}
+
+.win--msg {
+  grid-area: msg;
+  display: flex;
+  align-items: center;
+  padding: 0 0.5em;
+  color: var(--ega-green);
+  white-space: pre;
+}
+
+.win-buttons {
+  grid-area: btns;
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr 2fr;
+  gap: 2px;
+  min-height: 0;
+}
+
+.win--helpButton {
+  grid-area: helpbtn;
+}
+
+.win-btn {
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+  padding: 0;
+}
+
+.win-btn:hover {
+  background: #0000aa;
+}
+
+.win-btn .hot {
+  color: var(--ega-green);
+}
+
+/* The original drew these in BLUE; light blue is readable on black. */
+.win-btn .cold {
+  color: var(--ega-ltblue);
+}
+
+.win--go {
+  font-size: 1.4em;
+  font-weight: bold;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: 0.3em 0.4em;
+}
+
+.list__item {
+  font: inherit;
+  text-align: left;
+  color: var(--ega-ltred);
+  background: none;
+  border: 0;
+  padding: 0;
+  line-height: 1.44;
+  cursor: pointer;
+  white-space: pre;
+}
+
+.list__item:hover {
+  background: #0000aa;
+}
+
+.list__item.is-selected {
+  color: var(--ega-yellow);
+}
+
+.help-box {
+  position: relative;
+  height: 100%;
+  --cols: 34;
+}
+
+.text--help {
+  border: 0;
+  height: 100%;
+  min-height: 0;
+  line-height: 1.44;
+  font-size: clamp(8px, calc((100cqi - 12px) / (34 * 0.6)), 17px);
+}
+
+/* Typed input sits in the help window's character grid (Legacy ReadString). */
+.help-input {
+  position: absolute;
+  left: calc(6px + (var(--col) - 1) * 0.6em);
+  top: calc(4px + (var(--row) - 1) * 1.44em);
+  width: calc(100% - 12px - (var(--col) - 1) * 0.6em);
+  min-height: 0;
+  height: 1.44em;
+  padding: 0;
+  border: 0;
+  background: #0000aa;
+  color: var(--ega-ltred);
+  font-family: inherit;
+  font-size: clamp(8px, calc((100cqi - 12px) / (34 * 0.6)), 17px);
+}
+
+@media (max-width: 759px) {
+  .main-screen {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: none;
+    grid-template-areas:
+      'title title'
+      'view view'
+      'help help'
+      'files files'
+      'solver method'
+      'init init'
+      'btns btns'
+      'helpbtn helpbtn'
+      'msg msg';
+    aspect-ratio: auto;
+    font-size: 14px;
+    gap: 6px;
+  }
+
+  .win--view .map {
+    aspect-ratio: 229 / calc(161 * var(--ega-pixel-aspect));
+    height: auto;
+  }
+
+  .text--help {
+    min-height: calc(10 * 1.44em + 8px);
+  }
+
+  .win--files .list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9.5em, 1fr));
+  }
+
+  .list__item {
+    min-height: 32px;
+  }
+
+  .win-buttons {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: none;
+  }
+
+  .win-btn {
+    min-height: 44px;
+  }
+
+  .win--go {
+    font-size: 1em;
+  }
+
+  .win--msg {
+    min-height: 3em;
+    white-space: normal;
+  }
 }
 
 /* ---- Run screen ---- */
@@ -173,21 +400,15 @@ input {
   color: var(--muted);
 }
 
-.run__controls,
-.setup__buttons {
+.run__controls {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
 @media (max-width: 700px) {
-  body {
-    padding: 16px;
-  }
-
   .run__body,
-  .run__pair,
-  .setup {
+  .run__pair {
     grid-template-columns: 1fr;
   }
 
@@ -195,61 +416,4 @@ input {
   .text {
     font-size: clamp(9px, calc((100cqi - 18px) / (var(--cols) * 0.6)), 14px);
   }
-}
-
-/* ---- Temporary setup screen ---- */
-
-.setup {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 16px;
-  align-items: start;
-}
-
-.setup__caption {
-  color: var(--muted);
-  margin: 8px 0 0;
-}
-
-.setup__form {
-  display: grid;
-  gap: 12px;
-}
-
-.setup__form label {
-  display: grid;
-  gap: 4px;
-}
-
-.setup__form fieldset {
-  border: 2px solid var(--border);
-  display: grid;
-  gap: 8px;
-  margin: 0;
-}
-
-.setup__form .only-insertion,
-.setup__form .only-annealing {
-  display: none;
-}
-
-.setup__form.is-insertion .only-insertion,
-.setup__form.is-annealing .only-annealing {
-  display: grid;
-}
-
-.setup__problem {
-  color: var(--error);
-  margin: 0;
-  min-height: 1.2em;
-}
-
-.setup__note {
-  color: var(--muted);
-  font-size: 0.85rem;
-  margin: 0;
-}
-
-[hidden] {
-  display: none !important;
 }

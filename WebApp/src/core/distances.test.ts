@@ -25,7 +25,7 @@ describe('DistanceMatrix', () => {
 });
 
 // Data/10SOLNS.TXT lists the optimal tour lengths found for the ten 30-city
-// benchmark problems (from Dr Lister's student's solver, see DOCO.DOC). The
+// benchmark problems (from an exact solver, see DOCO.DOC). The
 // 30CITY_n.TSP files store their cities in that optimal order, so the length
 // of the file-order tour must reproduce each value.
 describe('optimal tours of the 30-city benchmarks', () => {

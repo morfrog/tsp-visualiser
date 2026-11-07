@@ -67,18 +67,30 @@ becomes a generator that `yield`s a frame (highlights + info text). A player dri
    - `player/runScreen.ts`: run screens and finish screens ("F I N I S H E D", Esc to return
      the new tour). Annealing ends with the sliding overlay (`player/overlay.ts`, port of
      `ControlLCLOverlay`). Buttons and map taps mirror the keys.
-   - `main.ts` is a temporary setup page (map, solver, method, start, annealing settings,
-     seed). A finished insertion or iteration run becomes the current tour, as in the original.
-
-   **Notes for phase 4:**
-   - The original's BLUE text (index 1 remapped to full blue) is hard to read on black;
-     consider a lighter blue if it matters more than authenticity.
    - Samples come from `Data/*.TSP` via `import.meta.glob` (`data/samples.ts`); the Vite dev
      server is allowed to read `..` for that.
-4. **Main screen.** File list, solver/method/init lists, annealing parameters, New / Randomise /
-   Save / Go buttons with Shift-N/R/S/G and Shift-H, message bar hints, help panel.
-5. **Files and storage.** Bundled samples from `Data/`, upload or drag-and-drop, Save as a
-   `.TSP` download, "Current" kept in `localStorage`, PNG screenshot instead of the `V` key.
+4. **Main screen.** ✅ Done. `ui/mainScreen.ts` lays out `IntWinManager`'s windows on the
+   original 640 × 350 grid (stacked on phones): title, file list, map view, help window, solver,
+   method and init lists, New / Save / Randomize / GO! buttons, message bar. `ui/menuState.ts`
+   holds the choices and rules (`SetFile`, `SetSolver`, `SetMethod`, `SetInit`), tested apart
+   from the page.
+   - As in the original, a map's city order is its tour. A finished insertion or iteration run,
+     New (`MakeMap`) and Randomize (`rndfile`) write to Current and select it. Any other return
+     from a run copies the selected map to Current (`DrawScreen` → `SetFile(INITIALISE)`).
+   - Hover or focus shows each window's hint in the message bar. Choosing an item shows its
+     help from `Legacy/HLP` (`data/help.ts`); choosing a file shows its statistics.
+   - Shift-N/S/R/G/H, F1 and F2 as before. Typed input is read in the help window like
+     `ReadString` (Enter accepts, Esc aborts, character filters).
+   - Annealing settings change by right-click, as before, or by choosing the selected one again
+     (for touch screens), with the original's checks and messages.
+   - Save downloads the selected map as a `.TSP` file and lists it (`.TSP` names only, as the
+     original's directory scan did) for this visit. Keeping it across visits is phase 5.
+   - Changes from the original: Quit's slot holds Help; button text uses light blue rather than
+     BLUE, which is hard to read on black. Personal details (name, student number, institution,
+     coordinator) are left out of the title, hints and About panel.
+5. **Files and storage.** Upload or drag-and-drop `.TSP` files into the list; keep saved files
+   and "Current" in `localStorage`; PNG screenshot instead of the `V` key. (Bundled samples
+   and Save as a download are done.)
 6. **Extras (optional).** Benchmark page recreating the DOCO tables; "Classic mode" running the
    original `VTTSP.EXE` in js-dos. Quit button dropped.
 
