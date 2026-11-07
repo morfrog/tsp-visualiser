@@ -4,7 +4,10 @@ import {
   annealItemNames,
   changeAnnealSetting,
   CURRENT,
+  fileIndex,
   initialMenu,
+  removeFile,
+  toStored,
   initItems,
   methodItems,
   selectedFile,
@@ -126,6 +129,12 @@ describe('Current and saved files', () => {
     expect(selectedFile(s).name).toBe(CURRENT);
   });
 
+  it('lists opened files whatever their name', () => {
+    const s = initialMenu(files());
+    expect(addFile(s, '30CITIES.DI0', [city(1), city(2), city(3)], true)).toBe(true);
+    expect(fileIndex(s, '30cities.di0')).toBe(2);
+  });
+
   it('replaces a file saved under the same name, and lists only .TSP names', () => {
     const s = initialMenu(files());
     addFile(s, 'a.tsp', [city(4), city(4), city(4)]);
@@ -133,5 +142,49 @@ describe('Current and saved files', () => {
     expect(s.files[0].cities).toHaveLength(3);
     expect(addFile(s, 'notes.txt', [])).toBe(false);
     expect(s.files).toHaveLength(3);
+  });
+});
+
+describe('keeping files between visits', () => {
+  it('stores only the visitor files and Current', () => {
+    const s = initialMenu(files());
+    addFile(s, 'MINE.TSP', [city(1), city(2), city(3)]);
+    setCurrent(s, [city(4), city(5), city(6)]);
+    expect(toStored(s)).toEqual({
+      files: [{ name: 'MINE.TSP', cities: [city(1), city(2), city(3)] }],
+      current: [city(4), city(5), city(6)],
+    });
+  });
+
+  it('restores stored files after the samples, and Current as it was', () => {
+    const s = initialMenu(files(), { files: [{ name: 'MINE.TSP', cities: [city(7), city(8), city(9)] }], current: [city(3)] });
+    expect(s.files.map((f) => [f.name, !!f.user])).toEqual([
+      ['A.TSP', false],
+      ['B.TSP', false],
+      ['MINE.TSP', true],
+      [CURRENT, false],
+    ]);
+    expect(s.files[3].cities).toEqual([city(3)]);
+  });
+
+  it('a stored file named like a sample replaces it, and forgetting brings the sample back', () => {
+    const s = initialMenu(files(), { files: [{ name: 'a.tsp', cities: [city(7), city(8), city(9)] }], current: null });
+    expect(s.files[0]).toMatchObject({ name: 'a.tsp', user: true });
+    expect(removeFile(s, 0)).toBe(true);
+    expect(s.files[0]).toEqual({ name: 'A.TSP', cities: files()[0].cities });
+  });
+
+  it('forgets a visitor file, keeping the selection sensible; samples and Current stay', () => {
+    const s = initialMenu(files());
+    addFile(s, 'ONE.TSP', [city(1), city(2), city(3)]);
+    addFile(s, 'TWO.TSP', [city(1), city(2), city(3)]);
+    selectFile(s, 3); // TWO
+    expect(removeFile(s, 2)).toBe(true); // ONE
+    expect(selectedFile(s).name).toBe('TWO.TSP');
+    expect(removeFile(s, 0)).toBe(false);
+    expect(removeFile(s, s.files.length - 1)).toBe(false);
+    selectFile(s, 2);
+    removeFile(s, 2);
+    expect(selectedFile(s).name).toBe(CURRENT);
   });
 });

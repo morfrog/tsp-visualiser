@@ -19,17 +19,22 @@ import {
 } from '../algorithms/catalog';
 import { f, d } from '../algorithms/text';
 import type { City } from '../core/geometry';
+import type { Stored } from '../data/storage';
 
 export const CURRENT = 'Current';
 
 export interface MapFile {
   name: string;
   cities: City[];
+  /** Saved or opened by the visitor (kept between visits), not a bundled sample. */
+  user?: boolean;
 }
 
 export interface MenuState {
   /** Listed files; the last is always Current. */
   files: MapFile[];
+  /** The bundled samples, to restore one a user file had replaced. */
+  samples: MapFile[];
   selectedFile: number;
   solver: number;
   /** Each solver remembers its own method (Legacy insmethodnum etc.). */
@@ -52,17 +57,44 @@ const METHODS: Record<SolverId, readonly Choice<string>[]> = {
 
 const ANNEAL_KEYS: readonly (keyof AnnealSettings)[] = ['temperature', 'coolingRate', 'changesPerTemperature'];
 
-/** The files found plus Current, a copy of the first (Legacy SetFile INITIALISE). */
-export function initialMenu(files: readonly MapFile[]): MenuState {
-  const listed = files.map((file) => ({ name: file.name, cities: file.cities.map((c) => ({ ...c })) }));
+/**
+ * The files found plus Current (Legacy SetFile INITIALISE): the bundled
+ * samples, then the visitor's stored files (one with a sample's name replaces
+ * it, as saving over a file did), then Current, as stored or else a copy of
+ * the first file.
+ */
+export function initialMenu(samples: readonly MapFile[], stored: Stored = { files: [], current: null }): MenuState {
+  const copy = (file: MapFile): MapFile => ({ ...file, cities: file.cities.map((c) => ({ ...c })) });
+  const listed = samples.map((file) => copy({ name: file.name, cities: file.cities }));
+  for (const file of stored.files) {
+    const user = copy({ name: file.name, cities: file.cities, user: true });
+    const i = listed.findIndex((f) => sameName(f.name, file.name));
+    if (i >= 0) listed[i] = user;
+    else listed.push(user);
+  }
   const first = listed[0]?.cities ?? [];
+  const current = stored.current ?? first;
   return {
-    files: [...listed, { name: CURRENT, cities: first.map((c) => ({ ...c })) }],
+    files: [...listed, { name: CURRENT, cities: current.map((c) => ({ ...c })) }],
+    samples: samples.map(copy),
     selectedFile: 0,
     solver: 0,
     methods: { insertion: 0, iteration: 0, annealing: 0 },
     inits: { insertion: 0, annealing: 0 },
     anneal: { ...DEFAULT_ANNEAL_SETTINGS },
+  };
+}
+
+function sameName(a: string, b: string): boolean {
+  return a.toUpperCase() === b.toUpperCase();
+}
+
+/** What to keep between visits: the visitor's files and Current. */
+export function toStored(state: MenuState): Stored {
+  const last = state.files.length - 1;
+  return {
+    files: state.files.slice(0, last).filter((f) => f.user).map((f) => ({ name: f.name, cities: f.cities })),
+    current: state.files[last].cities,
   };
 }
 
@@ -164,18 +196,44 @@ export function setCurrent(state: MenuState, cities: City[]): void {
 }
 
 /**
- * Adds or replaces a saved file. Like the original's directory scan, only
- * names ending in .TSP are listed; they go before Current.
+ * Adds or replaces the visitor's file. Like the original's directory scan,
+ * saved files are only listed if their names end in .TSP; opened files are
+ * listed whatever their name (`anyName`). They go before Current.
  */
-export function addFile(state: MenuState, name: string, cities: City[]): boolean {
-  if (!/\.tsp$/i.test(name)) return false;
-  const copy = { name, cities: cities.map((c) => ({ ...c })) };
-  const existing = state.files.findIndex((file, i) => i < state.files.length - 1 && file.name.toUpperCase() === name.toUpperCase());
+export function addFile(state: MenuState, name: string, cities: City[], anyName = false): boolean {
+  if (!anyName && !/\.tsp$/i.test(name)) return false;
+  const copy: MapFile = { name, cities: cities.map((c) => ({ ...c })), user: true };
+  const last = state.files.length - 1;
+  const existing = state.files.findIndex((file, i) => i < last && sameName(file.name, name));
   if (existing >= 0) {
     state.files[existing] = copy;
   } else {
-    state.files.splice(state.files.length - 1, 0, copy);
-    if (state.selectedFile === state.files.length - 2) state.selectedFile++; // keep Current selected
+    state.files.splice(last, 0, copy);
+    if (state.selectedFile === last) state.selectedFile++; // keep Current selected
+  }
+  return true;
+}
+
+/** Index of a listed file by name (not Current), or -1. */
+export function fileIndex(state: MenuState, name: string): number {
+  return state.files.findIndex((file, i) => i < state.files.length - 1 && sameName(file.name, name));
+}
+
+/**
+ * Forgets one of the visitor's files. A sample it had replaced comes back.
+ * Returns false for samples and Current, which can't be removed.
+ */
+export function removeFile(state: MenuState, index: number): boolean {
+  const last = state.files.length - 1;
+  const file = state.files[index];
+  if (index < 0 || index >= last || !file.user) return false;
+  const sample = state.samples.find((s) => sameName(s.name, file.name));
+  if (sample) {
+    state.files[index] = { name: sample.name, cities: sample.cities.map((c) => ({ ...c })) };
+  } else {
+    state.files.splice(index, 1);
+    if (state.selectedFile > index) state.selectedFile--;
+    else if (state.selectedFile === index) state.selectedFile = Math.min(index, state.files.length - 1);
   }
   return true;
 }

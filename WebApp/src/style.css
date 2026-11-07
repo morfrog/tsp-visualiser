@@ -279,6 +279,22 @@ canvas:focus-visible {
   color: var(--ega-yellow);
 }
 
+/* The visitor's own files (kept between visits). */
+.list__item.is-user::after {
+  content: ' *';
+  color: var(--ega-green);
+}
+
+.list__item--open {
+  color: var(--ega-green);
+  margin-top: 0.3em;
+}
+
+.main-screen.is-dropping .win--files {
+  border-color: var(--ega-yellow);
+  background: #0000aa;
+}
+
 .help-box {
   position: relative;
   height: 100%;

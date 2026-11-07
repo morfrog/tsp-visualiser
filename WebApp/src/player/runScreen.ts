@@ -17,6 +17,7 @@ import { Ega, Role, type EgaColor } from '../core/colors';
 import { DistanceMatrix } from '../core/distances';
 import { Tour } from '../core/tour';
 import { drawView, fitCanvas } from '../render/mapView';
+import { savePicture } from '../render/screenshot';
 import { renderTextGrid, TextGrid } from '../render/textGrid';
 import type { StartRequest } from '../run/protocol';
 import { startSession } from '../run/session';
@@ -71,6 +72,7 @@ function buildLayout(container: HTMLElement, annealing: boolean, title: string):
   const status = el('p', 'run__status');
   status.setAttribute('aria-live', 'polite');
   const controls = el('div', 'run__controls');
+  controls.dataset.noPicture = ''; // the original's V key captured the screen, not controls
   const texts: Layout['texts'] = {};
   const maps: HTMLCanvasElement[] = [];
   let overlay: HTMLCanvasElement | null = null;
@@ -146,6 +148,13 @@ export async function showRun(container: HTMLElement, request: RunRequest): Prom
     if (event.target instanceof HTMLSelectElement || event.target instanceof HTMLInputElement) return;
     // Let Enter/Space activate a focused button normally.
     if ((event.key === 'Enter' || event.key === ' ') && event.target instanceof HTMLButtonElement) return;
+    // Shift-V saves a picture at any point (Legacy DoInput 'V'). Unlike the
+    // original, it doesn't also count as a key press that moves the run on.
+    if (event.shiftKey && event.key.toUpperCase() === 'V') {
+      event.preventDefault();
+      savePicture(layout.root);
+      return;
+    }
     keyHandler(event.key);
     if (event.key === ' ' || event.key === 'Enter' || event.key === 'Escape') event.preventDefault();
   };
@@ -209,6 +218,7 @@ export async function showRun(container: HTMLElement, request: RunRequest): Prom
     button('Run to end', push({ kind: 'fast' }), "Run without stopping ('0')"),
     button('Pause', push({ kind: 'keyMode' }), 'Stop at every step (Enter)'),
     button('Stop', push({ kind: 'abort' }), 'Abandon the run (Esc)'),
+    button('Picture', () => savePicture(layout.root), 'Save a picture of the screen (Shift-V)'),
   );
   layout.maps.forEach((m) => m.addEventListener('click', () => commands.push({ kind: 'continue' })));
 

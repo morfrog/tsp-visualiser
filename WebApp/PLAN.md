@@ -88,9 +88,20 @@ becomes a generator that `yield`s a frame (highlights + info text). A player dri
    - Changes from the original: Quit's slot holds Help; button text uses light blue rather than
      BLUE, which is hard to read on black. Personal details (name, student number, institution,
      coordinator) are left out of the title, hints and About panel.
-5. **Files and storage.** Upload or drag-and-drop `.TSP` files into the list; keep saved files
-   and "Current" in `localStorage`; PNG screenshot instead of the `V` key. (Bundled samples
-   and Save as a download are done.)
+5. **Files and storage.** ✅ Done.
+   - `data/uploads.ts`: open `.TSP` files with the file list's "Open..." item (Shift-O) or by
+     dropping them on the main screen. Any name is accepted (e.g. `30CITIES.DI0`); limits
+     1 MB, 2000 cities, coordinates 0 to 1. Each file's result shows in the help window.
+   - `data/storage.ts`: the visitor's saved and opened files and Current are kept in
+     `localStorage` (`vttsp:v1`), written after every change. Every access is guarded; without
+     storage the app works the same but forgets on reload. A stored file named like a sample
+     replaces it in the list.
+   - The visitor's files are marked `*`; right-click or Delete asks (Y/N) and forgets one,
+     bringing back a sample it had replaced. Samples and Current can't be removed.
+   - `render/screenshot.ts`: Shift-V (the original's `V`) on either screen, or the run screen's
+     Picture button, saves `VTTSP000.PNG`, `VTTSP001.PNG`, ... redrawn from the visible
+     windows, canvases and text (run controls left out). Unlike the original, it doesn't also
+     advance a run.
 6. **Extras (optional).** Benchmark page recreating the DOCO tables; "Classic mode" running the
    original `VTTSP.EXE` in js-dos. Quit button dropped.
 

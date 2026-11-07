@@ -8,6 +8,9 @@
 // and Shift-H work as before; F1 is help and F2 is save.
 //
 // The Quit button had nothing to do in a browser; its slot holds Help.
+// New for the web: open or drop .TSP files into the list (Shift-O),
+// right-click or Delete forgets one of your files, Shift-V saves a picture
+// (the original's V key), and your files and Current are kept between visits.
 
 import { selectionProblem, SOLVERS } from '../algorithms/catalog';
 import { f, d } from '../algorithms/text';
@@ -18,15 +21,19 @@ import { AnsiCRandom, clockSeed } from '../core/random';
 import { Tour } from '../core/tour';
 import { formatTsp } from '../core/tspfile';
 import { help, type HelpEntry } from '../data/help';
+import { readFiles } from '../data/uploads';
 import { showRun } from '../player/runScreen';
 import { drawView, fitCanvas } from '../render/mapView';
+import { savePicture } from '../render/screenshot';
 import { renderTextGrid, TextGrid } from '../render/textGrid';
 import {
   addFile,
   annealSetting,
   changeAnnealSetting,
+  fileIndex,
   initItems,
   methodItems,
+  removeFile,
   selectedFile,
   selectedInit,
   selectedMethod,
@@ -55,6 +62,7 @@ const FILTERS = {
   int: /^[0-9+-]$/,
   double: /^[0-9.+\-Ee]$/,
   file: /^[^\\/:*?"<>|]$/,
+  yesNo: /^[YyNn]$/,
 };
 
 /** The original's help text, with the mouse and Quit lines updated for the web. */
@@ -99,11 +107,17 @@ export class MainScreen {
   private prompt: HTMLInputElement | null = null;
   private cancelPrompt: (() => void) | null = null;
   private busy = false;
+  private picker!: HTMLInputElement;
   private readonly onKeyDown = (e: KeyboardEvent) => this.handleKey(e);
 
+  /**
+   * `persist` is called after anything that changes the visitor's files or
+   * Current, so they can be kept between visits.
+   */
   constructor(
     private readonly container: HTMLElement,
     private readonly state: MenuState,
+    private readonly persist: (state: MenuState) => void = () => {},
   ) {}
 
   mount(): void {
@@ -142,6 +156,17 @@ export class MainScreen {
     fileList.setAttribute('role', 'group');
     fileList.setAttribute('aria-label', 'Files');
     files.append(fileList);
+    this.picker = el('input', 'sr-only');
+    this.picker.type = 'file';
+    this.picker.multiple = true;
+    this.picker.tabIndex = -1;
+    this.picker.setAttribute('aria-hidden', 'true');
+    this.picker.addEventListener('change', () => {
+      const chosen = [...(this.picker.files ?? [])];
+      this.picker.value = '';
+      if (chosen.length > 0) void this.openFiles(chosen);
+    });
+    files.append(this.picker);
 
     const view = win('view');
     this.canvas = el('canvas', 'map map--view');
@@ -192,6 +217,7 @@ export class MainScreen {
     this.msg.setAttribute('role', 'status');
 
     root.append(title, files, view, helpWin, solverWin, methodWin, initWin, buttons, helpButton, this.msg);
+    this.acceptDrops(root);
     this.container.replaceChildren(root);
     this.root = root;
     this.lists = { files: fileList, solver: solverList, method: methodList, init: initList };
@@ -253,7 +279,20 @@ export class MainScreen {
         this.drawMap();
         this.statistics();
       },
+      (i) => void this.forget(i),
     );
+    [...this.lists.files.children].forEach((item, i) => {
+      if (s.files[i]?.user) {
+        item.classList.add('is-user');
+        item.setAttribute('title', 'Your file. Right-click or Delete to forget it.');
+      }
+    });
+    const open = el('button', 'list__item list__item--open', 'Open...');
+    open.type = 'button';
+    open.setAttribute('aria-keyshortcuts', 'Shift+O');
+    open.title = 'Open .TSP files from your computer (Shift-O), or drop them here';
+    open.addEventListener('click', () => this.picker.click());
+    this.lists.files.append(open);
     this.renderList(this.lists.solver, SOLVERS.map((c) => ({ name: c.name, help: c.help })), s.solver, (i) => {
       selectSolver(s, i);
       this.renderLists();
@@ -354,8 +393,8 @@ export class MainScreen {
     const solver = SOLVERS[s.solver].name;
     const messages: Record<WindowId, string> = {
       title: 'Visualisation Tool for the TSP, 1997',
-      files: 'Choose A File',
-      view: `View of ${selectedFile(s).name}`,
+      files: 'Choose A File  (Shift-O opens yours; right-click forgets)',
+      view: `View of ${selectedFile(s).name}  (Shift-V saves a picture)`,
       help: 'Help on this program                     (Shift-H)',
       solver: 'Choose a TSP method',
       method: `Choose an ${solver} Operation Method`,
@@ -418,7 +457,9 @@ export class MainScreen {
           this.prompt = null;
           this.cancelPrompt = null;
         }
-        input.remove();
+        // Blur before removing, so removal doesn't re-enter through the blur handler.
+        if (document.activeElement === input) input.blur();
+        if (input.isConnected) input.remove();
       };
       // Another action replacing this prompt settles it silently (undefined).
       this.cancelPrompt = () => done(undefined);
@@ -468,6 +509,7 @@ export class MainScreen {
       );
     }
     setCurrent(this.state, makeMap(count, new AnsiCRandom(clockSeed())));
+    this.persist(this.state);
     this.renderLists();
     this.drawMap();
     this.writeHelp([{ text: `:${typed}`, row: 4, color: Ega.LTRED }, { text: 'Map Created..', row: 6, color: Ega.GREEN }], false);
@@ -483,6 +525,7 @@ export class MainScreen {
     const file = selectedFile(this.state);
     downloadText(typed, formatTsp(file.cities));
     const listed = addFile(this.state, typed, file.cities);
+    if (listed) this.persist(this.state);
     this.renderLists();
     this.writeHelp(
       [
@@ -497,6 +540,7 @@ export class MainScreen {
   /** Legacy RndBtnPress. */
   private randomize(): void {
     setCurrent(this.state, randomizeOrder(selectedFile(this.state).cities, new AnsiCRandom(clockSeed())));
+    this.persist(this.state);
     this.renderLists();
     this.drawMap();
     this.statistics();
@@ -552,12 +596,89 @@ export class MainScreen {
         setCurrent(s, file.cities.map((c) => ({ ...c })));
         s.selectedFile = keep;
       }
+      this.persist(s);
     } finally {
       this.busy = false;
       // Remounting shows the About panel, as DrawScreen did.
       this.mount();
       this.root.querySelector<HTMLElement>('.win--go')?.focus({ preventScroll: true });
     }
+  }
+
+  // ---------------------------------------------------------------- your files
+
+  /** Lists opened or dropped files, selecting the last one that read. */
+  private async openFiles(files: File[]): Promise<void> {
+    const results = await readFiles(files);
+    const lines: { text: string; row: number; color: EgaColor }[] = [{ text: 'Open...', row: 1, color: Ega.GREEN }];
+    let lastOk = -1;
+    results.forEach((r, i) => {
+      if (r.ok) {
+        addFile(this.state, r.name, r.cities, true);
+        lastOk = fileIndex(this.state, r.name);
+      }
+      if (i >= HELP_ROWS - 2) return; // room for a summary line
+      const name = r.name.length > 14 ? `${r.name.slice(0, 13)}~` : r.name;
+      // One row each: trim to the window so a long reason can't spill into the next.
+      const text = `${name}: ${r.ok ? `${r.cities.length} cities` : r.error}`;
+      const fitted = text.length > HELP_COLS ? `${text.slice(0, HELP_COLS - 1)}~` : text;
+      lines.push({ text: fitted, row: i + 2, color: r.ok ? Ega.GREEN : Ega.LTRED });
+    });
+    const firstError = results.find((r) => !r.ok);
+    if (firstError && !firstError.ok) this.message(`${firstError.name}: ${firstError.error}`, Ega.LTRED);
+    if (results.length > HELP_ROWS - 2) {
+      lines.push({ text: `...and ${results.length - (HELP_ROWS - 2)} more`, row: HELP_ROWS, color: Ega.YELLOW });
+    }
+    if (lastOk >= 0) {
+      selectFile(this.state, lastOk);
+      this.persist(this.state);
+    }
+    this.renderLists();
+    this.drawMap();
+    this.writeHelp(lines);
+  }
+
+  private acceptDrops(root: HTMLElement): void {
+    const hasFiles = (e: DragEvent) => [...(e.dataTransfer?.types ?? [])].includes('Files');
+    root.addEventListener('dragover', (e) => {
+      if (!hasFiles(e) || this.busy) return;
+      e.preventDefault();
+      e.dataTransfer!.dropEffect = 'copy';
+      root.classList.add('is-dropping');
+      this.message('Drop .TSP files to add them to the list', Ega.YELLOW);
+    });
+    root.addEventListener('dragleave', (e) => {
+      if (!root.contains(e.relatedTarget as Node | null)) root.classList.remove('is-dropping');
+    });
+    root.addEventListener('drop', (e) => {
+      root.classList.remove('is-dropping');
+      if (!hasFiles(e) || this.busy) return;
+      e.preventDefault();
+      void this.openFiles([...(e.dataTransfer?.files ?? [])]);
+    });
+  }
+
+  /** Asks, then forgets one of the visitor's files. Samples and Current stay. */
+  private async forget(index: number): Promise<void> {
+    const file = this.state.files[index];
+    if (!file?.user) {
+      return this.message(`${file?.name ?? 'That'} is not one of your files, so it stays.`, Ega.YELLOW);
+    }
+    this.writeHelp([
+      { text: `Forget ${file.name}?`, row: 1, color: Ega.YELLOW },
+      { text: ':(Y/N)\n:', row: 2, color: Ega.YELLOW },
+    ]);
+    const answer = await this.ask(3, 2, 1, FILTERS.yesNo, `Forget ${file.name}? Y or N`);
+    if (answer === undefined) return;
+    const echo = { text: `:${answer ?? ''}`, row: 3, color: Ega.LTRED };
+    if (answer?.toUpperCase() !== 'Y') {
+      return this.writeHelp([echo, { text: `Kept ${file.name}.`, row: 5, color: Ega.GREEN }], false);
+    }
+    removeFile(this.state, index);
+    this.persist(this.state);
+    this.renderLists();
+    this.drawMap();
+    this.writeHelp([echo, { text: `${file.name} Forgotten.`, row: 5, color: Ega.GREEN }], false);
   }
 
   // ---------------------------------------------------------------- keys
@@ -573,6 +694,12 @@ export class MainScreen {
       H: () => this.showHelp(VTTSP_HELP),
       F1: () => this.showHelp(VTTSP_HELP),
       F2: () => void this.save(),
+      O: () => this.picker.click(),
+      V: () => savePicture(this.root),
+      Delete: () => {
+        const i = [...this.lists.files.children].indexOf(document.activeElement as Element);
+        if (i >= 0 && i < this.state.files.length) void this.forget(i);
+      },
     };
     // The original compared getch() with capitals: Shift + letter (or Caps Lock).
     const key = e.key.length === 1 && e.shiftKey ? e.key.toUpperCase() : e.key;
