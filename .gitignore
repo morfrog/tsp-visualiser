@@ -53,3 +53,7 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Extracted 1997 archives, including the original VTTSP.EXE used by the
+# dev-only classic mode. Never commit these.
+Temp/

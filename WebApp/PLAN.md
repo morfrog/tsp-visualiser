@@ -102,15 +102,28 @@ becomes a generator that `yield`s a frame (highlights + info text). A player dri
      Picture button, saves `VTTSP000.PNG`, `VTTSP001.PNG`, ... redrawn from the visible
      windows, canvases and text (run controls left out). Unlike the original, it doesn't also
      advance a run.
-6. **Extras (optional).** Benchmark page recreating the DOCO tables; "Classic mode" running the
-   original `VTTSP.EXE` in js-dos. Quit button dropped.
+6. **Extras.** ✅ Done.
+   - **Benchmark page** (`benchmark.html`, `src/bench/`, linked from the footer): reruns every
+     DOCO table in a worker, with each result next to the 1997 one. The 150 same-every-run
+     results are checked and match; random-number columns are marked "(varies)" and use a seed
+     you can change. Annealing used the default settings, which DOCO doesn't record.
+   - **Classic mode, development only** (`classic.html`, `src/classic/page.ts`,
+     `dev/classicPlugin.ts`): runs the original `VTTSP.EXE` in js-dos 8.5.3 (loaded from
+     jsDelivr) under `npm run dev`. The original files are **not in source control** (`Temp/`
+     is git-ignored) and **never deployed**: they contain personal details and DOS4GW.EXE is
+     third-party. If `VTTSP.EXE` and `DOS4GW.EXE` are at `Temp/Tsp/PACK` (or
+     `VTTSP_ORIGINAL_DIR`), the dev server bundles that folder on request; otherwise the page
+     says what's missing. The plugin only applies to the dev server, `classic.html` isn't a
+     build input, the footer link only appears in dev builds, and the deploy workflow fails if
+     any `.EXE`, `.jsdos`, classic page or js-dos/DOS4GW reference reaches `dist/`.
+     The PACK executable reports itself as V2.07.
 
 ## Development
 
 ```bash
 cd WebApp
 npm install
-npm run dev       # local dev server
+npm run dev       # local dev server (classic.html runs the original, if present)
 npm test          # run the Vitest suite once
 npm run build     # type-check + production build to dist/
 npm run preview   # serve dist/ locally

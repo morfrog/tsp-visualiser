@@ -433,3 +433,133 @@ canvas:focus-visible {
     font-size: clamp(9px, calc((100cqi - 18px) / (var(--cols) * 0.6)), 14px);
   }
 }
+
+/* ---- Benchmark page ---- */
+
+.bench h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  color: var(--ega-green);
+}
+
+.bench h2 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  color: var(--ega-yellow);
+}
+
+.bench__intro,
+.bench__note {
+  color: var(--muted);
+  max-width: 75ch;
+  line-height: 1.4;
+}
+
+.bench__note {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
+.bench__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+}
+
+.bench__controls label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.bench__controls input {
+  width: 8em;
+}
+
+.btn--go {
+  color: var(--ega-yellow);
+  font-weight: bold;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.bench__status {
+  color: var(--ega-green);
+  min-height: 1.4em;
+}
+
+.bench__status.is-bad {
+  color: var(--ega-ltred);
+}
+
+.bench__table {
+  margin: 24px 0;
+}
+
+.bench__scroll {
+  overflow-x: auto;
+  border: 2px solid var(--border);
+}
+
+.bench__scroll:focus-visible {
+  outline: 3px solid var(--focus);
+}
+
+.bench table {
+  border-collapse: collapse;
+  min-width: 100%;
+  font-size: 0.85rem;
+}
+
+.bench th,
+.bench td {
+  padding: 4px 8px;
+  border: 1px solid #333;
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.bench thead th {
+  color: var(--ega-green);
+  font-weight: normal;
+}
+
+.bench tbody th,
+.bench tfoot th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.bench tfoot td,
+.bench tfoot th {
+  border-top: 2px solid var(--border);
+}
+
+.bench__ours {
+  display: block;
+  color: var(--text);
+}
+
+.bench__doco {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+.bench__varies {
+  color: var(--muted);
+}
+
+.bench td.is-match .bench__ours {
+  color: var(--ega-green);
+}
+
+.bench td.is-mismatch .bench__ours {
+  color: var(--ega-ltred);
+}
