@@ -5,7 +5,7 @@
 import type { DistanceMatrix } from '../core/distances';
 import type { Rng } from '../core/random';
 import type { Tour } from '../core/tour';
-import { anneal, type AnnealSettings } from './anneal';
+import { anneal, validateAnnealSettings, type AnnealSettings } from './anneal';
 import type { MethodRun } from './frame';
 import { insertion, nearestNeighbour, type InsertionRule, type InsertionStart } from './insertion';
 import { optimise, type OptMethod } from './optim';
@@ -67,6 +67,22 @@ export type Selection =
   | { solver: 'insertion'; method: InsertionMethodId; start: InsertionStart }
   | { solver: 'iteration'; method: OptMethod }
   | { solver: 'annealing'; settings: AnnealSettings };
+
+/**
+ * Pauses per step, for splitting a timed step's delay between them (Legacy
+ * Init2TimeSegs for Nearest Neighbour, Init3TimeSegs for the rest).
+ */
+export function pausesPerStep(selection: Selection): number {
+  return selection.solver === 'insertion' && selection.method === 'nearestNeighbour' ? 2 : 3;
+}
+
+/** Why a selection can't run on this map, or null if it can. */
+export function selectionProblem(cityCount: number, selection: Selection): string | null {
+  const min = selection.solver === 'insertion' ? 3 : 4;
+  if (cityCount < min) return `This method needs at least ${min} cities.`;
+  if (selection.solver === 'annealing') return validateAnnealSettings(selection.settings);
+  return null;
+}
 
 /**
  * Starts the selected method (Legacy "Go!"). Insertion builds a new tour and

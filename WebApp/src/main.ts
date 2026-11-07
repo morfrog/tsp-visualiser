@@ -1,77 +1,225 @@
-// Placeholder page until the real UI arrives (see PLAN.md, phases 3-4): draws
-// the 30CITY_0 sample and its file-order tour, using the ported core modules.
+// Temporary setup page for trying the player (phase 3). Phase 4 replaces it
+// with the original main screen: file list, solver/method/init lists and
+// buttons. Like the original, a finished insertion or iteration run becomes
+// the current tour, so methods can be chained (build, then improve).
 
+import { DEFAULT_ANNEAL_SETTINGS } from './algorithms/anneal';
+import {
+  ANNEALING_METHODS,
+  INSERTION_METHODS,
+  INSERTION_STARTS,
+  ITERATION_METHODS,
+  selectionProblem,
+  SOLVERS,
+  type Choice,
+  type Selection,
+  type SolverId,
+} from './algorithms/catalog';
+import { Role, type EgaColor } from './core/colors';
 import { DistanceMatrix } from './core/distances';
-import type { City } from './core/geometry';
+import { clockSeed } from './core/random';
 import { Tour } from './core/tour';
-import { parseTsp } from './core/tspfile';
+import { SAMPLES } from './data/samples';
+import { showRun } from './player/runScreen';
+import { drawView, fitCanvas } from './render/mapView';
 
-const SAMPLE_30CITY_0 = `30
-0.7049470 0.5640130
-0.6338390 0.4365670
-0.6931670 0.3657340
-0.8526570 0.4011050
-0.9629810 0.3749810
-0.8250370 0.2685020
-0.7925960 0.1481370
-0.7456280 0.1724600
-0.6402480 0.0756249
-0.6406450 0.1528370
-0.5788140 0.2638020
-0.5626700 0.3167820
-0.4833220 0.2215340
-0.3510540 0.2749110
-0.3174230 0.1712700
-0.1471600 0.0879849
-0.2200690 0.3299050
-0.0855434 0.4113590
-0.0259407 0.4917140
-0.1769460 0.5529340
-0.1561630 0.6755270
-0.0964385 0.9548940
-0.3073520 0.9367050
-0.3453170 0.6697290
-0.4972990 0.4665060
-0.5213480 0.6082340
-0.5988650 0.7628710
-0.7449870 0.8972440
-0.8067570 0.8662980
-0.8969390 0.5849180`;
+const app = document.querySelector<HTMLElement>('#app')!;
 
-function draw(canvas: HTMLCanvasElement, cities: readonly City[], tour: Tour): void {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Canvas 2D not supported');
+interface Current {
+  sample: number;
+  tour: number[];
+  /** Which run produced the current tour, if any. */
+  madeBy: string | null;
+}
 
-  const margin = 24;
-  const size = canvas.width - margin * 2;
-  const px = (c: City) => margin + c.x * size;
-  const py = (c: City) => margin + (1 - c.y) * size; // y up
+const state = {
+  current: { sample: Math.max(0, SAMPLES.findIndex((s) => s.name === '30CITY_0.TSP')), tour: [], madeBy: null } as Current,
+  solver: 'insertion' as SolverId,
+  method: 'nearest2',
+  start: 'furthest',
+  anneal: { ...DEFAULT_ANNEAL_SETTINGS },
+};
+state.current.tour = identity(SAMPLES[state.current.sample].cities.length);
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+let previewObserver: ResizeObserver | null = null;
 
-  ctx.strokeStyle = '#ff5555';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  tour.toArray().forEach((i, n) => {
-    const c = cities[i];
-    if (n === 0) ctx.moveTo(px(c), py(c));
-    else ctx.lineTo(px(c), py(c));
-  });
-  ctx.closePath();
-  ctx.stroke();
+function identity(n: number): number[] {
+  return Array.from({ length: n }, (_, i) => i);
+}
 
-  ctx.fillStyle = '#ffffff';
-  for (const c of cities) {
-    ctx.beginPath();
-    ctx.arc(px(c), py(c), 5, 0, Math.PI * 2);
-    ctx.fill();
+function options<T extends string>(
+  select: HTMLSelectElement,
+  choices: readonly Choice<T>[],
+  value: string,
+  markRandom = true,
+): void {
+  select.replaceChildren(
+    ...choices.map((c) => {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = `${c.name}${markRandom && !c.deterministic ? ' (random)' : ''}`;
+      o.selected = c.id === value;
+      return o;
+    }),
+  );
+}
+
+function selection(): Selection {
+  switch (state.solver) {
+    case 'insertion':
+      return { solver: 'insertion', method: state.method as never, start: state.start as never };
+    case 'iteration':
+      return { solver: 'iteration', method: state.method as never };
+    case 'annealing':
+      return { solver: 'annealing', settings: { ...state.anneal } };
   }
 }
 
-const viewCanvas = document.querySelector<HTMLCanvasElement>('#view')!;
-const statusLine = document.querySelector<HTMLParagraphElement>('#status')!;
-const sampleCities = parseTsp(SAMPLE_30CITY_0);
-const sampleTour = Tour.identity(sampleCities.length);
-draw(viewCanvas, sampleCities, sampleTour);
-const tourLength = sampleTour.length(new DistanceMatrix(sampleCities));
-statusLine.textContent = `30CITY_0.TSP: ${sampleCities.length} cities, optimal tour length ${tourLength.toFixed(6)}`;
+function renderSetup(): void {
+  const sample = SAMPLES[state.current.sample];
+  const dist = new DistanceMatrix(sample.cities);
+  const length = new Tour(state.current.tour).length(dist);
+
+  app.innerHTML = `
+    <section class="setup" aria-label="Choose a run">
+      <div class="setup__map">
+        <canvas class="map map--preview" role="img" aria-label="Current tour"></canvas>
+        <p class="setup__caption"></p>
+      </div>
+      <form class="setup__form">
+        <label>Map <select name="sample"></select></label>
+        <label>Solver <select name="solver"></select></label>
+        <label>Method <select name="method"></select></label>
+        <label class="only-insertion">Initialisation <select name="start"></select></label>
+        <fieldset class="only-annealing">
+          <legend>Annealing settings</legend>
+          <label>Temperature <input name="temperature" type="number" min="0" step="any"></label>
+          <label>Cooling rate <input name="coolingRate" type="number" min="0" max="1" step="any"></label>
+          <label>Changes at each temperature <input name="changes" type="number" min="1" step="1"></label>
+        </fieldset>
+        <label>Random seed <input name="seed" type="number" min="0" step="1"></label>
+        <p class="setup__problem" role="alert"></p>
+        <div class="setup__buttons">
+          <button type="submit" class="btn btn--go">Go!</button>
+          <button type="button" class="btn" name="reset">Reset tour</button>
+        </div>
+        <p class="setup__note">Temporary setup screen. The original main screen arrives in the next phase.</p>
+      </form>
+    </section>`;
+
+  const form = app.querySelector<HTMLFormElement>('.setup__form')!;
+  const field = <T extends HTMLElement>(name: string) => form.elements.namedItem(name) as T;
+
+  const sampleSelect = field<HTMLSelectElement>('sample');
+  sampleSelect.replaceChildren(
+    ...SAMPLES.map((s, i) => {
+      const o = document.createElement('option');
+      o.value = String(i);
+      o.textContent = `${s.name} (${s.cities.length} cities)`;
+      o.selected = i === state.current.sample;
+      return o;
+    }),
+  );
+  options(field<HTMLSelectElement>('solver'), SOLVERS, state.solver, false);
+  const methods = { insertion: INSERTION_METHODS, iteration: ITERATION_METHODS, annealing: ANNEALING_METHODS }[state.solver];
+  if (!methods.some((m) => m.id === state.method)) state.method = methods[0].id;
+  options(field<HTMLSelectElement>('method'), methods, state.method);
+  options(field<HTMLSelectElement>('start'), INSERTION_STARTS, state.start);
+  field<HTMLInputElement>('temperature').value = String(state.anneal.temperature);
+  field<HTMLInputElement>('coolingRate').value = String(state.anneal.coolingRate);
+  field<HTMLInputElement>('changes').value = String(state.anneal.changesPerTemperature);
+  field<HTMLInputElement>('seed').value = String(clockSeed());
+  form.classList.toggle('is-insertion', state.solver === 'insertion');
+  form.classList.toggle('is-annealing', state.solver === 'annealing');
+
+  const caption = app.querySelector<HTMLElement>('.setup__caption')!;
+  caption.textContent = `${sample.name}: ${sample.cities.length} cities, tour length ${length.toFixed(6)}${
+    state.current.madeBy ? ` (after ${state.current.madeBy})` : ''
+  }`;
+  const canvas = app.querySelector<HTMLCanvasElement>('.map--preview')!;
+  const drawPreview = () => {
+    fitCanvas(canvas);
+    drawView(
+      canvas.getContext('2d')!,
+      { left: 0, top: 0, width: canvas.width, height: canvas.height },
+      sample.cities,
+      {
+        tour: state.current.tour,
+        closed: true,
+        baseColors: new Array<EgaColor>(sample.cities.length).fill(state.current.madeBy ? Role.cityIn : Role.cityOut),
+        marks: [],
+        edges: 'plain',
+        lines: [],
+      },
+      { lineWidth: Math.max(1, canvas.width / 460) },
+    );
+  };
+  // One observer at a time: an old one fires when its canvas is removed.
+  previewObserver?.disconnect();
+  previewObserver = new ResizeObserver(() => {
+    if (canvas.isConnected) drawPreview();
+  });
+  previewObserver.observe(canvas);
+
+  const problem = app.querySelector<HTMLElement>('.setup__problem')!;
+  const check = () => {
+    problem.textContent = selectionProblem(sample.cities.length, selection()) ?? '';
+  };
+  check();
+
+  form.addEventListener('change', (event) => {
+    const target = event.target as HTMLInputElement | HTMLSelectElement;
+    switch (target.name) {
+      case 'sample':
+        state.current = { sample: Number(target.value), tour: [], madeBy: null };
+        state.current.tour = identity(SAMPLES[state.current.sample].cities.length);
+        return renderSetup();
+      case 'solver':
+        state.solver = target.value as SolverId;
+        return renderSetup();
+      case 'method':
+        state.method = target.value;
+        break;
+      case 'start':
+        state.start = target.value;
+        break;
+      case 'temperature':
+        state.anneal.temperature = Number(target.value);
+        break;
+      case 'coolingRate':
+        state.anneal.coolingRate = Number(target.value);
+        break;
+      case 'changes':
+        state.anneal.changesPerTemperature = Number(target.value);
+        break;
+    }
+    check();
+  });
+
+  field<HTMLButtonElement>('reset').addEventListener('click', () => {
+    state.current.tour = identity(sample.cities.length);
+    state.current.madeBy = null;
+    renderSetup();
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (selectionProblem(sample.cities.length, selection())) return check();
+    const seed = Math.trunc(Number(field<HTMLInputElement>('seed').value)) || 0;
+    const methodName = methods.find((m) => m.id === state.method)?.name ?? '';
+    const result = await showRun(app, {
+      title: `${sample.name}: ${SOLVERS.find((s) => s.id === state.solver)!.name}, ${methodName}`,
+      cities: sample.cities,
+      tour: state.current.tour,
+      selection: selection(),
+      seed,
+    });
+    if (result.tour) {
+      state.current.tour = result.tour;
+      state.current.madeBy = methodName.trim();
+    }
+    renderSetup();
+  });
+}
+
+renderSetup();

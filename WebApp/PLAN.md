@@ -51,19 +51,30 @@ becomes a generator that `yield`s a frame (highlights + info text). A player dri
    30 iteration results match DOCO's tables to 5 decimals. The iteration benchmark started from
    the shuffled `30CITIES.DI0`–`DI9` files.
 
-   **Notes for phase 3:**
-   - The original y-axis points down (`_setwindow(0, -0.05, -0.05, 1.05, 1.05)`, invert off),
-     with a 0.05 margin. The placeholder page draws y up; fix that in the renderer.
-   - Cities are filled circles of radius 0.023 (double when highlighted) with their number in
-     black inside; edges LTRED; background black. Palette in `core/colors.ts`.
-   - Black lines in a frame mean "erase this edge" (2-opt shows the edges it breaks that way).
-   - Frames hold live tours: draw a frame before resuming the generator.
-   - 3-opt costs ~9 ms per move at 30 cities, ~37 ms at 100 and ~420 ms at 256. Run methods
-     in a Web Worker (at least for run-to-end on large maps) so the page stays responsive.
-   - Annealing's end screen offered an overlay of the two tours (`ControlLCLOverlay`); not
-     ported yet.
-3. **Player and renderer.** Cities, tour and highlights on a scalable canvas with an EGA palette.
-   Keys `0`–`9`, Enter, Esc as in the original; play/pause/step buttons; touch support.
+3. **Player and renderer.** ✅ Done.
+   - `run/`: methods run in a Web Worker (`run.worker.ts`, falling back to the main thread).
+     `Stepper` turns frames into plain snapshots and serves one frame, or as many as fit in a
+     time budget (keeping all their text), for run-to-end.
+   - `render/mapView.ts`: canvas drawing as `SCREEN.C`/`PROBLEM.C` did: y down, 0.05 margins,
+     ellipse cities of radius 0.023 with black numbers (left off above 100 cities), LTRED or
+     segment-coloured edges, black lines erase. Canvases match the device pixel ratio and the
+     original windows' shapes on a 4:3 screen.
+   - `render/textGrid.ts`: text panels as character grids of the original sizes (23 × 20 side
+     panel; annealing 3 × 78 top bar and 2 × 38 panes), drawn as HTML text.
+   - `player/playback.ts`: `WaitTill`/`DoInput` as a testable controller. Starts paused at
+     each step; any key continues, digit d plays at d × 0.5 s per step (Watcom `clock()` at
+     100 ticks/s), `0` runs to the end, Enter pauses again, Esc stops.
+   - `player/runScreen.ts`: run screens and finish screens ("F I N I S H E D", Esc to return
+     the new tour). Annealing ends with the sliding overlay (`player/overlay.ts`, port of
+     `ControlLCLOverlay`). Buttons and map taps mirror the keys.
+   - `main.ts` is a temporary setup page (map, solver, method, start, annealing settings,
+     seed). A finished insertion or iteration run becomes the current tour, as in the original.
+
+   **Notes for phase 4:**
+   - The original's BLUE text (index 1 remapped to full blue) is hard to read on black;
+     consider a lighter blue if it matters more than authenticity.
+   - Samples come from `Data/*.TSP` via `import.meta.glob` (`data/samples.ts`); the Vite dev
+     server is allowed to read `..` for that.
 4. **Main screen.** File list, solver/method/init lists, annealing parameters, New / Randomise /
    Save / Go buttons with Shift-N/R/S/G and Shift-H, message bar hints, help panel.
 5. **Files and storage.** Bundled samples from `Data/`, upload or drag-and-drop, Save as a
