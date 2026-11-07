@@ -40,8 +40,28 @@ becomes a generator that `yield`s a frame (highlights + info text). A player dri
    *Oracle:* the `30CITY_n.TSP` files are stored in optimal tour order, and their file-order
    lengths match `Data/10SOLNS.TXT`. Phase 2 uses these to check the DOCO benchmark ratios:
    the same-result-every-run methods (SS in `DOCO.DOC`) should reproduce them exactly.
-2. **Algorithms as generators.** Insertion, Nearest Neighbour, 1/2/3-opt, annealing. Seeded PRNG
-   (methods that vary per run, DS, won't match 1997 runs exactly).
+2. **Algorithms as generators.** ✅ Done. `src/algorithms/`: `insertion.ts` (3 starts × 7 rules,
+   Nearest Neighbour), `optim.ts` (1/2/3-opt), `anneal.ts` (1-opt vs 2-opt side by side),
+   `catalog.ts` (menus in the original order with help files, and `startRun`). Each method is a
+   generator yielding a `Frame` (`frame.ts`) wherever the C paused in `WaitTill()`: views with
+   highlight marks, extra lines and edge colouring, plus text written into a character grid at
+   the original rows and columns. `core/random.ts` is a seeded ANSI C `rand()`; DS methods repeat
+   for a seed but can't match 1997 runs, which were seeded from the clock.
+   *Verified:* all 120 SS insertion results (Closest/Furthest × 6 rules × 10 problems) and all
+   30 iteration results match DOCO's tables to 5 decimals. The iteration benchmark started from
+   the shuffled `30CITIES.DI0`–`DI9` files.
+
+   **Notes for phase 3:**
+   - The original y-axis points down (`_setwindow(0, -0.05, -0.05, 1.05, 1.05)`, invert off),
+     with a 0.05 margin. The placeholder page draws y up; fix that in the renderer.
+   - Cities are filled circles of radius 0.023 (double when highlighted) with their number in
+     black inside; edges LTRED; background black. Palette in `core/colors.ts`.
+   - Black lines in a frame mean "erase this edge" (2-opt shows the edges it breaks that way).
+   - Frames hold live tours: draw a frame before resuming the generator.
+   - 3-opt costs ~9 ms per move at 30 cities, ~37 ms at 100 and ~420 ms at 256. Run methods
+     in a Web Worker (at least for run-to-end on large maps) so the page stays responsive.
+   - Annealing's end screen offered an overlay of the two tours (`ControlLCLOverlay`); not
+     ported yet.
 3. **Player and renderer.** Cities, tour and highlights on a scalable canvas with an EGA palette.
    Keys `0`–`9`, Enter, Esc as in the original; play/pause/step buttons; touch support.
 4. **Main screen.** File list, solver/method/init lists, annealing parameters, New / Randomise /
