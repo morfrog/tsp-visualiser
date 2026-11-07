@@ -1,6 +1,10 @@
-// Phase 0 placeholder: proves the build + Pages deploy pipeline by drawing a
-// sample map (Data/30CITY_0.TSP) and its city-order tour on the canvas.
-// The real UI and algorithms arrive in later phases (see PLAN.md).
+// Placeholder page until the real UI arrives (see PLAN.md, phases 3-4): draws
+// the 30CITY_0 sample and its file-order tour, using the ported core modules.
+
+import { DistanceMatrix } from './core/distances';
+import type { City } from './core/geometry';
+import { Tour } from './core/tour';
+import { parseTsp } from './core/tspfile';
 
 const SAMPLE_30CITY_0 = `30
 0.7049470 0.5640130
@@ -34,35 +38,25 @@ const SAMPLE_30CITY_0 = `30
 0.8067570 0.8662980
 0.8969390 0.5849180`;
 
-interface City {
-  x: number;
-  y: number;
-}
-
-function parseTsp(text: string): City[] {
-  const [countLine, ...lines] = text.trim().split(/\r?\n/);
-  const count = parseInt(countLine, 10);
-  return lines.slice(0, count).map((line) => {
-    const [x, y] = line.trim().split(/\s+/).map(Number);
-    return { x, y };
-  });
-}
-
-function draw(canvas: HTMLCanvasElement, cities: City[]): number {
+function draw(canvas: HTMLCanvasElement, cities: readonly City[], tour: Tour): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas 2D not supported');
 
   const margin = 24;
   const size = canvas.width - margin * 2;
   const px = (c: City) => margin + c.x * size;
-  const py = (c: City) => margin + (1 - c.y) * size; // y up, as on the original screen
+  const py = (c: City) => margin + (1 - c.y) * size; // y up
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.strokeStyle = '#ff5555';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  cities.forEach((c, i) => (i === 0 ? ctx.moveTo(px(c), py(c)) : ctx.lineTo(px(c), py(c))));
+  tour.toArray().forEach((i, n) => {
+    const c = cities[i];
+    if (n === 0) ctx.moveTo(px(c), py(c));
+    else ctx.lineTo(px(c), py(c));
+  });
   ctx.closePath();
   ctx.stroke();
 
@@ -72,20 +66,12 @@ function draw(canvas: HTMLCanvasElement, cities: City[]): number {
     ctx.arc(px(c), py(c), 5, 0, Math.PI * 2);
     ctx.fill();
   }
-
-  let length = 0;
-  for (let i = 0; i < cities.length; i++) {
-    const a = cities[i];
-    const b = cities[(i + 1) % cities.length];
-    length += Math.hypot(a.x - b.x, a.y - b.y);
-  }
-  return length;
 }
 
 const viewCanvas = document.querySelector<HTMLCanvasElement>('#view')!;
 const statusLine = document.querySelector<HTMLParagraphElement>('#status')!;
 const sampleCities = parseTsp(SAMPLE_30CITY_0);
-const tourLength = draw(viewCanvas, sampleCities);
-statusLine.textContent = `30CITY_0.TSP: ${sampleCities.length} cities, file-order tour length ${tourLength.toFixed(6)}`;
-
-export {};
+const sampleTour = Tour.identity(sampleCities.length);
+draw(viewCanvas, sampleCities, sampleTour);
+const tourLength = sampleTour.length(new DistanceMatrix(sampleCities));
+statusLine.textContent = `30CITY_0.TSP: ${sampleCities.length} cities, optimal tour length ${tourLength.toFixed(6)}`;

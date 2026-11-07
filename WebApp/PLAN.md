@@ -33,9 +33,13 @@ becomes a generator that `yield`s a frame (highlights + info text). A player dri
 0. **Scaffold and deploy.** Vite + TS in `WebApp/`, `base: '/tsp-visualiser/'`, GitHub Actions
    workflow deploying `WebApp/dist` to Pages on push to `main`.
    *Manual step:* repo Settings → Pages → Source = **GitHub Actions**.
-1. **Core logic.** `.TSP` parser, distances, tour, path length. Vitest unit tests. The
-   same-result-every-run methods (SS in `DOCO.DOC`) on `30CITY_*.TSP` should reproduce the DOCO
-   benchmark ratios.
+1. **Core logic.** ✅ Done. `src/core/`: `tspfile.ts` (character-scan reader matching
+   `FILE.C`, so CRLF, tabs, exponents, stray bytes all parse), `distances.ts`, `tour.ts`
+   (array in linked-list head order, so inserts, deletes and reversals land exactly where
+   `PATH.C` put them). Vitest tests in `src/**/*.test.ts` read the real files in `../Data`.
+   *Oracle:* the `30CITY_n.TSP` files are stored in optimal tour order, and their file-order
+   lengths match `Data/10SOLNS.TXT`. Phase 2 uses these to check the DOCO benchmark ratios:
+   the same-result-every-run methods (SS in `DOCO.DOC`) should reproduce them exactly.
 2. **Algorithms as generators.** Insertion, Nearest Neighbour, 1/2/3-opt, annealing. Seeded PRNG
    (methods that vary per run, DS, won't match 1997 runs exactly).
 3. **Player and renderer.** Cities, tour and highlights on a scalable canvas with an EGA palette.
@@ -53,6 +57,9 @@ becomes a generator that `yield`s a frame (highlights + info text). A player dri
 cd WebApp
 npm install
 npm run dev       # local dev server
+npm test          # run the Vitest suite once
 npm run build     # type-check + production build to dist/
 npm run preview   # serve dist/ locally
 ```
+
+CI (`.github/workflows/deploy-pages.yml`) runs the tests and the build on Node 22, then deploys.
