@@ -18,7 +18,7 @@
 #include "anneal.h"
 #include "mouse.h"
 
-#define VERSION 2.07
+#define VERSION 2.1
 
 #define TITLEHEIGHT 15
 #define MSGBOXTOP 320
